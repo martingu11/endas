@@ -5,8 +5,7 @@
 
 __all__ = [
     'CoordinateSystem', 'ObservationOperator', 'CovarianceOperator',
-    'SequentialAlgorithm', 'TaperFn', 'SpatialQuery',
-    'DomainLocalization'
+    'TaperFn', 'SpatialQuery', 'DomainLocalization'
     ]
 
 from abc import ABCMeta, abstractmethod

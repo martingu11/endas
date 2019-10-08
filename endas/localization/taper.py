@@ -1,5 +1,6 @@
 """
 Covariance tapering functions.
+
 """
 
 from endas import TaperFn
@@ -31,8 +32,16 @@ class GaspariCohn(TaperFn):
     """
 
     def __init__(self, L):
+        """
+        Gaspari-Cohn covariance tapering function.
+
+        Args:
+            L : Correlation length of the tapering function. The tapering function will
+                be zero at 2*L
+        """
         assert L > 0
         self._L = L
+
 
     @property
     def support_range(self): return 2 * self._L
