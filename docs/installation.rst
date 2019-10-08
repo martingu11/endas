@@ -19,9 +19,10 @@ the extension module is optional and you can skip it completely if you do not wa
 with the additional complexity (EnDAS will fall back on a pure Python/NumPy implementation
 then). The C/C++ implementation however offers better performance. At the moment the only way
 to have the extension module installed is to build EnDAS from a source distribution and you will
-need a working C/C++ compiler on your machine. The GCC compiler is typically included with all
-Linux distributions. On Windows, you may want to install the Microsoft Visual Studio (Community
-edition).
+need a working C/C++ compiler on your machine. On Linux, the compiler is included with the OS.
+On Windows, you will need to install the Microsoft Visual Studio or at least the standalone
+compiler, if available. You can find more information about which compilers are compatible
+with which version of CPython `here <https://wiki.python.org/moin/WindowsCompilers>`_.
 
 
 Installing from PyPI

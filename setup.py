@@ -5,12 +5,21 @@ from setuptools import setup, Extension
 if sys.version_info[:2] < (3, 6):
     raise RuntimeError("Python >= 3.6 required.")
 
+BUILD_CPP_EXT = True
 CYTHON_REBUILD = False
 CYTHON_ANNOTATE = True
 
-# This is a bit hacky but will do the job and is the easiest way to add
 
-# Force  recompilaton of .c files form .pyx with Cython
+# Extra arguments to setup.py install/build/bukd_ext
+# This is a bit hacky way to add arguments but avoids having to subclass the setuptools commands
+# just to do something as simple as this.
+
+# Disable building of the C/C++ extension
+if "--no-cpp-ext" in sys.argv:
+    sys.argv.remove("--no-cpp-ext")
+    BUILD_CPP_EXT = True
+
+# Force  recompilaton of .c files from .pyx with Cython
 if "--cython-rebuild" in sys.argv:
     sys.argv.remove("--cython-rebuild")
     CYTHON_REBUILD = True
@@ -29,19 +38,22 @@ def finalize_sources(sources):
         return sources
 
 
-# Source files for the _cython_impl module containing Cython implementation of
-# some parts of EnDAS.
+# Source files for the _cython_impl module containing Cython implementation of some parts of EnDAS.
 cython_impl_sources = [
-    "endas/_cython/localization_taper.pyx"
+    "endas/_cython/localization_taper.pyx",
+    "endas/_cython/localization_cs.pyx"
 ]
 
-extensions = [
-    # EnDAS internals implemented as Cython extension
-    Extension("endas._cython_impl", finalize_sources(cython_impl_sources))
-]
+extensions = []
+
+# Building EnDAS internals implemented as C/C++ extension
+if BUILD_CPP_EXT:
+    extensions.append(Extension("endas.cython_impl",
+                                finalize_sources(cython_impl_sources)
+                                ))
 
 
-if CYTHON_REBUILD:
+if BUILD_CPP_EXT and CYTHON_REBUILD:
     from Cython.Build import cythonize
     extensions = cythonize(extensions, annotate=CYTHON_ANNOTATE)
 
@@ -52,5 +64,7 @@ setup(
     version="0.1",
     description="Ensemble Data Assimilation library",
     packages=["endas", "endas.algorithms", "endas.localization"],
-    ext_modules=extensions
+    install_requires=['numpy', 'scipy'],
+    ext_modules=extensions,
+
 )
