@@ -261,11 +261,6 @@ class SequentialEnsembleAlgorithm(metaclass=ABCMeta):
         pass
 
 
-
-
-
-
-
 class TaperFn(metaclass=ABCMeta):
     """
     Tapering function.
@@ -320,19 +315,28 @@ class CoordinateSystem(metaclass=ABCMeta):
         """
         pass
 
+    @property
+    @abstractmethod
+    def is_cartesian(self):
+        """
+        Returns ``True`` if this is a Cartesian coordinate system.
+        """
+        pass
+
+
     @abstractmethod
     def distance(self, A, B, out=None):
         """
         Implements distance metric for this coordinate system.
 
-        The method computes distance between pairs of points in sets A and B. The dimension of each
-        point must be equal to `self.ndim` and  are stored row-wise. Therefore, the sets A and B must
-        be arrays of shape (n, ndim), where n is the number of points to process.
+        The method computes distance between pairs of points in sets A and B. The dimension of each point must be equal
+        to ``self.ndim`` and  are stored row-wise. Therefore, the sets A and B must be arrays of shape (n, ndim), where
+        n is the number of points to process.
 
         Args:
-            A, B: n x ndim arrays containing `n` coordinates in the sets `A` and `B`
-            out : Existing array of length `n` where the result should be stored, is possible. If `None` is given, new
-                  array is allocated.
+            A, B: n x ndim arrays containing ``n`` coordinates in the sets ``A`` and ``B``
+            out : Existing array of length ``n`` where the result should be stored, is possible. If ``None`` is given,
+                  new array is allocated.
 
         Returns:
             Array of length `n` containing the computed distances.

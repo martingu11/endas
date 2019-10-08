@@ -11,21 +11,18 @@ update.
 from . import api
 from .api import *
 
-from . import cs
 from . import cov
 from . import algorithms
 from . import arraycache
 
 
-__all__ =  []
+__all__ = []
 __all__ += api.__all__
 
 
 # Patch the module names of members from imported sub-modules for Sphinx
 for _xname in __all__:
     getattr(api, _xname).__module__ = __name__
-
-
 
 
 # Try loading the Cython implementation extension module. It may not have been compiled,
