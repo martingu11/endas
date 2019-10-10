@@ -5,14 +5,31 @@ import cython
 
 from libc.math cimport sqrt, sin, cos, asin
 
+ctypedef fused coord_t:
+    int
+    float
+    double
 
-# Euclidean distance specialized for the most common cases - 2d and 3d. 1d case is simply done with
-# np.subtract
+
+# Euclidean distance specialized for the most common cases - 1d, 2d and 3d.
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def cs_euclid_distance_1d(coord_t[:] A not None, coord_t[:] B not None, coord_t[:] out not None):
+    # At this point we assume all the necessary asserts were already done! A and B are flat arrays
+    cdef int n = A.shape[0]
+    cdef int i
+    cdef coord_t d
+    for i in range(n):
+        d = A[i] - B[i]
+        if d < 0: d = -d   # Does anyone know better way to do abs() for both ints and floats?
+        out[i] = d
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def cs_euclid_distance_2d(double[:,:] A not None, double[:,:] B not None, double[:,:] out not None):
+def cs_euclid_distance_2d(double[:,:] A not None, double[:,:] B not None, double[:] out not None):
     # At this point we assume all the necessary asserts were already done! A and B have shape (n, 2)
     cdef int n = A.shape[0]
     cdef int i
@@ -23,7 +40,7 @@ def cs_euclid_distance_2d(double[:,:] A not None, double[:,:] B not None, double
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def cs_euclid_distance_3d(double[:,:] A not None, double[:,:] B not None, double[:,:] out not None):
+def cs_euclid_distance_3d(coord_t[:,:] A not None, coord_t[:,:] B not None, double[:] out not None):
     # At this point we assume all the necessary asserts were already done! A and B have shape (n, 3)
     cdef int n = A.shape[0]
     cdef int i
@@ -35,7 +52,7 @@ def cs_euclid_distance_3d(double[:,:] A not None, double[:,:] B not None, double
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def cs_euclid_distance_Nd(double[:,:] A not None, double[:,:] B not None, double[:,:] out not None):
+def cs_euclid_distance_Nd(coord_t[:,:] A not None, coord_t[:,:] B not None, double[:] out not None):
     # At this point we assume all the necessary asserts were already done! A and B have shape (n, N)
     cdef int n = A.shape[0]
     cdef int N = A.shape[1]
@@ -52,7 +69,7 @@ def cs_euclid_distance_Nd(double[:,:] A not None, double[:,:] B not None, double
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def cs_latlon_distance(double[:,:] A not None, double[:,:] B not None, double[:,:] out not None, double R):
+def cs_latlon_distance(double[:,:] A not None, double[:,:] B not None, double[:] out not None, double R):
     # At this point we assume all the necessary asserts were already done! A and B have shape (n, 2)
     cdef int n = A.shape[0]
     cdef int i

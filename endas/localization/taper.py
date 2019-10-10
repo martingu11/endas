@@ -3,7 +3,7 @@ Covariance tapering functions.
 
 """
 
-from endas import TaperFn
+from . import TaperFn
 from endas import _get_cython_impl
 
 import numpy as np
