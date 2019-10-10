@@ -1,12 +1,5 @@
 """
 Functionality for caching larger-than-memory data.
-
-Large data cache is used in situations where keeping all data in memory is likely not going
-to be feasible, such as in Kalman Smoother implementations. Therefore, some data may be persisted to
-other storage (e.g. disk) for later retrieval.
-
-While this is functionally similar to the Python ``shelve`` module, we will eventually need somewhat
-different interface, thus the need for a custom module.
 """
 
 import os
@@ -111,7 +104,8 @@ class ArrayCache(object):
 
 class LRUArrayCache(ArrayCache):
     """
-    Data cache that swaps recently used data objects to disk and back when requested.
+    Data cache that swaps recently used data objects to disk.
+
     The cache will keep items in memory as long as their combined size os below maxsizeMB. When the
     capacity is reached, least recently accessed items are swapped to storage to make space.
 

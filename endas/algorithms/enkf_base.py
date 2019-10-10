@@ -21,8 +21,8 @@ import math
 import numpy as np
 
 from endas import ensemble, CovarianceOperator
-from endas import DomainLocalization
 from endas import arraycache
+from endas.localization import DomainLocalization
 
 
 from abc import ABCMeta, abstractmethod

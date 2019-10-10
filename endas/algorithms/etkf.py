@@ -17,7 +17,9 @@ from endas import ensemble
 
 class VariantESTKF(EnKFVariant):
     """
-    Classic (stochastic) Ensemble Kalman Filter with perturbed observations.
+    Error Subspace Transform Kalman Filter.
+
+
     """
 
     def __init__(self, rotation=True):

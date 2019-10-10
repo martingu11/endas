@@ -3,7 +3,7 @@ Extended Kalman Filter.
 """
 
 
-__all__ = ['KF']
+__all__ = ['KalmanFilter']
 
 import numpy as np
 from scipy import linalg
@@ -11,7 +11,7 @@ from endas import CovarianceOperator
 from endas import arraycache
 
 
-class KF:
+class KalmanFilter:
     """
     Kalman Filter and Smoother.
     """

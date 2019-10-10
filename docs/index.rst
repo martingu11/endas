@@ -45,16 +45,14 @@ Code examples can be found in the **examples** directory of the
 `EnDAS repository on GitHub <https://github.com/martingu11/endas>`_.
 
 
-
-
-
 .. toctree::
    :maxdepth: 1
    :hidden:
 
    self
    installation
-   api_reference
+   getstarted/index
+   reference/index
 
 
 

@@ -47,9 +47,19 @@ extensions = [ 'sphinx.ext.autodoc',
 
 autodoc_member_order = "bysource"
 autosummary_generate = True
-#autosummary_imported_members = True
 
 #autoclass_content = "both"
+
+autodoc_default_options = {
+    'member-order': 'bysource',
+    #'special-members': '__init__',
+    #'undoc-members': False,
+    'show-inheritance': True,
+    #'inherited-members' : True
+}
+
+autodoc_inherit_docstrings = False
+
 
 
 # Add any paths that contain templates here, relative to this directory.
