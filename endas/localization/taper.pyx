@@ -4,9 +4,9 @@ Covariance tapering functions.
 """
 
 from . import TaperFn
-from endas import _get_cython_impl
 
 import numpy as np
+import cython
 
 __all__ = ['GaspariCohn', 'Linear', 'Spherical']
 
@@ -42,10 +42,12 @@ class GaspariCohn(TaperFn):
         assert L > 0
         self._L = L
 
-
     @property
     def support_range(self): return 2 * self._L
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    @cython.cdivision(True)
     def taper(self, x, d, out=None):
         assert isinstance(x, np.ndarray)
         assert isinstance(d, np.ndarray)
@@ -53,15 +55,22 @@ class GaspariCohn(TaperFn):
         assert d.ndim == 1
         assert len(x) == len(d)
 
-        _cyimpl = _get_cython_impl()
-        if _cyimpl is not None:
-            if out is None: out = np.empty(len(x), dtype=np.double)
-            return _cyimpl.taper_gc(x, d, out=out, L=self._L)
-        # No Cython implementation available, fall-back on the NumPy version
-        else:
-            # Todo: Needs to be implemented!
-            raise NotImplemented()
+        if out is None: out = np.empty(len(x), dtype=np.double)
 
+        cdef double[:] x_view = x
+        cdef double[:] d_view = d
+        cdef double[:] out_view = out
+        cdef double L = self._L
+        cdef int n = x.shape[0]
+        cdef int i
+        cdef double r
+        for i in range(n):
+            r = d_view[i] / L
+            if r < 1: out_view[i] = x_view[i] * 1.0 - (5/3.0)*r**2 + (5/8.0)*r**3 + (1/2.0)*r**4 - (1/4.0)*r**5
+            elif r < 2: out_view[i] = x_view[i] * 4.0 - 5.0*r + (5/3.0)*r**2 + (5/8.0)*r**3 - (1/2.0)*r**4 + (1/12.0)*r**5 - (2.0/3.0)*r
+            else: out_view[i] = 0
+
+        return out
 
 
 class Linear(TaperFn):
@@ -78,6 +87,9 @@ class Linear(TaperFn):
     def supportrange(self): return self._L
 
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    @cython.cdivision(True)
     def taper(self, x, d, out=None):
         assert isinstance(x, np.ndarray)
         assert isinstance(d, np.ndarray)
@@ -85,15 +97,21 @@ class Linear(TaperFn):
         assert d.ndim == 1
         assert len(x) == len(d)
 
-        _cyimpl = _get_cython_impl()
-        if _cyimpl is not None:
-            if out is None: out = np.empty(len(x), dtype=np.double)
-            return _cyimpl.taper_linear(x, d, out=out, L=self._L)
-        # No Cython implementation available, fall-back on the NumPy version
-        else:
-            # Todo: Needs to be implemented!
-            raise NotImplemented()
+        if out is None: out = np.empty(len(x), dtype=np.double)
 
+        cdef double[:] x_view = x
+        cdef double[:] d_view = d
+        cdef double[:] out_view = out
+        cdef double L = self._L
+        cdef int n = x.shape[0]
+        cdef int i
+        cdef double r
+        for i in range(n):
+            r = d_view[i] / L
+            if r < 1.0: out_view[i] = x_view[i] * 1.0 - r
+            else: out_view[i] = 0
+
+        return out
 
 
 
@@ -123,6 +141,9 @@ class Spherical(TaperFn):
     def supportrange(self): return self._L
 
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    @cython.cdivision(True)
     def taper(self, x, d, out=None):
         assert isinstance(x, np.ndarray)
         assert isinstance(d, np.ndarray)
@@ -130,13 +151,20 @@ class Spherical(TaperFn):
         assert d.ndim == 1
         assert len(x) == len(d)
 
-        _cyimpl = _get_cython_impl()
-        if _cyimpl is not None:
-            if out is None: out = np.empty(len(x), dtype=np.double)
-            return _cyimpl.taper_spherical(x, d, out=out, L=self._L)
-        # No Cython implementation available, fall-back on the NumPy version
-        else:
-            # Todo: Needs to be implemented!
-            raise NotImplemented()
+        if out is None: out = np.empty(len(x), dtype=np.double)
+
+        cdef double[:] x_view = x
+        cdef double[:] d_view = d
+        cdef double[:] out_view = out
+        cdef double L = self._L
+        cdef int n = x.shape[0]
+        cdef int i
+        cdef double r
+        for i in range(n):
+            r = d_view[i] / L
+            if r < 1.0: out_view[i] = x_view[i] * 1.0 - (1.5*r - 0.5*r**3)
+            else: out_view[i] = 0
+
+        return out
 
 

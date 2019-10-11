@@ -26,9 +26,8 @@ Requirements
 ------------
 
 EnDAS is written in Python 3, using NumPy and SciPy. Therefore, if you cannot use either, EnDAS is unfortunately
-not for you. Some parts of EnDAS are implemented in Cython, these are however optional and pure Python/NumPy
-implementations also exist as a fall-back. For more information see the
-:doc:`Installation instructions page <installation>`.
+not for you. Apart from these, you will need a working C/C++ compiler for building some parts of EnDAS. See the
+:doc:`Installation instructions page <installation>` for more information.
 
 Installation
 ------------

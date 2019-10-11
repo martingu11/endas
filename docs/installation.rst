@@ -8,67 +8,69 @@ The EnDAS library requires the following:
 
 - `Python <https://www.python.org/>`_ 3.x (3.6 or newer recommended)
 - `NumPy <https://numpy.org/>`_ and `SciPy <https://www.scipy.org/>`_
+- Working C/C++ compiler for building the source distribution (see below)
 
-Optionally, you may want to have the following installed as well
+Optionally, you may want to have the following installed as well:
 
 - `Matplotlib <https://matplotlib.org/>`_ when running examples or plotting your own results
 - `Sphinx <http://www.sphinx-doc.org>`_ to generate documentation
 
-Some parts of EnDAS are implemented as a C/C++ extension module (using Cython). Building of
-the extension module is optional and you can skip it completely if you do not want to deal
-with the additional complexity (EnDAS will fall back on a pure Python/NumPy implementation
-then). The C/C++ implementation however offers better performance. At the moment the only way
-to have the extension module installed is to build EnDAS from a source distribution and you will
-need a working C/C++ compiler on your machine. On Linux, the compiler is included with the OS.
-On Windows, you will need to install the Microsoft Visual Studio or at least the standalone
-compiler, if available. You can find more information about which compilers are compatible
-with which version of CPython `here <https://wiki.python.org/moin/WindowsCompilers>`_.
+.. note::
+   EnDAS is tested on CPython. It may be possible to use EnDAS with `PyPy<https://pypy.org/>`_ version 6.0.0 or above
+   and SciPy 1.1.0 or newer. The instructions below assume you are using CPython.
+
+Some parts of EnDAS are implemented as a C/C++ extension module (using Cython). Currently EnDAS comes in a
+*source distribution* and you will therefore need a working C/C++ compiler in order to install it. On Linux, the
+compiler is included with the OS and EnDAS should install out of the box. On Windows, you will need to install the
+Microsoft Visual Studio (or the standalone compiler tools, if available). You should use Visual Studio version that
+is recommended for your Python as listed `here <https://wiki.python.org/moin/WindowsCompilers>`_.
 
 
 Installing from PyPI
 --------------------
 
-The easiest way to install EnDAS is to use the source distribution published in PyPi and
-install with ``pip``::
+The easiest way to install EnDAS is to use the source distribution published in PyPi and install with ``pip``::
 
     pip install endas
 
-This will also build and install the C/C++ extension, therefore a working C/C++ compiler
-is needed. If you do not want to build the C/C++ extension, tell ``pip`` to pass
-``--no-cpp-ext`` to ``setup.py`` when installing EnDAS::
-
-    pip install --install-option="--no-cpp-ext"
+This will build the C/C++ extension and install EnDAS into the Python environment form which you run ``pip``.
 
 
 Building and installing from source
 -----------------------------------
 
-The source code is hosted on GitHub: `<https://github.com/martingu11/endas>`_. After
-cloning the repository, you can install EnDAS in a working Python 3 distribution (with
-the dependencies above installed) by typing::
+The source code is hosted on GitHub: `<https://github.com/martingu11/endas>`_. After cloning the repository, you can
+install EnDAS in a working Python 3 distribution (with the dependencies above installed) by typing::
 
-    python setup.py install
+    python setup.py install --cython-rebuild
 
-in the terminal from the root folder of the EnDAS library (where setup.py is located).
-You may need to run the command as a super user for the installation to succeed. As with
-the PyPi installation, this will attempt to build the C/C++ extension before installing
-the module. To disable this (for example if you do not have a working compiler), run::
+in the terminal from the root folder of the EnDAS library (where setup.py is located). The ``--cython-rebuild`` flag is
+needed for the C/C++ extension source files to be generated from Cython sources. It needs to be done only once, unless
+you are making changes to .pyx files.
 
-    python setup.py install --no-cpp-ext
+If you plan on developing EnDAS or making changes to it, you may want to install it as and *ediable package*. This is
+done with the "develop" command instead of "install"::
 
-instead.
+    python setup.py build_ext --inplace --cython-rebuild
+    python setup.py develop
+
+As above, this will build the extension modules and "install" EnDAS by creating a link to the source code. You do not
+need to run ``setup.py develop`` afterwards. If you edit any Cython sources, you still need to rebuild the compiled
+extension modules though::
+
+    python setup.py build_ext --inplace --cython-rebuild
+
 
 Building documentation
 ----------------------
 
-If you have Sphinx installed (and the sphinx-build utility is on PATH), you can generate
-documentation by typing::
+If you have Sphinx installed (and the sphinx-build utility is on PATH), you can generate documentation by typing::
 
     cd doc
     make html
 
-Please note that you also need GNU Make to run this (installed on all Linux flavours,
-for Windows version see http://gnuwin32.sourceforge.net/packages/make.htm).
+Please note that you also need GNU Make to run this (installed on all Linux flavours, for Windows version see
+http://gnuwin32.sourceforge.net/packages/make.htm).
 
 
 

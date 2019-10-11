@@ -8,22 +8,6 @@ from abc import ABCMeta, abstractmethod
 __all__ = ['ObservationOperator', 'CovarianceOperator']
 
 
-
-# Try loading the Cython implementation extension module. It may not have been compiled, which is fine,
-# we have fall-back implementations in place.
-_HAVE_CYTHON_IMPL = False
-try:
-    import endas._cython_impl as _cyimpl
-    _HAVE_CYTHON_IMPL = True
-except:
-    pass
-
-def _get_cython_impl():
-    return _cyimpl if _HAVE_CYTHON_IMPL else None
-
-
-
-
 class ObservationOperator(metaclass=ABCMeta):
     """
     Abstract base class for observation operators.

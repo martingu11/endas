@@ -29,7 +29,7 @@ implementations too. For more information see the [installation instructions](IN
 TO BE COMPLETETED. 
 
 Code examples can be found in the `examples` directory of the EnDAS repository on GitHub:
-[https://github.com/martingu11/endas/examples]([https://github.com/martingu11/endas/examples]).
+[https://github.com/martingu11/endas]([https://github.com/martingu11/endas]).
 
 ## Installation
 
