@@ -58,7 +58,9 @@ else:
         print("Building with --cython-rebuild but Cython is not installed. Please install it first.")
         sys.exit(1)
 
-    extensions = cythonize(find_extensions('endas', ['.pyx']), annotate=CYTHON_ANNOTATE)
+    extensions = cythonize(find_extensions('endas', ['.pyx']), 
+                           annotate=CYTHON_ANNOTATE, 
+                           language_level="3")
 
 with open('./README.md', 'r') as readme:
     long_description = readme.read()

@@ -91,8 +91,9 @@ class EuclideanCS(CoordinateSystem):
     def is_cartesian(self): return True
 
     def distance(self, A, B, out=None):
-        assert A.shape == B.shape
         assert A.shape[1] == self.ndim
+        assert A.shape == B.shape or A.shape[0] <= 1
+
         n = A.shape[0]
         if n == 0: return np.empty(0)
 

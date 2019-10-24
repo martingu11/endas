@@ -8,6 +8,7 @@ from . import TaperFn
 import numpy as np
 import cython
 
+
 __all__ = ['GaspariCohn', 'Linear', 'Spherical']
 
 
@@ -61,7 +62,7 @@ class GaspariCohn(TaperFn):
         cdef double[:] d_view = d
         cdef double[:] out_view = out
         cdef double L = self._L
-        cdef int n = x.shape[0]
+        cdef int n = x_view.shape[0]
         cdef int i
         cdef double r
         for i in range(n):
@@ -103,7 +104,7 @@ class Linear(TaperFn):
         cdef double[:] d_view = d
         cdef double[:] out_view = out
         cdef double L = self._L
-        cdef int n = x.shape[0]
+        cdef int n = x_view.shape[0]
         cdef int i
         cdef double r
         for i in range(n):
@@ -157,7 +158,7 @@ class Spherical(TaperFn):
         cdef double[:] d_view = d
         cdef double[:] out_view = out
         cdef double L = self._L
-        cdef int n = x.shape[0]
+        cdef int n = x_view.shape[0]
         cdef int i
         cdef double r
         for i in range(n):

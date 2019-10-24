@@ -7,9 +7,8 @@ __all__ = ['Grid2d']
 import numpy as np
 
 from . import SpatialQuery, TaperFn
-from .bbox import BBox
+from .bbox import BBox2i
 from . import StateSpacePartitioning
-from endas import _get_cython_impl
 
 
 class Grid2d(StateSpacePartitioning):
@@ -59,6 +58,7 @@ class Grid2d(StateSpacePartitioning):
         self._mask = mask
         self._extent = extent
         self._cellsize = extent.size / (nx, ny)
+        self._cs = cs
 
         self._bs = block_size
         self._pad = padding
@@ -70,14 +70,15 @@ class Grid2d(StateSpacePartitioning):
             self._domains = []
 
             allcells = np.arange(self._ny*self._nx).reshape(self._ny, self._nx)
-            full_bbox = BBox(min=(0, 0), end=(self._nx+1, self._ny+1), dtype=np.int)
+            full_bbox = BBox2i(0, 0, self._nx+1, self._ny+1)
 
             for y in range(0, self._ny, self._bs):
                 for x in range(0, self._nx, self._bs):
 
-                    d_box = BBox(min=(x, y), end=(x + self._bs, y + self._bs), dtype=np.int).intersect(full_bbox)
+                    d_box = BBox2i(x, y, x + self._bs, y + self._bs).intersect(full_bbox)
                     d_box_padded = d_box.copy()
-                    d_box_padded = d_box_padded.inflate((self._pad, self._pad)).intersect(full_bbox)
+                    d_box_padded.inflate(self._pad, self._pad)
+                    d_box_padded.intersect(full_bbox)
 
                     # Select cells and corresponding variables from the state vector that are inside this block
                     d_cells = allcells[d_box_padded.y:d_box_padded.yend, d_box_padded.x:d_box_padded.xend]
@@ -91,19 +92,39 @@ class Grid2d(StateSpacePartitioning):
         return self._domains
 
 
-    def get_local_extent(self, domain):
-        dbox = domain[0]
-        return BBox(min=self._extent.min + dbox.min * self._cellsize,
-                    end=self._extent.min + dbox.end * self._cellsize).intersect(self._extent)
+    def get_local_observations(self, domain, z_coords, taper_fn, distances=True):
+
+        # Grid2d allows the use of SpatialQuery or plain observation coordinates in `z_coords`. In the former
+        # case the spatial index is used to find observations near the local domain. I the latter case a
+        # brute-force search is done
+        d_box, _ = domain
+
+        if isinstance(z_coords, np.ndarray):
+            if z_coords.ndim != 2:
+                raise ValueError("z_coords must be two-dimensional array")
+            if z_coords.shape[1] != 2:
+                raise ValueError("z_coords array must be of shape (n,2)")
+            m = z_coords[0]
+
+            self._cs.distance()
+
+
+
+
+
+
+
+
+
+
+
 
 
     def get_local_state_size(self, domain):
         return len(domain[1])
 
-
     def get_local_state(self, domain, xg):
         raise NotImplementedError()
-
 
     def put_local_state(self, domain, xl, xg):
         raise NotImplementedError()
