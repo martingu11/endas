@@ -5,7 +5,7 @@ Ensemble Transform Kalman Filter (ETKF)
 
 """
 
-__all__ = [ 'VariantESTKF' ]
+__all__ = ['ESTKF']
 
 import math
 import numpy as np
@@ -15,10 +15,9 @@ from .enkf_base import EnKFVariant
 from endas import ensemble
 
 
-class VariantESTKF(EnKFVariant):
+class ESTKF(EnKFVariant):
     """
     Error Subspace Transform Kalman Filter.
-
 
     """
 
@@ -26,32 +25,35 @@ class VariantESTKF(EnKFVariant):
         self.rotation=rotation
 
 
-    def compute_ensemble_transform(self, A_global, A, z, H, R, inflation, lstrategy, out=None):
+    def process_global_ensemble(self, Ag, H):
+        xg = ensemble.mean(Ag)
+        Hx = H.dot(xg)
+        HA = H.dot(Ag)
+        return Hx, HA
+
+
+    def ensemble_transform(self, A, z, H, R, Ag_data, inflation, lstrategy, out=None):
         n, N = A.shape  # State and ensemble size
         #m = H.shape[0]  # Number of observations
 
         rho = 1.0 - (inflation - 1.0)
         #rho_s = 1.0 - (rho - 1.0)
 
-        x_global = ensemble.mean(A_global)
-
-        #AgX = ensemble.to_anomaly(A_global)
-        #HAX = H.dot(AgX)
+        Hx, HA = Ag_data
 
         a = (1.0 / N) * (1.0 / (1.0 / math.sqrt(N) + 1))
         T = np.full((N, N - 1), -a)
         np.fill_diagonal(T, 1.0 - a)
         T[-1, :] = -1.0 / math.sqrt(N)
 
-        HL = H.dot(A_global).dot(T)
-
+        HL = HA.dot(T)
         RinvHL = R.solve(HL)
 
         Ainv = HL.T.dot(RinvHL)
         np.fill_diagonal(Ainv, Ainv.diagonal() + (rho * (N - 1)))
         # np.fill_diagonal(Ainv, Ainv.diagonal() + ((m - 1)))
 
-        dz = z - H.dot(x_global)
+        dz = z - Hx
         w = HL.T.dot(R.solve(dz))
         w = linalg.solve(Ainv, w, overwrite_b=True)
 
@@ -69,7 +71,6 @@ class VariantESTKF(EnKFVariant):
             Ediag = RRdiag / np.fabs(RRdiag)
             E = np.diag(np.reciprocal(Ediag), 0)
             Q = Q.dot(E)
-
             W = W.dot(Q)
 
         dW = w.reshape(-1, 1) + W
@@ -80,9 +81,3 @@ class VariantESTKF(EnKFVariant):
         Gs += (1.0 / N)
 
         return G, Gs
-
-
-
-
-
-

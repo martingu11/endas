@@ -60,7 +60,7 @@ else:
 
     extensions = cythonize(find_extensions('endas', ['.pyx']), 
                            annotate=CYTHON_ANNOTATE, 
-                           language_level="3")
+                           language_level=3)
 
 with open('./README.md', 'r') as readme:
     long_description = readme.read()

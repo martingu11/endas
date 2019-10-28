@@ -2,7 +2,7 @@
 Ensemble Kalman Filter.
 """
 
-__all__ = [ 'VariantEnKF' ]
+__all__ = ['EnKF']
 
 import numpy as np
 from scipy import linalg
@@ -11,18 +11,23 @@ from .enkf_base import EnKFVariant
 from endas import ensemble
 
 
-class VariantEnKF(EnKFVariant):
+class EnKF(EnKFVariant):
     """
     Classic (stochastic) Ensemble Kalman Filter with perturbed observations.
     """
 
-    def compute_ensemble_transform(self, A_global, A, z, H, R, inflation, lstrategy, out=None):
+    def process_global_ensemble(self, Ag, H):
+        AX = ensemble.to_anomaly(Ag)
+        HAX = H.dot(AX)
+        HA = H.dot(Ag)
+        return HAX, HA
+
+
+    def ensemble_transform(self, A, z, H, R, Ag_data, inflation, lstrategy, out=None):
         n, N = A.shape  # State and ensemble size
         m = H.shape[0]  # Number of observations
 
-        AgX = ensemble.to_anomaly(A_global)
-        HAX = H.dot(AgX)
-
+        HAX, HA = Ag_data
 
         # We have many observations or the observation error covariance operator
         # does not support the addition operator -> perform inversion using the
@@ -43,7 +48,7 @@ class VariantEnKF(EnKFVariant):
         D = ensemble.center(D, out=D)
 
         D = np.add(D, z.reshape(-1, 1), out=D)
-        D = np.subtract(D, H.dot(A_global), out=D)
+        D = np.subtract(D, HA, out=D)
         X4 = K.dot(D, out=out)
 
         X5 = np.eye(N) + X4
