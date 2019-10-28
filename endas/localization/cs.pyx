@@ -17,58 +17,6 @@ ctypedef fused coord_t:
     double
 
 
-# Euclidean distance specialized for the most common cases - 1d, 2d and 3d.
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def cs_euclid_distance_1d(coord_t[:] A not None, coord_t[:] B not None, coord_t[:] out not None):
-    # At this point we assume all the necessary asserts were already done! A and B are flat arrays
-    cdef int n = A.shape[0]
-    cdef int i
-    cdef coord_t d
-    for i in range(n):
-        d = A[i] - B[i]
-        if d < 0: d = -d   # Does anyone know better way to do abs() for both ints and floats?
-        out[i] = d
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def cs_euclid_distance_2d(double[:,:] A not None, double[:,:] B not None, double[:] out not None):
-    # At this point we assume all the necessary asserts were already done! A and B have shape (n, 2)
-    cdef int n = A.shape[0]
-    cdef int i
-    for i in range(n):
-        out[i] = sqrt( (A[i,0]-B[i,0])**2 + (A[i,1]-B[i,1])**2 )
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def cs_euclid_distance_3d(coord_t[:,:] A not None, coord_t[:,:] B not None, double[:] out not None):
-    # At this point we assume all the necessary asserts were already done! A and B have shape (n, 3)
-    cdef int n = A.shape[0]
-    cdef int i
-    for i in range(n):
-        out[i] = sqrt( (A[i,0]-B[i,0])**2 + (A[i,1]-B[i,1])**2 + (A[i,2]-B[i,2])**2 )
-
-
-# Euclidean distance for generic N-d case with extra inner loop
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def cs_euclid_distance_Nd(coord_t[:,:] A not None, coord_t[:,:] B not None, double[:] out not None):
-    # At this point we assume all the necessary asserts were already done! A and B have shape (n, N)
-    cdef int n = A.shape[0]
-    cdef int N = A.shape[1]
-    cdef int i
-    cdef double s
-    for i in range(n):
-        s = 0.0
-        for j in range(N): s+= (A[i,j] - B[i,j])**2
-        out[i] = sqrt(s)
-
 
 class EuclideanCS(CoordinateSystem):
     """
@@ -79,10 +27,15 @@ class EuclideanCS(CoordinateSystem):
 
     """
 
-    def __init__(self, ndim, dtype=np.double):
+    def __init__(self, ndim):
         assert ndim >= 1
         self._ndim = ndim
-        self._dtype = dtype
+
+
+        #if self.ndim == 1: self._fn = self._distance_1d
+        #elif self.ndim == 2: self._fn = self._distance_2d
+        #elif self.ndim == 3: self._fn = self._distance_3d
+        #elif self.ndim == 4: self._fn = self._distance_Nd
 
     @property
     def ndim(self): return self._ndim
@@ -91,53 +44,115 @@ class EuclideanCS(CoordinateSystem):
     def is_cartesian(self): return True
 
     def distance(self, A, B, out=None):
-        assert A.shape[1] == self.ndim
-        assert A.shape == B.shape or A.shape[0] <= 1
 
-        n = A.shape[0]
+        have_single_A = A.shape[0] == 1
+        if have_single_A: assert A.shape[1] == self.ndim
+        else: assert A.shape == B.shape
+        assert B.shape[1] == self.ndim
+
+        n = B.shape[0]
         if n == 0: return np.empty(0)
 
-        if out is None: out = np.empty(n, dtype=self._dtype)
-        if self.ndim == 1:   cs_euclid_distance_1d(A, B, out)
-        elif self.ndim == 2: cs_euclid_distance_2d(A, B, out)
-        elif self.ndim == 3: cs_euclid_distance_3d(A, B, out)
-        else:                cs_euclid_distance_Nd(A, B, out)
+        if out is None:
+            out = np.empty(n, dtype=np.double)
+        else:
+            assert out.ndim == 1
+            assert out.size == n
+
+        if self.ndim == 1: self._distance_1d(A.ravel(), B.ravel(), out)
+        elif self.ndim == 2: self._distance_2d(A, B, out)
+        elif self.ndim == 3: self._distance_3d(A, B, out)
+        else: self._distance_Nd(A, B, out)
+
+        return out
+
+
+    # One-dimensional case
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    @cython.cdivision(True)
+    def _distance_1d(self, coord_t[::1] A, coord_t[::1] B, double[::1] out):
+        cdef int n = B.shape[0]
+        cdef int i
+        if A.shape[0] == 1:
+            for i in range(n):
+                out[i] = abs(A[0] - B[i])
+        else:
+            for i in range(n):
+                out[i] = abs(A[i] - B[i])
+
+
+    # Two-dimensional case
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    @cython.cdivision(True)
+    def _distance_2d(self, coord_t[:,::1] A not None, coord_t[:,::1] B not None, double[::1] out not None):
+        cdef int n = B.shape[0]
+        cdef int i
+        if A.shape[0] == 1:
+            for i in range(n):
+                out[i] = sqrt( (A[0,0] - B[i,0])**2 + (A[0,1] - B[i,1])**2 )
+        else:
+            for i in range(n):
+                out[i] = sqrt( (A[i,0] - B[i,0])**2 + (A[i,1] - B[i,1])**2 )
+
+    # Three-dimensional case
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    @cython.cdivision(True)
+    def _distance_3d(self, coord_t[:,::1] A not None, coord_t[:,::1] B not None, double[::1] out not None):
+        cdef int n = B.shape[0]
+        cdef int i
+        if A.shape[0] == 1:
+            for i in range(n):
+                out[i] = sqrt( (A[0,0] - B[i,0])**2 + (A[0,1] - B[i,1])**2 + (A[0,2] - B[i,2])**2 )
+        else:
+            for i in range(n):
+                out[i] = sqrt( (A[i,0] - B[i,0])**2 + (A[i,1] - B[i,1])**2 + (A[i,2] - B[i,2])**2)
+
+
+    # Generic N-dimensional case
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    @cython.cdivision(True)
+    def _distance_Nd(self, coord_t[:,::1] A not None, coord_t[:,::1] B not None, double[::1] out not None):
+        cdef int n = B.shape[0]
+        cdef int N = B.shape[1]
+        cdef int i
+        cdef double sum_sq
+        if A.shape[0] == 1:
+            for i in range(n):
+                sum_sq = 0.0
+                for j in range(N): sum_sq += (A[0,j] - B[i,j])**2
+                out[i] = sqrt(sum_sq)
+        else:
+            for i in range(n):
+                sum_sq = 0.0
+                for j in range(N): sum_sq += (A[i,j] - B[i,j])**2
+                out[i] = sqrt(sum_sq)
 
 
 
 
-
-# Lat-lon distance on a perfect sphere using the Haversine formula
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# Haversine formula for great circle distance on sphere
 @cython.cdivision(True)
-def cs_latlon_distance(double[:,:] A not None, double[:,:] B not None, double[:] out not None, double R):
-    # At this point we assume all the necessary asserts were already done! A and B have shape (n, 2)
-    cdef int n = A.shape[0]
-    cdef int i
-    cdef double Alat, Blat, Alon, Blon
-    cdef double dfif_lat, diff_lon
-    cdef double a
+cdef inline double haversine(double Alat, double Alon, double Blat, double Blon, double R) nogil:
+    Alat*= 0.0174532925 # Conversion to radians
+    Blat*= 0.0174532925
+    Alon*= 0.0174532925
+    Blon*= 0.0174532925
 
-    for i in range(n):
-        Alat = A[i,0] * 0.0174532925    # Degree to Radian
-        Alon = A[i,1] * 0.0174532925
-        Blat = B[i,0] * 0.0174532925
-        Blon = B[i,1] * 0.0174532925
-
-        a = sin((Alat - Blat) / 2.0)**2 + cos(Alat) * cos(Blat) * sin((Alon - Blon) / 2.0)**2
-        if a > 1.0: a = 1.0
-        a = 2.0 * asin(sqrt(a))
-
-        out[i] = a * R
-
+    cdef double a = sin((Alat - Blat) / 2.0)**2 + cos(Alat) * cos(Blat) * sin((Alon - Blon) / 2.0)**2
+    if a > 1.0: a = 1.0
+    a = 2.0 * asin(sqrt(a))
+    return a * R
 
 
 class LatLonCS(CoordinateSystem):
     """
     Polar coordinate system on a perfect sphere.
 
-    ``LatLonCS`` implementes coordinate system on a perfect sphere with coordinates of any point expressed as latitude
+    ``LatLonCS`` implements coordinate system on a perfect sphere with coordinates of any point expressed as latitude
     and longitude. The currently implemented coordinate system is strictly two-dimensional, i.e. there is no vertical
     component. The coordinates are assumed to be in degrees.
 
@@ -158,14 +173,39 @@ class LatLonCS(CoordinateSystem):
     @property
     def is_cartesian(self): return False
 
+
     def distance(self, A, B, out=None):
-        assert A.shape == B.shape
-        assert A.shape[1] == self.ndim
-        n = A.shape[0]
+        have_single_A = A.shape[0] == 1
+        if have_single_A: assert A.shape[1] == self.ndim
+        else: assert A.shape == B.shape
+        assert B.shape[1] == self.ndim
+
+        n = B.shape[0]
         if n == 0: return np.empty(0)
 
-        if out is None: out = np.empty(n, dtype=np.double)
-        cs_latlon_distance(A, B, out, self.R)
+        if out is None:
+            out = np.empty(n, dtype=np.double)
+        else:
+            assert out.ndim == 1
+            assert out.size == n
+
+        cdef int i
+        cdef double Alat, Blat, Alon, Blon
+        cdef double dfif_lat, diff_lon
+        cdef double a
+
+        cdef double[:,::1] A_view = A
+        cdef double[:,::1] B_view = B
+        cdef double[::1] out_view = out
+        cdef double R = self.R
+
+        if A_view.shape[0] == 1:
+            for i in range(n):
+                out_view[i] = haversine(A_view[0, 0], A_view[0, 1], B_view[i, 0], B_view[i, 1], R)
+        else:
+            for i in range(n):
+                out_view[i] = haversine(A_view[i, 0], A_view[i, 1], B_view[i, 0], B_view[i, 1], R)
+
         return out
 
 

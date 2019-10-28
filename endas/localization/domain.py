@@ -24,39 +24,25 @@ class StateSpacePartitioning(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def ndim(self):
+    def num_domains(self):
         """
-        Number of dimensions over which the partitioning is done.
-        """
-        pass
-
-    @abstractmethod
-    def generate_domains(self):
-        """
-        Returns sequence of distinct domains over the state space.
-
-        The returned object may be any iterable sequence, including generator objects or expressions,
-        containing/yielding the individual local domains. What comprises a "local domain" is entirely to the
-        implementing class. Therefore, the domains as returned by this call are to be passed as they are to the
-        ``get_local_*`` and other methods of this class to identify the local domain in question.
+        Returns the number of local domains in the state space partitioning.
         """
         pass
 
 
     @abstractmethod
-    def get_local_observations(self, domain, z_coords, taper_fn, distances=True):
+    def get_local_observations(self, domain_id, z_coords, taper_fn):
         """
         Locates observations to be used for local analysis of the given domain.
 
         Args:
-            domain    : Identifies domain for which observations should be retrieved.
-            z_coords  : Abstract description of the locations of observations in the observation vector.
-            taper_fn  : Tapering function that defines the localization radius.
-            distances : If ``True``, distances of the returned observations from the domain are also
-                        returned.
+            domain_id    : Index of the domain for which observations should be retrieved. Domain indexes start at 0.
+            z_coords     : Abstract description of the locations of observations in the observation vector.
+            taper_fn     : Tapering function that defines the localization radius.
         Returns:
             Tuple ``(z_local, d)`` where ``z`` is a flat array of indices into the observation vector and ``d`` are
-            the distances of each selected observation from the domain (or ``None`` if ``distances=False`` was passed).
+            the distances of each selected observation from the domain.
 
         The interpretation of ``z_coords`` is entirely up to the implementing class to decide and ``TypeError`` should
         be raised if an unsupported type is passed. Please see the documentation of implementing classes for information
@@ -66,33 +52,34 @@ class StateSpacePartitioning(metaclass=ABCMeta):
 
 
     @abstractmethod
-    def get_local_state_size(self, domain):
+    def get_local_state_size(self, domain_id):
         """
         Returns the state vector size for the given domain.
         Args:
-            domain : Domain instance whose state size should be returned
+            domain_id : Index of the domain whose state size should be returned. Domain indexes start at 0.
         """
         pass
 
     @abstractmethod
-    def get_local_state(self, domain, xg):
+    def get_local_state(self, domain_id, xg):
         """
         Returns local state vector (or ensemble of state vectors) for the given domain.
 
         Args:
-          xg : Global state vector or ensemble (ensemble members stored in columns)
+            domain_id : Index of the domain whose local state vector be returned. Domain indexes start at 0.
+            xg        : Global state vector or ensemble (ensemble members stored in columns).
         """
         pass
 
     @abstractmethod
-    def put_local_state(self, domain, xl, xg):
+    def put_local_state(self, domain_id, xl, xg):
         """
-        Writes local state vector (or ensemble of state vectors) for the given domain back to
-        the global state vector.
+        Writes local state vector (or ensemble of state vectors) for the given domain back to the global state vector.
 
         Args:
-          xl : Local state vector or ensemble
-          xg : Global state vector or ensemble to copy the local data to
+            domain_id : Index of the domain whose local state vector be stored. Domain indexes start at 0.
+            xl        : Local state vector or ensemble
+            xg        : Global state vector or ensemble to copy the local data to
         """
         pass
 
@@ -103,7 +90,7 @@ class GenericStateSpace1d(StateSpacePartitioning):
 
     This a generic form of domain-based analysis localization where each state space variable is assigned its own
     local domain. The local analysis update is therefore performed for each state variable individually. Under this
-    scheme the indexes of state vector elements also act as their respective "coordinates". Furthermore, observations
+    scheme, the indexes of state vector elements also act as their respective "coordinates". Furthermore, observations
     are assumed to be directly related to state vector elements and their coordinates are also expressed as the indexes
     of the corresponding state vector elements.
 
@@ -124,41 +111,38 @@ class GenericStateSpace1d(StateSpacePartitioning):
         assert n > 0
         self._n = n
 
-    #@property
-    #def ndim(self): return 1
 
-    def generate_domains(self):
-        # Generate domains. Since the domains are so trivial, there is nothing we need to store. It is enough to
-        # have an index for each local domain and the rest we calculate as needed
-        return [x for x in range(self._n)]
+    @property
+    def num_domains(self):
+        # Under this scheme each state variable has its own local domain
+        return self._n
 
 
-    def get_local_observations(self, domain, z_coords, taper_fn, distances=True):
+    def get_local_observations(self, domain_id, z_coords, taper_fn):
         assert isinstance(z_coords, np.ndarray)
+        assert domain_id >= 0 and domain_id <= self.num_domains
+
         r = int(math.ceil(taper_fn.support_range))
-        d_min = max(0, domain - r)
-        d_max = max(self._n, domain + r)
 
-        selected_z = np.where((z_coords > d_min) & (z_coords <= d_max))[0]
+        d_min = max(0, domain_id - r)
+        d_max = max(self._n, domain_id + r)
+        selected = np.where((z_coords > d_min) & (z_coords <= d_max))[0]
 
-        if distances:
-            selected_d = np.subtract(selected_z, domain)
-            selected_d = np.abs(selected_d, out=selected_d)
-        else:
-            selected_d = None
+        dist = np.abs(np.subtract(selected, domain_id))
+        return selected, dist
 
-        return selected_z, selected_d
 
-    def get_local_state_size(self, domain):
+    def get_local_state_size(self, domain_id):
+        assert domain_id >= 0 and domain_id <= self.num_domains
         return 1
 
-    def get_local_state(self, domain, xg):
-        assert isinstance(domain, int)
-        return xg[domain]
+    def get_local_state(self, domain_id, xg):
+        assert domain_id >= 0 and domain_id <= self.num_domains
+        return xg[domain_id]
 
-    def put_local_state(self, domain, xl, xg):
-        assert isinstance(domain, int)
-        xg[domain] = xl
+    def put_local_state(self, domain_id, xl, xg):
+        assert domain_id >= 0 and domain_id <= self.num_domains
+        xg[domain_id] = xl
 
 
 
@@ -205,6 +189,10 @@ class DomainLocalization:
         """
         return self._ssp
 
+
+    @property
+    def taper_fn(self):
+        return self._taper_fn
 
     def set_taper_fn(self, taper_fn):
         """

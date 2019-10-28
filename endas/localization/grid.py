@@ -5,6 +5,8 @@ Domain localization on N-dimensional grids.
 __all__ = ['Grid2d']
 
 import numpy as np
+import math
+import array
 
 from . import SpatialQuery, TaperFn
 from .bbox import BBox2i
@@ -27,8 +29,6 @@ class Grid2d(StateSpacePartitioning):
                      and ``cs.ndim`` must be 2
         mask       : Flat array of indexes identifying grid cells included in the state vector. If ``None`` is passed
                      (this is the default), the grid is assumed to be dense.
-        taper_fn   : Taper function that defines the localization radius. Must be an instance of
-                     :class:`endas.localization.TaperFn` or ``None`` (see notes below).
         block_size : Size of each local domain along each dimension. The default value 1 results in analysis being
                      performed for each grid cell individually
         padding    : If greater than zero, each local domain will be padded by the given number of cells.
@@ -52,7 +52,7 @@ class Grid2d(StateSpacePartitioning):
 
     """
 
-    def __init__(self, nx : int, ny, extent, cs, mask=None, taper_fn=None, block_size=1, padding=0):
+    def __init__(self, nx : int, ny, extent, cs, mask=None, block_size=1, padding=0):
         self._nx = nx
         self._ny = ny
         self._mask = mask
@@ -63,9 +63,10 @@ class Grid2d(StateSpacePartitioning):
         self._bs = block_size
         self._pad = padding
         self._domains = None
+        self._generate_domains()
 
 
-    def generate_domains(self):
+    def _generate_domains(self):
         if self._domains is None:
             self._domains = []
 
@@ -92,13 +93,23 @@ class Grid2d(StateSpacePartitioning):
         return self._domains
 
 
-    def get_local_observations(self, domain, z_coords, taper_fn, distances=True):
+    def num_domains(self): return len(self._domains)
+
+
+    def get_local_observations(self, domain_id, z_coords, taper_fn):
+
+        assert domain_id >= 0 and domain_id <= self.num_domains
+        d_box, _ = self._domains[domain_id]
+
+        # Centre of the domain in "real-world" coordinates
+        d_centre_coord = np.array((d_box.centerx() * self._cellsize + self._extent.x,
+                                   d_box.centery() * self._cellsize + self._extent.y)).reshape(1,-1)
+
+        r = int(math.ceil(taper_fn.support_range))
 
         # Grid2d allows the use of SpatialQuery or plain observation coordinates in `z_coords`. In the former
-        # case the spatial index is used to find observations near the local domain. I the latter case a
+        # case the spatial index is used to find observations near the local domain. In the latter case a
         # brute-force search is done
-        d_box, _ = domain
-
         if isinstance(z_coords, np.ndarray):
             if z_coords.ndim != 2:
                 raise ValueError("z_coords must be two-dimensional array")
@@ -106,28 +117,37 @@ class Grid2d(StateSpacePartitioning):
                 raise ValueError("z_coords array must be of shape (n,2)")
             m = z_coords[0]
 
-            self._cs.distance()
+            dist = self._cs.distance(d_centre_coord, z_coords)
+            selected = np.where(dist < r)[0]
+            dist = dist[selected]
+            return selected, dist
+
+        # Assume z_coords is a SpatialQuery instance
+        elif isinstance(z_coords, SpatialQuery):
+            selected, dist = z_coords.range_query(d_centre_coord, r, distances=True)
+            return selected, dist
+
+        elif z_coords is None:
+            raise ValueError("z_coords cannot be None")
+        else:
+            raise TypeError("z_coords is of unsupported type")
 
 
+    def get_local_state_size(self, domain_id):
+        assert domain_id >= 0 and domain_id <= self.num_domains
+        return len(self._domains[domain_id][1])
 
 
-
-
-
-
-
-
-
-
-
-    def get_local_state_size(self, domain):
-        return len(domain[1])
-
-    def get_local_state(self, domain, xg):
+    def get_local_state(self, domain_id, xg):
+        assert domain_id >= 0 and domain_id <= self.num_domains
         raise NotImplementedError()
 
-    def put_local_state(self, domain, xl, xg):
+
+    def put_local_state(self, domain_id, xl, xg):
+        assert domain_id >= 0 and domain_id <= self.num_domains
         raise NotImplementedError()
+
+
 
 
 

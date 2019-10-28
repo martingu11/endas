@@ -4,8 +4,7 @@ Axis-aligned bounding boxes in various dimensions.
 
 __all__ = [ 'BBox2d', 'BBox2i']
 
-#import cython
-#cimport cython
+import cython
 
 
 cdef class BBox2d:
@@ -25,13 +24,26 @@ cdef class BBox2d:
 
     @property
     def shape(self):
-        return self.xend - self.x, self.yend - self.y
+        return self.sizex(), self.sizey()
+
+    @property
+    def center(self):
+        return self.centerx(), self.centery()
 
     cpdef double sizex(self):
         return self.xend - self.x
 
     cpdef double sizey(self):
         return self.yend - self.y
+
+    @cython.cdivision(True)
+    cpdef double centerx(self):
+        return self.sizex() / 2 + self.x
+
+    @cython.cdivision(True)
+    cpdef double centery(self):
+        return self.sizey() / 2 + self.y
+
 
     cpdef BBox2d copy(self):
         """
@@ -78,13 +90,28 @@ cdef class BBox2i:
 
     @property
     def shape(self):
-        return self.xend - self.x, self.yend - self.y
+        return self.sizex(), self.sizey()
+
+    @property
+    def center(self):
+        return self.centerx(), self.centery()
 
     cpdef int sizex(self):
         return self.xend - self.x
 
     cpdef int sizey(self):
         return self.yend - self.y
+
+
+    @cython.cdivision(True)
+    cpdef double centerx(self):
+        return self.sizex() / 2 + self.x
+
+    @cython.cdivision(True)
+    cpdef double centery(self):
+        return self.sizey() / 2 + self.y
+
+
 
     cpdef BBox2i copy(self):
         """

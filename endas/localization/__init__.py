@@ -116,7 +116,6 @@ class SpatialQuery(metaclass=ABCMeta):
         return self.cs.ndim
 
 
-
     @property
     @abstractmethod
     def cs(self):
@@ -125,19 +124,19 @@ class SpatialQuery(metaclass=ABCMeta):
 
 
     @abstractmethod
-    def range_query(self, lbound, ubound):
+    def range_query(self, coord, range, distances=False):
         """
-        Looks up items based on a range of coordinates.
-
-        The range is given by the lower and upper bounds, therefore all elements whose coordinates
-        are in the interval [lbound_i, ubound_i], for all i in 1 .. `self.ndim`, are returned.
+        Looks up items up to the given distance from the given coordinate.
 
         Args:
-            lbound: Array of length `self.ndim` of lower bound coordinates
-            ubound: Array of length `self.ndim` of upper bound coordinates
+            coord     : Array of length `self.ndim` representing the queried coordinate.
+            range     : Search range. All items within this distance from ``coord`` will be returned.
+            distances : If ``True``, distances of the returned elements from the query coordinate will also
+                        be returned.
 
         Returns:
-            Indexes
+            Array of indexes of items that are within the range. If ``distances=True`` was passed, a second array
+            of the same length containing distances of the corresponding items is also returned.
         """
         pass
 
