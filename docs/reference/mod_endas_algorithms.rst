@@ -1,3 +1,5 @@
+.. _da-algorithms:
+
 DA Algorithms (endas.algorithms)
 ================================
 
@@ -28,8 +30,8 @@ implementation of the :class:`EnKFVariant` interface class. The following EnKF v
     :template: class.rst
     :nosignatures:
 
-    VariantEnKF
-    VariantESTKF
+    EnKF
+    ESTKF
 
 
 
