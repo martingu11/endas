@@ -65,6 +65,9 @@ autodoc_inherit_docstrings = False
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']
 
+# Specify index.rst as the master file explicitly as it changed in Sphinx 2.0
+master_doc = 'index'
+
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 # source_suffix = ['.rst', '.md']
@@ -104,7 +107,7 @@ html_theme_options = {
     # Toc options
     'collapse_navigation': False,
     'sticky_navigation': True,
-    'navigation_depth': 4,
+    'navigation_depth': 3,
     'includehidden': True,
     'titles_only': False
 }
