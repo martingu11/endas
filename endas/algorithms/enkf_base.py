@@ -110,7 +110,7 @@ class EnsembleKalmanFilter:
             self._loc_statesize_sum+= n
 
 
-    # def forecast(self, model, dt, A, Q):
+    # def forecast(self, model, A, Q, dt):
     #     n, N = A.shape
     #     if Q is not None: assert Q.shape == (n, n)
     #
@@ -298,7 +298,7 @@ class EnsembleKalmanFilter:
                                                      self._Af)
 
 
-    def end_analysis(self, on_smoother_result=None):
+    def end_analysis(self, on_smoother_result=None, result_args=tuple()):
         n, N = self._n, self._N  # State and ensemble size
         k = len(self._smoother_data)
 
@@ -357,7 +357,7 @@ class EnsembleKalmanFilter:
 
             if As is not None:
                 if on_smoother_result is not None:
-                    on_smoother_result(ensemble.mean(As), As, tj)
+                    on_smoother_result(ensemble.mean(As), As, tj, result_args)
                 #print("Remove Aj")
                 self._cache.remove(Aj_handle)
 
@@ -376,7 +376,7 @@ class EnsembleKalmanFilter:
         return self._Af
 
 
-    def finish(self, on_smoother_result):
+    def finish(self, on_smoother_result, result_args=tuple()):
         n, N = self._n, self._N  # State and ensemble size
         k = len(self._smoother_data)
 
@@ -406,7 +406,7 @@ class EnsembleKalmanFilter:
                 As = As_buffer
 
             if on_smoother_result is not None:
-                on_smoother_result(ensemble.mean(As), As, tj)
+                on_smoother_result(ensemble.mean(As), As, tj, result_args)
                 # print("Remove Aj")
             self._cache.remove(Aj_handle)
 

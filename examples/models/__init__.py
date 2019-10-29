@@ -10,12 +10,7 @@ demonstration purposes only.
 
 from abc import ABCMeta, abstractmethod
 
-from . import lorenz
-from .lorenz import *
-
 __all__ = ['ForwardModel']
-__all__.extend(lorenz.__all__)
-
 
 
 class ForwardModel(metaclass=ABCMeta):

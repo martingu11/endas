@@ -147,7 +147,7 @@ class KalmanFilter:
             self._Pa = self._Pf
 
 
-    def end_analysis(self, on_smoother_result=None):
+    def end_analysis(self, on_smoother_result=None, result_args=tuple()):
         """
         Ends the analysis update step and returns the filter analysis solution.
         Optionally, any available smoother solution is returned as well. If smoothing is enabled and
@@ -165,7 +165,7 @@ class KalmanFilter:
         update step.
         """
         if self._lag == 0:
-            if on_smoother_result is not None: on_smoother_result(self._xa, self._Pa, self._t)
+            if on_smoother_result is not None: on_smoother_result(self._xa, self._Pa, self._t, result_args)
         else:
             xa_handle = self._cache.put(self._xa)
             Pa_handle = self._cache.put(self._Pa)
@@ -174,7 +174,7 @@ class KalmanFilter:
         return self._xa, self._Pa
 
 
-    def smoother_finish(self, on_smoother_result):
+    def smoother_finish(self, on_smoother_result, result_args=tuple()):
         """
         Finalizes any pending smoothing solutions and calls `on_smoother_result`.
         For each available smoother solution, `on_smoother_result` will be called as:
@@ -197,7 +197,7 @@ class KalmanFilter:
         self._cache.remove(xa_handle)
         self._cache.remove(Pa_handle)
 
-        on_smoother_result(xs, Ps, t)
+        on_smoother_result(xs, Ps, t, result_args)
 
         for k in range(len(self._data)-2, -1, -1):
 
@@ -221,6 +221,6 @@ class KalmanFilter:
             self._cache.remove(xa_handle)
             self._cache.remove(Pa_handle)
 
-            on_smoother_result(xs, Ps, t)
+            on_smoother_result(xs, Ps, t, result_args)
 
 
