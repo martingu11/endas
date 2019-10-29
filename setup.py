@@ -8,8 +8,10 @@ if sys.version_info[:2] < (3, 6):
 CYTHON_REBUILD = False
 CYTHON_ANNOTATE = True
 
+RTD_BUILD = 'READTHEDOCS' in os.environ
 
-# Extra arguments to setup.py install/build/bukd_ext
+
+# Extra arguments to setup.py install/build/build_ext
 # This is a bit hacky way to add arguments but avoids having to subclass the setuptools commands
 # just to do something as simple as this.
 
@@ -43,7 +45,7 @@ def find_extensions(dir, file_types, extlist=None):
 
 
 # Building C/C++ extensions from the source distribution package
-if not CYTHON_REBUILD:
+if not CYTHON_REBUILD and not RTD_BUILD:
     extensions = find_extensions('endas', ['.c'])
 
     if len(extensions) == 0:
