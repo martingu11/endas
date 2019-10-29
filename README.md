@@ -20,13 +20,15 @@ EnDAS is a data assimilation library for Python that focuses on ensemble data as
 ## Requirements
 
 EnDAS is written in Python 3, using NumPy and SciPy. Therefore, if you cannot use either, EnDAS is unfortunately
-not for you. Some parts of EnDAS are implemented in Cython, these are however optional and have pure Python/NumPy
-implementations too. For more information see the [installation instructions](INSTALL.md).  
+not for you. Some parts of EnDAS are implemented as C/C++ extensions (using Cython) so you will need working 
+C/C++ compiler and, if building from the GitHub source, Cython installed. EnDAS will work on any Python interpreter 
+implementation compatible with the Cython such as CPython or PyPy. For more information see the 
+[installation instructions](INSTALL.md).  
 
 
 ## Documentation
 
-TO BE COMPLETETED. 
+Documentation can be found at https://endas.readthedocs.io/en/latest.
 
 Code examples can be found in the `examples` directory of the EnDAS repository on GitHub:
 [https://github.com/martingu11/endas]([https://github.com/martingu11/endas]).
