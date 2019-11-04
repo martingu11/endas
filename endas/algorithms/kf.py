@@ -8,6 +8,7 @@ __all__ = ['KalmanFilter']
 import numpy as np
 from scipy import linalg
 from endas import CovarianceOperator
+from endas import cov
 from endas import arraycache
 
 
@@ -17,7 +18,7 @@ class KalmanFilter:
     """
 
     def __init__(self, model, model_tl, model_adj,
-                 cache=None, lag=None, forgetting_factor=1.0):
+                 cache=None, lag=0, forgetting_factor=1.0):
         """
         Kalman Filter and Smoother.
 
@@ -58,6 +59,7 @@ class KalmanFilter:
 
         if self._lag == 0: return
 
+        P0 = cov.to_matrix(P0, force_dense=True)  # Avoid sparse matrices here for performance reasons!
         x0_handle = self._cache.put(x0)
         P0_handle = self._cache.put(P0)
         self._data.append((None, None, x0_handle, P0_handle, None, t0))
@@ -76,19 +78,19 @@ class KalmanFilter:
         Returns:
 
         """
-        assert len(xb.shape) == 1
+        assert xb.ndim == 1
         n = xb.shape[0]
 
-        Pb = CovarianceOperator.as_matrix(Pb, forceDense=True) # Avoid sparse matrices here for performance reasons!
-        Q = CovarianceOperator.as_matrix(Q) if Q is not None else None
+        Pb = cov.to_matrix(Pb, force_dense=True) # Avoid sparse matrices here for performance reasons!
+        Q = cov.to_matrix(Q, force_dense=True) if Q is not None else None
 
         # Move state estimate and covariance from xb to xk
         self._trajectory = self._M(xb, dt)
 
         Pf = self._Mtl(self._trajectory, Pb)
-        Pf = self._Madj(self._trajectory, Pf, out=Pf)
-        if Q is not None: Pf = np.add(Pf, Q, out=Pf)
-        return xb, Pf
+        Pf = self._Madj(self._trajectory, Pf)
+        if Q is not None: Pf += Q
+        return xb.ravel(), Pf
 
 
     def begin_analysis(self, x, P, t):
@@ -107,6 +109,8 @@ class KalmanFilter:
         self._t = t
         self._xa = None
         self._Pa = None
+
+        P = cov.to_matrix(P, force_dense=True)  # Avoid sparse matrices here for performance reasons!
         self._xf_handle = self._cache.put(x) if self._lag > 0 else None
         self._Pf_handle = self._cache.put(P) if self._lag > 0 else None
 
@@ -126,6 +130,7 @@ class KalmanFilter:
         """
 
         if z is not None and len(z) > 0:
+            H = H.to_matrix(force_dense=True)
 
             # Observation noise covariance
             F = H.dot(self._Pf).dot(H.T)
@@ -139,6 +144,7 @@ class KalmanFilter:
             # State update as xk + Cp*H'*F^-1*dz
             dz = z - H.dot(self._xf)
             self._xa = self._xf + self._Pf.dot(H.T).dot(linalg.solve(F, dz, sym_pos=True, overwrite_b=True))
+            self._xa = self._xa.ravel()
 
             # Covariance estimate update as Cp - Cp*H'*F^-1*H*Cp
             self._Pa = self._Pf - self._Pf.dot(H.T).dot(linalg.solve(F, H.dot(self._Pf), sym_pos=True, overwrite_a=True, overwrite_b=True))
@@ -164,6 +170,8 @@ class KalmanFilter:
         Returns: Tuple `(xa, Pa)` containing the state vector and error covariance matrix after the
         update step.
         """
+        self._xa = self._xa.ravel()
+
         if self._lag == 0:
             if on_smoother_result is not None: on_smoother_result(self._xa, self._Pa, self._t, result_args)
         else:
@@ -189,7 +197,9 @@ class KalmanFilter:
         Returns: nothing
         """
 
-        _, _, xa_handle, Pa_handle, t = self._data[-1]
+        if self._lag == 0: return
+
+        _, _, xa_handle, Pa_handle, trj, t = self._data[-1]
 
         # Todo: implement lock-release into ArrayCache!
         xs = self._cache.get(xa_handle)
@@ -201,7 +211,7 @@ class KalmanFilter:
 
         for k in range(len(self._data)-2, -1, -1):
 
-            xf_handle, Pf_handle = self._data[k+1][0:1]
+            xf_handle, Pf_handle = self._data[k+1][0:2]
             xa_handle, Pa_handle, trj, t = self._data[k][2:]
 
             xf = self._cache.get(xf_handle)

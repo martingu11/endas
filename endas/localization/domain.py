@@ -9,7 +9,6 @@ __all__ = [
 from abc import ABCMeta, abstractmethod
 import math
 import numpy as np
-import endas.cov as cov
 import endas.localization
 
 

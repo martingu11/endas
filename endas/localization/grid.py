@@ -52,7 +52,7 @@ class Grid2d(StateSpacePartitioning):
 
     """
 
-    def __init__(self, nx : int, ny, extent, cs, mask=None, block_size=1, padding=0):
+    def __init__(self, nx, ny, extent, cs, mask=None, block_size=1, padding=0):
         self._nx = nx
         self._ny = ny
         self._mask = mask

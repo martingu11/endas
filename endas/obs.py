@@ -44,7 +44,7 @@ class MatrixObservationOp(ObservationOperator):
 
 
     def to_matrix(self, force_dense=False, out=None):
-        return self._h if not force_dense else np.asarray(self._h.todense(out=out))
+        return self._h if not force_dense else np.asarray(self._h)
 
 
 

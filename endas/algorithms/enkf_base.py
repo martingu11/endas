@@ -110,18 +110,18 @@ class EnsembleKalmanFilter:
             self._loc_statesize_sum+= n
 
 
-    # def forecast(self, model, A, Q, dt):
-    #     n, N = A.shape
-    #     if Q is not None: assert Q.shape == (n, n)
-    #
-    #     # Move ensemble members forward in time and optionally perturb state vectors with model error
-    #     model(A, dt)
-    #
-    #     if Q is not None:
-    #         QX = Q.random_multivariate_normal(N)
-    #         QX = ensemble.center(QX, out=QX)
-    #         np.add(A, QX, out=A)
-    #     return A
+    def forecast(self, model, A, Q, dt):
+        n, N = A.shape
+        if Q is not None: assert Q.shape == (n, n)
+
+        # Move ensemble members forward in time and optionally perturb state vectors with model error
+        model(A, dt)
+
+        if Q is not None:
+            QX = Q.random_multivariate_normal(N)
+            QX = ensemble.center(QX, out=QX)
+            np.add(A, QX, out=A)
+        return A
 
 
     def smoother_begin(self, A0, t0):
@@ -220,15 +220,22 @@ class EnsembleKalmanFilter:
         # Global analysis
         if self._num_domains == 0:
             if m > 0:
-                self._Aa_enkf, X5 = self.compute_analysis(self._Af, self._Af, z, H, R)
+                Ag_data = self.variant.process_global_ensemble(self._Af, H)
+
+                X5, X5s = self.variant.ensemble_transform(
+                    self._Af, z, H, R,
+                    Ag_data,
+                    self.cov_inflation,
+                    self.localization_strategy)
+                self._Af = self._Af.dot(X5)
             else:
-                X5 = None
+                X5s = None
 
-            if self._X5 is not None: np.dot(self._X5, X5, out=self._X5)
-            else: self._X5 = X5
+            if self._X5 is not None: np.dot(self._X5, X5s, out=self._X5)
+            else: self._X5 = X5s
             self._haveX5 = True
+            self._Aa_enkf = self._Af
 
-            self._Af = self._Aa_enkf # For global analysis these two coincide
 
         # Localized analysis
         else:
@@ -363,7 +370,10 @@ class EnsembleKalmanFilter:
 
 
         # Done with smoothing, if there was any. Store analysis result for this update step and return it.
-        if self._lag > 0:
+        if self._lag == 0:
+            if on_smoother_result is not None:
+                on_smoother_result(ensemble.mean(self._Af), self._Af, self._t, result_args)
+        else:
             Aa_handle = self._cache.put(self._Aa_enkf)
             #print("Add Aj", k)
             self._smoother_data.append((Aa_handle, self._t))
@@ -376,7 +386,7 @@ class EnsembleKalmanFilter:
         return self._Af
 
 
-    def finish(self, on_smoother_result, result_args=tuple()):
+    def smoother_finish(self, on_smoother_result, result_args=tuple()):
         n, N = self._n, self._N  # State and ensemble size
         k = len(self._smoother_data)
 
