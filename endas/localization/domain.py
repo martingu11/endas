@@ -1,5 +1,5 @@
 """
-Spatial localization of the analysis update.
+Domain-based localization of the analysis update.
 """
 
 __all__ = [
@@ -116,7 +116,6 @@ class GenericStateSpace1d(StateSpacePartitioning):
         # Under this scheme each state variable has its own local domain
         return self._n
 
-
     def get_local_observations(self, domain_id, z_coords, taper_fn):
         assert isinstance(z_coords, np.ndarray)
         assert domain_id >= 0 and domain_id <= self.num_domains
@@ -124,10 +123,11 @@ class GenericStateSpace1d(StateSpacePartitioning):
         r = int(math.ceil(taper_fn.support_range))
 
         d_min = max(0, domain_id - r)
-        d_max = max(self._n, domain_id + r)
-        selected = np.where((z_coords > d_min) & (z_coords <= d_max))[0]
+        d_max = min(self._n, domain_id + r)
+        selected = np.where((z_coords > d_min) & (z_coords < d_max))[0]
 
-        dist = np.abs(np.subtract(selected, domain_id))
+        selcoords = z_coords[selected]
+        dist = np.abs(np.subtract(selcoords, domain_id), dtype=np.double)
         return selected, dist
 
 

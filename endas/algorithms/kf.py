@@ -12,6 +12,18 @@ from endas import cov
 from endas import arraycache
 
 
+class KFSmootherData:
+    __slots__ = ['xf', 'Pf', 'xa', 'Pa', 'trj', 't']
+
+    def __init__(self, xf=None, Pf=None, xa=None, Pa=None, trj=None, t=None):
+        self.xf = xf
+        self.Pf = Pf
+        self.xa = xa
+        self.Pa = Pa
+        self.trj = trj
+        self.t = t
+
+
 class KalmanFilter:
     """
     Kalman Filter and Smoother.
@@ -62,7 +74,7 @@ class KalmanFilter:
         P0 = cov.to_matrix(P0, force_dense=True)  # Avoid sparse matrices here for performance reasons!
         x0_handle = self._cache.put(x0)
         P0_handle = self._cache.put(P0)
-        self._data.append((None, None, x0_handle, P0_handle, None, t0))
+        self._data.append(KFSmootherData(None, None, x0_handle, P0_handle, None, t0))
 
 
     def forecast(self, xb, Pb, Q, dt):
@@ -85,11 +97,15 @@ class KalmanFilter:
         Q = cov.to_matrix(Q, force_dense=True) if Q is not None else None
 
         # Move state estimate and covariance from xb to xk
-        self._trajectory = self._M(xb, dt)
-
-        Pf = self._Mtl(self._trajectory, Pb)
-        Pf = self._Madj(self._trajectory, Pf)
+        trj = self._M(xb, dt)
+        Pf = self._Mtl(trj, Pb)
+        Pf = self._Madj(trj, Pf)
         if Q is not None: Pf += Q
+
+        if self._lag is None or self._lag > 0:
+            assert len(self._data) > 0, "forecast() called before smoother_begin()"
+            self._data[-1].trj = trj
+
         return xb.ravel(), Pf
 
 
@@ -105,10 +121,10 @@ class KalmanFilter:
         """
 
         self._xf = x
-        self._Pf = P
+        self._Pf = cov.to_matrix(P, force_dense=True)
         self._t = t
-        self._xa = None
-        self._Pa = None
+        self._xa = self._xf
+        self._Pa = self._Pf
 
         P = cov.to_matrix(P, force_dense=True)  # Avoid sparse matrices here for performance reasons!
         self._xf_handle = self._cache.put(x) if self._lag > 0 else None
@@ -177,7 +193,7 @@ class KalmanFilter:
         else:
             xa_handle = self._cache.put(self._xa)
             Pa_handle = self._cache.put(self._Pa)
-            self._data.append((self._xf_handle, self._Pf_handle, xa_handle, Pa_handle, self._trajectory, self._t))
+            self._data.append(KFSmootherData(self._xf_handle, self._Pf_handle, xa_handle, Pa_handle, None, self._t))
 
         return self._xa, self._Pa
 
@@ -199,38 +215,40 @@ class KalmanFilter:
 
         if self._lag == 0: return
 
-        _, _, xa_handle, Pa_handle, trj, t = self._data[-1]
+        smd = self._data[-1]
+        #_, _, xa_handle, Pa_handle, trj, t = self._data[-1]
 
         # Todo: implement lock-release into ArrayCache!
-        xs = self._cache.get(xa_handle)
-        Ps = self._cache.get(Pa_handle)
-        self._cache.remove(xa_handle)
-        self._cache.remove(Pa_handle)
+        xs = self._cache.get(smd.xa)
+        Ps = self._cache.get(smd.Pa)
+        self._cache.remove(smd.xa)
+        self._cache.remove(smd.Pa)
 
-        on_smoother_result(xs, Ps, t, result_args)
+        on_smoother_result(xs, Ps, smd.t, result_args)
 
         for k in range(len(self._data)-2, -1, -1):
+            smdk1 = self._data[k+1]
+            smdk = self._data[k]
+            #xf_handle, Pf_handle = self._data[k+1][0:2]
+            #xa_handle, Pa_handle, trj, t = self._data[k][2:]
 
-            xf_handle, Pf_handle = self._data[k+1][0:2]
-            xa_handle, Pa_handle, trj, t = self._data[k][2:]
+            xf = self._cache.get(smdk1.xf)
+            Pf = self._cache.get(smdk1.Pf)
+            xa = self._cache.get(smdk.xa)
+            Pa = self._cache.get(smdk.Pa)
 
-            xf = self._cache.get(xf_handle)
-            Pf = self._cache.get(Pf_handle)
-            xa = self._cache.get(xa_handle)
-            Pa = self._cache.get(Pa_handle)
-
-            J = linalg.solve(a=Pf, b=self._Mtl(trj, Pa), assume_a='sym').T
+            J = linalg.solve(a=Pf, b=self._Mtl(smdk.trj, Pa), assume_a='sym').T
 
             J*= self.forgetting_factor
 
             xs = xa + J.dot(xs - xf)
             Ps = Pa + J.dot(J.dot(Ps - Pf).T)
 
-            self._cache.remove(xf_handle)
-            self._cache.remove(Pf_handle)
-            self._cache.remove(xa_handle)
-            self._cache.remove(Pa_handle)
+            self._cache.remove(smdk1.xf)
+            self._cache.remove(smdk1.Pf)
+            self._cache.remove(smdk.xa)
+            self._cache.remove(smdk.Pa)
 
-            on_smoother_result(xs, Ps, t, result_args)
+            on_smoother_result(xs, Ps, smdk.t, result_args)
 
 

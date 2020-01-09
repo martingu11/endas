@@ -11,7 +11,7 @@ import math
 import numpy as np
 from scipy import linalg
 
-from .enkf_base import EnKFVariant
+from .enkf import EnKFVariant
 from endas import ensemble
 
 
@@ -21,7 +21,7 @@ class ESTKF(EnKFVariant):
 
     """
 
-    def __init__(self, rotation=True):
+    def __init__(self, rotation=False):
         self.rotation=rotation
 
 

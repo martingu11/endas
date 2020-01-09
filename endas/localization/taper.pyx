@@ -67,8 +67,8 @@ class GaspariCohn(TaperFn):
         cdef double r
         for i in range(n):
             r = d_view[i] / L
-            if r < 1: out_view[i] = x_view[i] * 1.0 - (5/3.0)*r**2 + (5/8.0)*r**3 + (1/2.0)*r**4 - (1/4.0)*r**5
-            elif r < 2: out_view[i] = x_view[i] * 4.0 - 5.0*r + (5/3.0)*r**2 + (5/8.0)*r**3 - (1/2.0)*r**4 + (1/12.0)*r**5 - (2.0/3.0)*r
+            if r < 1: out_view[i] = x_view[i] * (1.0 - (5/3.0)*r**2 + (5/8.0)*r**3 + (1/2.0)*r**4 - (1/4.0)*r**5)
+            elif r < 2: out_view[i] = x_view[i] * (4.0 - 5.0*r + (5/3.0)*r**2 + (5/8.0)*r**3 - (1/2.0)*r**4 + (1/12.0)*r**5 - 2.0/(3.0*r))
             else: out_view[i] = 0
 
         return out
