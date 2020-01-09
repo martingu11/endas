@@ -7,6 +7,9 @@ This module implements various forms of localization for ensemble-based data ass
 
 .. currentmodule:: endas.localization
 
+Classes and functions
+----------------------------------------
+
 .. rubric:: Interface classes for localization
 
 .. autosummary::
