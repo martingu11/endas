@@ -92,9 +92,10 @@ class DiagonalCovariance(CovarianceOperator):
             self._sddiag = np.sqrt(diag)
         else:
             self._diag_is_original = False
-            self._Q = sparse.diags(np.reciprocal(invdiag))
+            self._sddiag = np.reciprocal(invdiag)
+            self._Q = sparse.diags(np.copy(self._sddiag))
             self._Qinv = sparse.diags(invdiag)
-            self._sddiag = np.sqrt(self._Q)
+            self._sddiag = np.sqrt(self._sddiag)
 
 
     @property
