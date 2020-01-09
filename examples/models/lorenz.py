@@ -3,18 +3,16 @@ Toy models used for testing the data assimilation algorithms.
 """
 
 import numpy as np
-from . import ForwardModel
-
 
 __all__ = [ 'Lorenz95' ]
 
 
 # Used by the Lorenz95 evolution operator to represent model trajectory.
 class L95Trajectory:
-    __slots__ = ['dt', 'k1', 'k2', 'k3', 'k4', 'x']
+    __slots__ = ['dt', 'k', 'x']
 
 
-class Lorenz95(ForwardModel):
+class Lorenz95:
     """
     Lorenz 95 evolution operator.
 
@@ -33,95 +31,106 @@ class Lorenz95(ForwardModel):
         [1] Lorenz, Edward (1996). "Predictability – A problem partly solved"
     """
 
-    def __init__(self, N=40, F=8):
-        self._N = N
+    def __init__(self, n=40, F=8):
+        self._n = n
         self._F = F
 
-        # Precomputed array indices for the ODE expressions to avoid explicit
-        # loops later on
-        self._i_m1 = np.array([i % N for i in range(-1, N-1)])  # x_i-1
-        self._i_m2 = np.array([i % N for i in range(-2, N-2)])  # x_i-2
-        self._i_p1 = np.array([i % N for i in range( 1, N+1)])  # x_i+1
-        self._i_p2 = np.array([i % N for i in range( 2, N+2)])  # x_i+2
-
-    @property
-    def ndim(self): return self._N
+        # Precomputed array indices for the ODE expressions to avoid explicit loops later on
+        self._i_m1 = np.array([i % n for i in range(-1, n-1)])  # x_i-1
+        self._i_m2 = np.array([i % n for i in range(-2, n-2)])  # x_i-2
+        self._i_p1 = np.array([i % n for i in range( 1, n+1)])  # x_i+1
+        self._i_p2 = np.array([i % n for i in range( 2, n+2)])  # x_i+2
 
 
     def __call__(self, x, dt):
-        N, M = x.shape if len(x.shape) > 1 else (len(x), 1)
-        assert N == self.ndim
-
-        # Let the base class handle the loop over ensemble members
-        if M > 1: return super().__call__(x, dt)
+        if len(x.shape) == 1: x = x.reshape(-1, 1)
+        n, N = x.shape
+        assert n == self._n
 
         def l95(x):
             return -x[self._i_m2]*x[self._i_m1] + x[self._i_m1]*x[self._i_p1] - x + self._F
 
-        # State propagation using the 4th-order Runge-Kutta method. Store what we need
-        # for the tl() and ad() computations
+        # State propagation using the 4th-order Runge-Kutta method. Store what we need for the tl() and ad()
+        # computations
 
         trj = L95Trajectory()
-
         trj.dt = dt
-        trj.k1 = dt * l95(x)
-        trj.k2 = dt * l95(x + trj.k1/2)
-        trj.k3 = dt * l95(x + trj.k2/2)
-        trj.k4 = dt * l95(x + trj.k3)
-        x+= (trj.k1 + 2*trj.k2 + 2*trj.k3 + trj.k4) / 6.0
-        trj.x = np.copy(x)
+        trj.k = np.zeros((N, 4, n))
+        trj.x = np.zeros((N, n))
+
+        for i in range(N):
+            trj.k[i,0,:] = dt * l95(x[:,i])
+            trj.k[i,1,:] = dt * l95(x[:,i] + trj.k[i,0,:] / 2)
+            trj.k[i,2,:] = dt * l95(x[:,i] + trj.k[i,1,:] / 2)
+            trj.k[i,3,:] = dt * l95(x[:,i] + trj.k[i,2,:])
+            x[:,i] += (trj.k[i,0,:] + 2*trj.k[i,1,:] + 2*trj.k[i,2,:] + trj.k[i,3,:]) / 6.0
+            trj.x[i,:] = x[:,i]
 
         return trj
 
 
     def dot(self, trajectory, x, out=None):
+        if len(x.shape) == 1: x = x.reshape(-1, 1)
+        n, N = x.shape
+        assert n == self._n
 
-        N, M = x.shape if len(x.shape) > 1 else (len(x), 1)
-        assert N == self.ndim
-
-        # Let the base class handle the loop over ensemble members
-        if M > 1: return super().dot(trajectory, x)
         assert isinstance(trajectory, L95Trajectory)
-
 
         def l95_tl(x, dx):
             return -x[self._i_m1]*dx[self._i_m2] + (x[self._i_p1]-x[self._i_m2])*dx[self._i_m1] - dx + \
                    x[self._i_m1]*dx[self._i_p1]
 
-        dK1 = trajectory.dt * l95_tl(trajectory.x, x)
-        dK2 = trajectory.dt * l95_tl(trajectory.x + trajectory.k1/2, x + dK1/2)
-        dK3 = trajectory.dt * l95_tl(trajectory.x + trajectory.k2/2, x + dK2/2)
-        dK4 = trajectory.dt * l95_tl(trajectory.x + trajectory.k3, x + dK3)
+        if out is None:
+            out = np.zeros((n, N))
+        else:
+            if N == 1: out = out.reshape(-1, 1)
+            assert out.shape == x.shape
 
-        return x + (dK1 + 2 * dK2 + 2 * dK3 + dK4) / 6.0
+        for i in range(N):
+            ti = i % trajectory.x.shape[0]
+            dK1 = trajectory.dt * l95_tl(trajectory.x[ti,:], x[:,i])
+            dK2 = trajectory.dt * l95_tl(trajectory.x[ti,:] + trajectory.k[ti,0,:] / 2, x[:,i] + dK1 / 2)
+            dK3 = trajectory.dt * l95_tl(trajectory.x[ti,:] + trajectory.k[ti,1,:] / 2, x[:,i] + dK2 / 2)
+            dK4 = trajectory.dt * l95_tl(trajectory.x[ti,:] + trajectory.k[ti,2,:], x[:,i] + dK3)
+            out[:,i] = x[:,i] + (dK1 + 2 * dK2 + 2 * dK3 + dK4) / 6.0
 
+        return out
 
 
     def adjdot(self, trajectory, x, out=None):
-        N, M = x.shape if len(x.shape) > 1 else (len(x), 1)
-        assert N == self.ndim
+        if len(x.shape) == 1: x = x.reshape(-1, 1)
+        n, N = x.shape
+        assert n == self._n
 
-        # Let the base class handle the loop over ensemble members
-        if M > 1: return super().adjdot(trajectory, x, out=out)
         assert isinstance(trajectory, L95Trajectory)
 
         def l95_ad(x, dx):
             return x[self._i_m2]*dx[self._i_m1] + (x[self._i_p2]-x[self._i_m1])*dx[self._i_p1] - dx - \
                    x[self._i_p1]*dx[self._i_p2]
 
-        def adK1(dx): return trajectory.dt * l95_ad(trajectory.x, dx);
+        def adK1(dx, i): return trajectory.dt * l95_ad(trajectory.x[i,:], dx);
 
-        def adK2(dx):
-            aux = l95_ad(trajectory.x + trajectory.k1/2, dx)
-            return trajectory.dt * (aux + adK1(aux)/2)
+        def adK2(dx, i):
+            aux = l95_ad(trajectory.x[i,:] + trajectory.k[i,0,:]/2, dx)
+            return trajectory.dt * (aux + adK1(aux, i) / 2)
 
-        def adK3(dx):
-            aux = l95_ad(trajectory.x  + trajectory.k2/2, dx)
-            return trajectory.dt * (aux + adK2(aux)/2)
+        def adK3(dx, i):
+            aux = l95_ad(trajectory.x[i,:] + trajectory.k[i,1,:]/2, dx)
+            return trajectory.dt * (aux + adK2(aux, i) / 2)
 
-        def adK4(dx):
-            aux = l95_ad(trajectory.x + trajectory.k3, dx)
-            return trajectory.dt * (aux + adK3(aux))
+        def adK4(dx, i):
+            aux = l95_ad(trajectory.x[i,:] + trajectory.k[i,2,:], dx)
+            return trajectory.dt * (aux + adK3(aux, i))
 
-        dx2 = x + (adK1(x) + 2 * adK2(x) + 2 * adK3(x) + adK4(x)) / 6.0
-        return dx2
+        if out is None:
+            out = np.zeros((n, N))
+        else:
+            if N == 1: out = out.reshape(-1, 1)
+            assert out.shape == x.shape
+
+        for i in range(N):
+            ti = i % trajectory.x.shape[0]
+            dx = x[:,i]
+            out[:,i] = dx + (adK1(dx, ti) + 2 * adK2(dx, ti) + 2 * adK3(dx, ti) + adK4(dx, ti)) / 6.0
+
+        return out
