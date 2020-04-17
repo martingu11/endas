@@ -12,7 +12,7 @@ import numpy as np
 from scipy import linalg
 
 from .enkf import EnKFVariant
-from endas import ensemble
+from .. import ensemble
 
 
 class ESTKF(EnKFVariant):

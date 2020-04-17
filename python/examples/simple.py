@@ -8,10 +8,9 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-from endas import ensemble
-from endas import algorithms as algs
-from endas.obs import MatrixObservationOp
-from endas.cov import DiagonalCovariance
+from python.endas import algorithms as algs, ensemble
+from python.endas.obs import MatrixObservationOp
+from python.endas.cov import DiagonalCovariance
 
 # For deterministic output
 np.random.seed(1234)

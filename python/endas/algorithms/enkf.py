@@ -14,13 +14,11 @@ executed and in particular how localization is done.
 
 __all__ = [ 'EnsembleKalmanFilter', 'EnKFVariant', 'EnKF' ]
 
-import math
 import numpy as np
 from scipy import linalg
 
-from endas import ensemble, CovarianceOperator
-from endas import arraycache
-from endas.localization import DomainLocalization
+from python.endas import arraycache, ensemble
+from python.endas.localization import DomainLocalization
 
 
 from abc import ABCMeta, abstractmethod

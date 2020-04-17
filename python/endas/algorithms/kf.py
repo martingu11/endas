@@ -7,9 +7,8 @@ __all__ = ['KalmanFilter']
 
 import numpy as np
 from scipy import linalg
-from endas import CovarianceOperator
-from endas import cov
-from endas import arraycache
+from python.endas import CovarianceOperator
+from python.endas import arraycache, cov
 
 
 class KFSmootherData:

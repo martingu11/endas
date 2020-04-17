@@ -64,7 +64,7 @@ else:
                            annotate=CYTHON_ANNOTATE, 
                            language_level=3)
 
-with open('./README.md', 'r') as readme:
+with open('../README.md', 'r') as readme:
     long_description = readme.read()
 
 

@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import time
 
-from endas.localization.cs import EuclideanCS, LatLonCS
+from python.endas.localization import EuclideanCS, LatLonCS
 
 
 def np_euclid_distance(a, b):

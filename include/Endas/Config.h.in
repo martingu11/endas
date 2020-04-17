@@ -1,0 +1,29 @@
+#ifndef __ENDAS_CONFIG_H__
+#define __ENDAS_CONFIG_H__
+
+#include "Compiler.h"
+#include <memory>
+
+#define ENDAS_VERSION_MAJOR ${EnDAS_VERSION_MAJOR}
+#define ENDAS_VERSION_MINOR ${EnDAS_VERSION_MINOR}
+
+#define ENDAS_DLL
+
+
+#if ${ENDAS_USING_BLAS}
+#   define EIGEN_USE_BLAS
+#endif
+
+#if ${ENDAS_USING_LAPACK}
+#   define EIGEN_USE_LAPACKE
+#endif
+
+#define ENDAS_PLOTTING_ENABLED ${ENDAS_USING_PYTHON}
+
+
+/** Numeric type used for representing nearly all data in EnDAS. */
+typedef double real_t;
+
+
+
+#endif

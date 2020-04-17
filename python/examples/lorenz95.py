@@ -13,7 +13,6 @@ have this issue and the -i switch isn't needed.
 
 
 # Make sure the endas package can be found when running from the examples folder without having to install it first
-import sys, os.path
 
 import math
 
@@ -22,11 +21,8 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-from endas import cov, obs
-from endas import ensemble
-from endas import algorithms as alg
-from endas.cov import DiagonalCovariance
-from endas.localization import DomainLocalization, GenericStateSpace1d, taper
+from python.endas import algorithms as alg, cov, ensemble, obs
+from python.endas.localization import DomainLocalization, GenericStateSpace1d, taper
 
 from scipy import linalg
 
@@ -87,13 +83,13 @@ observedStates = np.arange(0, k)
 
 # Initial error covariance
 sig_clim = 3.6414723
-P0 = cov.DiagonalCovariance(np.ones(n) * (0.5*sig_clim)**2)
+P0 = cov.DiagonalCovariance(np.ones(n) * (0.5 * sig_clim) ** 2)
 
 # Model error covariance
-Q = cov.DiagonalCovariance(np.ones(n) * (0.05*sig_clim)**2)
+Q = cov.DiagonalCovariance(np.ones(n) * (0.05 * sig_clim) ** 2)
 
 # Observation error covariance
-R = cov.DiagonalCovariance(np.ones(k) * (0.15*sig_clim)**2)
+R = cov.DiagonalCovariance(np.ones(k) * (0.15 * sig_clim) ** 2)
 
 
 # ----------------------------------------------------------------------------------------------------------------------

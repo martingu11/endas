@@ -9,7 +9,7 @@ __all__ = [
 from abc import ABCMeta, abstractmethod
 import math
 import numpy as np
-import endas.localization
+import python.endas.localization
 
 
 
@@ -199,7 +199,7 @@ class DomainLocalization:
         observations is truncated with distance.
         """
         assert taper_fn is not None
-        assert isinstance(taper_fn, endas.localization.TaperFn)
+        assert isinstance(taper_fn, python.endas.localization.TaperFn)
         self._taper_fn = taper_fn
 
 
