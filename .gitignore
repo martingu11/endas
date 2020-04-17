@@ -1,3 +1,8 @@
+.vscode/
+include/Endas/Config.h
+include/Endas/Compiler.h
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -10,6 +15,7 @@ __pycache__/
 .Python
 docs/_build
 docs/doxygen
+docs/reference/generated
 build/
 develop-eggs/
 dist/
@@ -104,3 +110,4 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
