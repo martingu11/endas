@@ -59,7 +59,7 @@ endas::generateTestData(int nsteps, const Ref<const Array> x0,
 
 
 
-std::tuple<Array2d, Array2d, double> 
+std::tuple<Array2d, Array2d> 
 endas::runKF(KalmanSmoother& kf, int nsteps, double dt, const Ref<const Array> x0, 
              const Ref<const Array2d> obs, const std::vector<int>& obsTimeSteps,
              const ObservationOperator& H, const CovarianceOperator& P0, 
@@ -88,8 +88,6 @@ endas::runKF(KalmanSmoother& kf, int nsteps, double dt, const Ref<const Array> x
     });
     
     // The main time stepping loop
-    ENDAS_TIMER_BEGIN(ks);
-
     kf.beginSmoother(x, Pmat, 0);
 
     int obsIndex = 0;
@@ -113,15 +111,12 @@ endas::runKF(KalmanSmoother& kf, int nsteps, double dt, const Ref<const Array> x
 
     kf.endSmoother();
     
-    ENDAS_TIMER_END(ks);
-    double elapsed = ENDAS_TIMER_ELAPSED_SEC(ks);
-
-    return make_tuple(move(resultX), move(resultSD), elapsed);
+    return make_tuple(move(resultX), move(resultSD));
 }
 
 
 
-std::tuple<Array2d, Array2d, double> 
+std::tuple<Array2d, Array2d> 
 endas::runEnKF(EnsembleKalmanSmoother& kf, const GenericEvolutionModel& model,
                int nsteps, double dt, const Ref<const Array2d> E0, 
                const Ref<const Array2d> obs, const std::vector<int>& obsTimeSteps,
@@ -148,8 +143,6 @@ endas::runEnKF(EnsembleKalmanSmoother& kf, const GenericEvolutionModel& model,
     });
     
     // The main time stepping loop
-    ENDAS_TIMER_BEGIN(ks);
-
     kf.beginSmoother(E, 0);
 
     int obsIndex = 0;
@@ -172,9 +165,6 @@ endas::runEnKF(EnsembleKalmanSmoother& kf, const GenericEvolutionModel& model,
 
     kf.endSmoother();
     
-    ENDAS_TIMER_END(ks);
-    double elapsed = ENDAS_TIMER_ELAPSED_SEC(ks);
-
-    return make_tuple(move(resultX), move(resultXSD), elapsed);
+    return make_tuple(move(resultX), move(resultXSD));
 }
 

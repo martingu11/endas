@@ -102,14 +102,14 @@ inline Array rmse(const SoftRef<const endas::Array2d> a, const SoftRef<const end
 
 
 
-std::tuple<Array2d, Array2d, double> 
+std::tuple<Array2d, Array2d> 
 runKF(KalmanSmoother& ks, int nsteps, double dt, const Ref<const Array> x0, 
       const Ref<const Array2d> obs, const std::vector<int>& obsTimeSteps,
       const ObservationOperator& H, const CovarianceOperator& P0, 
       const CovarianceOperator& Q, const CovarianceOperator& R);
 
 
-std::tuple<Array2d, Array2d, double> 
+std::tuple<Array2d, Array2d> 
 runEnKF(EnsembleKalmanSmoother& ks, const GenericEvolutionModel& model,
         int nsteps, double dt, const Ref<const Array2d> E0, 
         const Ref<const Array2d> obs, const std::vector<int>& obsTimeSteps,

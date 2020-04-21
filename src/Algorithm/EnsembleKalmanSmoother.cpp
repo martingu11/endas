@@ -43,7 +43,7 @@ struct EnsembleKalmanSmoother::Data
     int lag;
     double covInflation;
 
-    // Localiaztion
+    // Localization
     int numDomains;
 
     // Data for the current update
@@ -164,6 +164,8 @@ void EnsembleKalmanSmoother::assimilate(const Ref<const Array> z,
     if (z.size() == 0) return;
 
     ENDAS_ASSERT(z.size() == H.nobs());
+
+    ENDAS_PERF_SCOPE(AssimilateObservations);
 
     auto& Eg = *mData->upE;
     int n = Eg.rows();

@@ -4,8 +4,10 @@
 #include <chrono>
 
 #include <Endas/Endas.hpp>
+#include <Endas/Core/Profiling.hpp>
 #include <Endas/Random/Random.hpp>
 #include <Endas/Algorithm/KalmanSmoother.hpp>
+#include <Endas/Algorithm/EnsembleKalmanSmoother.hpp>
 #include <Endas/Error/DiagonalCovariance.hpp>
 #include <Endas/Model/Lorenz95.hpp>
 
@@ -22,7 +24,6 @@
 using namespace std;
 using namespace endas;
 
-typedef chrono::steady_clock perfclock_t;
 
 constexpr double PI = 3.141592653589793238462643383279502884;
 
@@ -35,20 +36,30 @@ int main(int argc, char *argv[])
     // Experiment setup
     //-----------------------------------------------------------------------------------
 
+    // State size
     int n = 40;
 
+    // Ensemble size
+    int N = 30;
+
+    // Forcing term of the Lorenz 96 model */
     int F = 8;
 
     // Number of data assimilation steps
     int nsteps = 1000;
 
-    // Model integration time step (equivalent to 30min)
-    double dt = 0.025 / 6.0;
+    // Model integration time step.
+    // Note: Too long integration step may cause difficulties with convergence, especially
+    // for KalmanSmoother that relies on the linearization of the model. If this happens, 
+    // decrease the integration step.
+    double dt = 0.025 / 3.0;
 
     // Observation error standard deviation
     double obsSigma = 0.4;
 
     // If greater than 1, observations will be assimilated on every n-th time step only
+    // Note: If this is set too high, filters will diverge. This is especially true of 
+    // the KalmanSmoother. If this happens, lower this or decrease `dt`.
     int obsInterval = 6;
 
 
@@ -63,10 +74,9 @@ int main(int argc, char *argv[])
     // Observation error covariance matrix
     DiagonalCovariance R(Array::Constant(n, 0.15 * sigClim).pow(2));
 
-    // Observation operator. We will observe the last 3 variables in every 5 state vector 
-    // variables, i.e. 24 out of 40 in this case
+    // Observation operator. All state variables are observed
     int nobs = 40;
-    Matrix H = Matrix::Identity(n, n);
+    MatrixObservationOperator H(Matrix::Identity(n, n));
 
     // Initial system state with x21 perturbed a little
     Array x0 = Array::Constant(n, 8.0);
@@ -79,10 +89,20 @@ int main(int argc, char *argv[])
     Lorenz95Model model(n, F);
 
     // Smoother lag. Zero disables smoothing (only filter solution is computed)
-    int lag = 1;
+    int lag = 15;
 
     // Kalman Filter we will be using
-    endas::KalmanSmoother kf(model, lag);
+    endas::KalmanSmoother ks(model, lag);
+
+    // Ensemble Kalman Filters we will be using
+    endas::EnsembleKalmanSmoother enks(EnKS(), n, N, lag);
+    enks.setCovInflationFactor(1.05);   // These are rough guesses, not tuned values.
+    enks.setSmootherForgettingFactor(0.95);
+
+    // Ensemble Kalman Filters we will be using
+    endas::EnsembleKalmanSmoother etks(ESTKS(), n, N, lag);
+    etks.setCovInflationFactor(1.05);   // These are rough guesses, not tuned values.
+    etks.setSmootherForgettingFactor(0.95);
 
     //-----------------------------------------------------------------------------------
     // End of setup
@@ -95,118 +115,114 @@ int main(int argc, char *argv[])
         // covariance R.
         cout << "Generating test data..." << endl;
 
-        Array2d xtAll, zAll;
+        Array2d xtAll, obs;
         vector<int> obsTimes;
 
-        tie(xtAll, zAll, obsTimes) = generateTestData(nsteps, x0, model, dt, H, Q, R, obsInterval);
+        tie(xtAll, obs, obsTimes) = generateTestData(nsteps, x0, model, dt, H, Q, R, obsInterval);
 
-        // Bad guess for the initial state
-        Array x = x0;
+        // Use somewhat bad guess for x0 for data assimilation
+        x0*= 1.5;
+
+
+        // Generate initial ensemble from x0 and the background error covariance P0
+        Array2d E0(n, N);
+        generateEnsemble(x0, P0, E0);
         
-        // We will need P, Q and R as plain matrices for KalmanSmoother
-        Matrix Pmat, Qmat, Rmat;
-        P0.toMatrix(Pmat);
-        Q.toMatrix(Qmat);
-        R.toMatrix(Rmat);
+        // Use the runXXX() utility functions to run the smoother time stepping loops
 
-        Array2d resultX(n, nsteps);
-        Array2d resultSD(n, nsteps);
-        resultX.col(0) = x;
-        resultSD.col(0) = cov2error(Pmat);
-
-        // This will be called on every KF/KS solution that becomes available
-        kf.onResult([&](const Ref<const Array> x, const Ref<const Matrix> P, int k)
+        cout << "Running KS..." << endl;
+        Array2d ksX, ksErr;
         {
-            resultX.col(k) = x;
-            resultSD.col(k) = cov2error(P);
-
-            //cout << "onresult " << k << " (" << x.transpose() << ")" << endl;
-        });
-        
-        //-----------------------------------------------------------------------------------
-        // THE MAIN TIME-STEPPING LOOP 
-        //-----------------------------------------------------------------------------------
-
-        cout << "Running KF..." << endl;
-
-        endas::getRngEngine().seed(1234);
-        auto timerBegin = perfclock_t::now();
-
-        kf.beginSmoother(x, Pmat, 0);
-
-        int obsIndex = 0;
-        for (int k = 1; k != nsteps; k++)
-        {
-            // The Kalman Filter forecast step. The state `x` and error covariance `Pmat` are
-            // updated in-place 
-            kf.forecast(x, Pmat, Qmat, k-1, dt);
-
-            // The update or analysis step
-            kf.beginAnalysis(x, Pmat, k);
-
-            // Do we have observations for this step? If yes, assimilate
-            if (obsTimes[obsIndex] == k)
-            {
-                kf.assimilate(zAll.col(obsIndex++), H, Rmat);
-            }
-
-            kf.endAnalysis();
+            ENDAS_PERF_SCOPE(KS);
+            tie(ksX, ksErr) = runKF(ks, nsteps, dt, x0, obs, obsTimes, H, P0, Q, R);
         }
 
-        kf.endSmoother();
-        auto timerEnd = perfclock_t::now();
+        cout << "Running EnKS..." << endl;
+        Array2d enksX, enksErr;
+        {
+            ENDAS_PERF_SCOPE(ENKS);
+            tie(enksX, enksErr) = runEnKF(enks, model, nsteps, dt, E0, obs, obsTimes, H, Q, R);
+        }
 
-        //-----------------------------------------------------------------------------------
+        cout << "Running ETKS..." << endl;
+        Array2d etksX, etksErr;
+        {
+            ENDAS_PERF_SCOPE(ETKS);
+            tie(etksX, etksErr) = runEnKF(etks, model, nsteps, dt, E0, obs, obsTimes, H, Q, R);
+        }
+
+
         // Done, print statistics and generate plots 
-        //-----------------------------------------------------------------------------------
 
-        cout << "Kalman Filter/Smoother completed in " 
-            << chrono::duration_cast<chrono::milliseconds>(timerEnd - timerBegin).count() / 1000.0 
-            << " seconds" << endl;
+        Array ksRMSE = rmse(xtAll, ksX);
+        Array enksRMSE = rmse(xtAll, enksX);
+        Array etksRMSE = rmse(xtAll, etksX);
 
+        cout << "KS mean RMSE  : " << ksRMSE.mean() << endl;
+        cout << "EnKS mean RMSE: " << enksRMSE.mean() << endl;
+        cout << "ETKS mean RMSE: " << etksRMSE.mean() << endl;
 
-        Array resultRMSE = rmse(xtAll, resultX);
-        cout << "Kalman Filter/Smoother mean RMSE: " << resultRMSE.mean() << endl;
+        cout << "Execution time summary:" << endl;
+        profilingSummary(cout, 2);
 
 
 #if ENDAS_PLOTTING_ENABLED
 
         // The plotted variable
         int X = 20;
-
         auto xValues = rangeToVector(0, nsteps);
 
-        map<string, string> lineStyle = { { "linewidth", "1"} };
-        map<string, string> fillStyle = { { "alpha", "0.4"} };
-        unordered_map<string, string> obsStyle  = { { "marker", "+"}, { "linewidth", "1"} };
+        map<string, string> lineKeywords = { { "linewidth", "1"} };
+        unordered_map<string, string> obsKeywords = { { "marker", "+"}, { "linewidth", "1"} };
 
         plt::figure_size(900, 600);
-        
-        lineStyle["color"] = "black";
-        plt::plot(xValues, toVector(xtAll.row(20)), lineStyle);
 
-        lineStyle["color"] = "green";
-        fillStyle["color"] = "green";
-        plt::plot(xValues, toVector(resultX.row(X)), lineStyle);
-        plt::fill_between(xValues, toVector(resultX.row(X) - resultSD.row(X)*1.96), 
-                                    toVector(resultX.row(X) + resultSD.row(X)*1.96), 
-                                    fillStyle);
-        
-        obsStyle["color"] = "purple";
-        plt::scatter(obsTimes, toVector(zAll.row(X)), 13, obsStyle);
+        plt::subplot(2, 1, 1);
+        plt::title("Smoother performance on Lorenz96 problem");
 
-        /*plt::xlabel("k");
-        plt::ylabel("X" + to_string(r+1));
+        lineKeywords["color"] = "black";
+        lineKeywords["label"] = "Truth";
+        plt::plot(xValues, toVector(xtAll.row(20)), lineKeywords);
+
+        obsKeywords["color"] = "purple";
+        obsKeywords["label"] = "Observation";
+        plt::scatter(obsTimes, toVector(obs.row(X)), 13, obsKeywords);
+
+        lineKeywords["color"] = "green";
+        lineKeywords["label"] = "KS";
+        plt::plot(xValues, toVector(ksX.row(X)), lineKeywords);
+        
+        lineKeywords["color"] = "red";
+        lineKeywords["label"] = "EnKS";
+        plt::plot(xValues, toVector(enksX.row(X)), lineKeywords);
+        
+        lineKeywords["color"] = "blue";
+        lineKeywords["label"] = "ESTKS";
+        plt::plot(xValues, toVector(etksX.row(X)), lineKeywords);
+        
+        plt::xlabel("k");
+        plt::ylabel("X" + to_string(X));
         plt::grid(true);
+        plt::legend();
         
 
-        plt::subplot(4, 1, 4);
-        lineStyle["color"] = "black";
-        plt::plot(xValues, toVector(resultRMSE), lineStyle);
+        plt::subplot(2, 1, 2);
+        lineKeywords["color"] = "green";
+        lineKeywords["label"] = "KS";
+        plt::plot(xValues, toVector(ksRMSE), lineKeywords);
+
+        lineKeywords["color"] = "red";
+        lineKeywords["label"] = "EnKS";
+        plt::plot(xValues, toVector(enksRMSE), lineKeywords);
+
+        lineKeywords["color"] = "blue";
+        lineKeywords["label"] = "ESTKS";
+        plt::plot(xValues, toVector(etksRMSE), lineKeywords);
+
         plt::xlabel("k");
         plt::ylabel("RMSE");
-        plt::ylim(0.0, obsSigma);
-        plt::grid(true);*/
+        plt::grid(true);
+        plt::legend();
 
         plt::show();
 

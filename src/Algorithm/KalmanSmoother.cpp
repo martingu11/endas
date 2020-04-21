@@ -138,7 +138,7 @@ void KalmanSmoother::assimilate(const Ref<const Array> z, const Ref<const Matrix
 {
     ENDAS_ASSERT(mData->updateActive);
 
-    ENDAS_PERF_SCOPE(Update);
+    ENDAS_PERF_SCOPE(AssimilateObservations);
 
     // Nothing to do
     if (z.size() == 0) return;

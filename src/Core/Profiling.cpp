@@ -129,7 +129,7 @@ inline void formatRelDuration(ostream& os, perfclock_t::duration d, perfclock_t:
 }
 
 
-void printScope(std::ostream& os, const PerfScope& scope, int level, int col1width)
+void printScope(std::ostream& os, const PerfScope& scope, int level, int col1width, int maxNesting)
 {
     // Print scope name and total execution time
     os << setw(col1width) << left << setfill('.') << indent(level, scope.key);
@@ -140,23 +140,29 @@ void printScope(std::ostream& os, const PerfScope& scope, int level, int col1wid
     if (scope.parent) formatRelDuration(os, scope.duration, scope.parent->duration);
     os << endl;
 
-    // Then all time records for this scope
-    for (auto&& rec : scope.records)
+    if (level+1 <= maxNesting)
     {
-        os << setw(col1width) << left << setfill('.') << indent(level+1, rec.first);
-        os << setfill(' ');
 
-        os << ": " << setw(10) << left << formatDuration(rec.second);
-        os << " ";
-        formatRelDuration(os, rec.second, scope.duration);
-        os << endl;
-    }
+        // Then all time records for this scope
+        for (auto&& rec : scope.records)
+        {
+            os << setw(col1width) << left << setfill('.') << indent(level+1, rec.first);
+            os << setfill(' ');
 
-    // And finally nested scopes
-    for (auto&& child : scope.children)
-    {
-        printScope(os, child, level+1, col1width);   
+            os << ": " << setw(10) << left << formatDuration(rec.second);
+            os << " ";
+            formatRelDuration(os, rec.second, scope.duration);
+            os << endl;
+        }
+
+        // And finally nested scopes
+        
+        for (auto&& child : scope.children)
+        {
+            printScope(os, child, level+1, col1width, maxNesting);   
+        }
     }
+    
 };
 
 
@@ -173,13 +179,13 @@ void endas::profilerClear()
 }
 
 
-void endas::profilingSummary(std::ostream& os)
+void endas::profilingSummary(std::ostream& os, int maxNesting)
 {
 #if !ENDAS_PROFILING_DISABLED
 
     globRootScope.duration = perfclock_t::now() - globRootScope.start;
 
     int col1width = 40;
-    printScope(os, topScope(), 0, col1width);
+    printScope(os, topScope(), 0, col1width, maxNesting);
 #endif    
 }

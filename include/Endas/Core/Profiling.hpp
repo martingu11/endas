@@ -98,10 +98,12 @@ ENDAS_DLL void profilerClear();
 
 /**
  * Prints profiling information to a stream.
- * 
  * If profiling is disabled, this prints nothing.
+ * 
+ * @param os          Output stream to which to print
+ * @param maxNesting  Controls how many nested scopes will be printed
  */
-ENDAS_DLL void profilingSummary(std::ostream& os);
+ENDAS_DLL void profilingSummary(std::ostream& os, int maxNesting = 5);
 
 
 
