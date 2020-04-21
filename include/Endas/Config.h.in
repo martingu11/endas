@@ -20,6 +20,8 @@
 
 #define ENDAS_PLOTTING_ENABLED ${ENDAS_USING_PYTHON}
 
+#define ENDAS_PROFILING_DISABLED ${ENDAS_PROFILING_DISABLED}
+
 
 /** Numeric type used for representing nearly all data in EnDAS. */
 typedef double real_t;

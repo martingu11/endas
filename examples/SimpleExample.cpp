@@ -1,14 +1,11 @@
 #include <iostream>
 #include <string>
 #include <cmath>
-#include <chrono>
 
 #include <Endas/Endas.hpp>
 #include <Endas/Random/Random.hpp>
 #include <Endas/Algorithm/KalmanSmoother.hpp>
 #include <Endas/Error/DiagonalCovariance.hpp>
-#include <Endas/Model/Trivial.hpp>
-
 
 #if ENDAS_PLOTTING_ENABLED
 #   define WITHOUT_NUMPY
@@ -22,8 +19,6 @@
 
 using namespace std;
 using namespace endas;
-
-typedef chrono::steady_clock perfclock_t;
 
 
 constexpr double PI = 3.141592653589793238462643383279502884;
@@ -60,7 +55,7 @@ int main(int argc, char *argv[])
 
     // Observation operator. This is a 1x3 matrix representing a single observation of both
     // the first and second state variable. The third state variable is unobserved.
-    Matrix H = makeMatrix(1, 3, { 1.0, 1.0, 0.0 });
+    MatrixObservationOperator H(makeMatrix(1, 3, { 1.0, 1.0, 0.0 }));
 
     // Initial system state
     Array x0 = makeArray({0, 0, 1});
@@ -74,8 +69,8 @@ int main(int argc, char *argv[])
         0.0, -sin(PI / 6.0), cos(PI / 6.0)
     }));
 
-    // Smoother lag. Zero disables smoothing (only filter solution is computed)
-    int lag = 1;
+    // Smoother lag. Zero disables smoothing (only filter solution is computed).
+    int lag = endas::LAG_FIKS;
 
     // Kalman Filter we will be using
     endas::KalmanSmoother kf(model, lag);
@@ -99,30 +94,32 @@ int main(int argc, char *argv[])
         Array x = makeArray({0.5, 0.5, 0.5});  
         
         // We will need P, Q and R as plain matrices for KalmanSmoother
-        Matrix Pmat, Qmat, Rmat;
+        Matrix Pmat, Qmat, Rmat, Hmat;
         P0.toMatrix(Pmat);
         Q.toMatrix(Qmat);
         R.toMatrix(Rmat);
+        R.toMatrix(Hmat);
 
         Array2d resultX(3, nsteps);
         Array2d resultSD(3, nsteps);
         resultX.col(0) = x;
-        resultSD.col(0) = cov2error(Pmat);
+        resultSD.col(0) = covError(Pmat);
 
         // This will be called on every KF/KS solution that becomes available
         kf.onResult([&](const Ref<const Array> x, const Ref<const Matrix> P, int k)
         {
             resultX.col(k) = x;
-            resultSD.col(k) = cov2error(P);
+            resultSD.col(k) = covError(P);
         });
         
         //-----------------------------------------------------------------------------------
         // THE MAIN TIME-STEPPING LOOP 
         //-----------------------------------------------------------------------------------
 
-        cout << "Running KF..." << endl;
-        auto timerBegin = perfclock_t::now();
-
+        cout << "Running KS..." << endl;
+        
+        ENDAS_TIMER_BEGIN(ks);
+        
         kf.beginSmoother(x, Pmat, 0);
 
         int obsIndex = 0;
@@ -138,21 +135,21 @@ int main(int argc, char *argv[])
             // Do we have observations for this step? If yes, assimilate
             if (obsTimes[obsIndex] == k)
             {
-                kf.assimilate(zAll.col(obsIndex++), H, Rmat);
+                kf.assimilate(zAll.col(obsIndex++), Hmat, Rmat);
             }
 
             kf.endAnalysis();
         }
 
         kf.endSmoother();
-        auto timerEnd = perfclock_t::now();
-
+        
+        ENDAS_TIMER_END(ks);
+        
         //-----------------------------------------------------------------------------------
         // Done, print statistics and generate plots 
         //-----------------------------------------------------------------------------------
         
-        cout << "Kalman Filter/Smoother completed in " 
-            << chrono::duration_cast<chrono::microseconds>(timerEnd - timerBegin).count() / 1000.0
+        cout << "Kalman Filter/Smoother completed in " << ENDAS_TIMER_ELAPSED_MSEC(ks)
             << " milliseconds" << endl;
 
         Array resultRMSE = rmse(xtAll, resultX);

@@ -2,15 +2,22 @@
 #define __ENDAS_EXAMPLES_UTILS_HPP__
 
 #include <Endas/Endas.hpp>
-#include <Endas/Model/Model.hpp>
 #include <Endas/Error/CovarianceOperator.hpp>
+#include <Endas/Algorithm/KalmanSmoother.hpp>
+#include <Endas/Algorithm/EnsembleKalmanSmoother.hpp>
 
 #include <vector>
-
+#include <chrono>
 #include <iostream>
 
 namespace endas
 {
+
+
+//---------------------------------------------------------------------------------------
+// Plotting
+//---------------------------------------------------------------------------------------
+
 
 inline std::vector<double> toVector(const SoftRef<const endas::Array> x)
 {
@@ -28,6 +35,23 @@ inline std::vector<double> rangeToVector(int start, int end, int step = 1)
 }
 
 
+/*void plot
+
+
+lineStyle["color"] = "green";
+        fillStyle["color"] = "green";
+        plt::plot(xValues, toVector(resultX.row(X)), lineStyle);
+        plt::fill_between(xValues, toVector(resultX.row(X) - resultSD.row(X)*1.96), 
+                                    toVector(resultX.row(X) + resultSD.row(X)*1.96), 
+                                    fillStyle);
+
+*/
+
+
+//---------------------------------------------------------------------------------------
+// Data assmilation
+//---------------------------------------------------------------------------------------
+
 
 /**
  * Generate synthetic data for a so called "twin experiment". 
@@ -40,16 +64,34 @@ inline std::vector<double> rangeToVector(int start, int end, int step = 1)
 std::tuple<Array2d, Array2d, std::vector<int>> 
 generateTestData(int nsteps, const Ref<const Array> x0,
                  const GenericEvolutionModel& model, double dt,
-                 const Ref<const Matrix> H, const CovarianceOperator& Q, 
+                 const ObservationOperator& H, const CovarianceOperator& Q, 
                  const CovarianceOperator& R, 
                  int obsInterval = 1);
 
 
-
-inline auto cov2error(const Ref<const Matrix> cov) -> decltype(cov.diagonal().array().sqrt())
+/**
+ * Returns state uncertainty/error derived from error covariance matrix.
+ */
+inline Array covError(const Ref<const Matrix> cov)
 {
     return cov.diagonal().array().sqrt();
 }
+
+/**
+ * Returns state uncertainty/error derived from an ensemble.
+ */
+inline Array ensembleError(const Ref<const Array2d> E) 
+{
+    Array ret(E.rows());
+    for (int r = 0; r != E.rows(); r++) 
+    {
+        double rmean = E.row(r).mean();
+        ret(r) = sqrt((E.row(r) - rmean).square().mean());
+    }
+
+    return ret;
+}
+
 
 inline Array rmse(const SoftRef<const endas::Array2d> a, const SoftRef<const endas::Array2d> b)
 {
@@ -57,6 +99,25 @@ inline Array rmse(const SoftRef<const endas::Array2d> a, const SoftRef<const end
     ENDAS_ASSERT(a.rows() == b.rows());
     return ((a - b).square().colwise().mean()).sqrt(); 
 }
+
+
+
+std::tuple<Array2d, Array2d, double> 
+runKF(KalmanSmoother& ks, int nsteps, double dt, const Ref<const Array> x0, 
+      const Ref<const Array2d> obs, const std::vector<int>& obsTimeSteps,
+      const ObservationOperator& H, const CovarianceOperator& P0, 
+      const CovarianceOperator& Q, const CovarianceOperator& R);
+
+
+std::tuple<Array2d, Array2d, double> 
+runEnKF(EnsembleKalmanSmoother& ks, const GenericEvolutionModel& model,
+        int nsteps, double dt, const Ref<const Array2d> E0, 
+        const Ref<const Array2d> obs, const std::vector<int>& obsTimeSteps,
+        const ObservationOperator& H, const CovarianceOperator& Q, 
+        const CovarianceOperator& R);
+
+
+
 
 
 }
