@@ -2,8 +2,8 @@
  * @file Ensemble.hpp
  * @author Martin Gunia
  */
-#ifndef __ENDAS_ENSEMBLE_HPP__
-#define __ENDAS_ENSEMBLE_HPP__
+#ifndef __ENDAS_DA_ENSEMBLE_HPP__
+#define __ENDAS_DA_ENSEMBLE_HPP__
 
 #include <stddef.h>
 

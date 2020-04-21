@@ -13,14 +13,20 @@ target_sources(endas PRIVATE
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/ObservationOperator.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/CovarianceOperator.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/DiagonalCovariance.hpp
-
+    ${CMAKE_SOURCE_DIR}/include/Endas/DA/StateSpace.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/DA/StateSpaceGrid.hpp
+    
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/Algorithm/KalmanSmoother.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp
 
     ${CMAKE_SOURCE_DIR}/include/Endas/Caching/ArrayCache.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Caching/MemoryArrayCache.hpp
+
     ${CMAKE_SOURCE_DIR}/include/Endas/Random/Random.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Random/MultivariateRandomNormal.hpp
+
+    ${CMAKE_SOURCE_DIR}/include/Endas/Spatial/Spatial.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/Spatial/CoordinateSystem.hpp
 )
 
 

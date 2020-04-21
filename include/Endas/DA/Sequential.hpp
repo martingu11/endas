@@ -3,8 +3,8 @@
  * @author Martin Gunia
  */
 
-#ifndef __ENDAS_ALGORITHM_ALGORITHM_HPP__
-#define __ENDAS_ALGORITHM_ALGORITHM_HPP__
+#ifndef __ENDAS_DA_SEQUENTIAL_HPP__
+#define __ENDAS_DA_SEQUENTIAL_HPP__
 
 #include "Model.hpp"
 #include "CovarianceOperator.hpp"

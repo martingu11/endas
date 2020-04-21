@@ -2,8 +2,8 @@
  * @file DiagonalCovariance.hpp
  * @author Martin Gunia
  */
-#ifndef __ENDAS_DIAGONAL_COVARIANCE_OPERATOR_HPP__
-#define __ENDAS_DIAGONAL_COVARIANCE_OPERATOR_HPP__
+#ifndef __ENDAS_DA_DIAGONAL_COVARIANCE_OPERATOR_HPP__
+#define __ENDAS_DA_DIAGONAL_COVARIANCE_OPERATOR_HPP__
 
 #include "CovarianceOperator.hpp"
 

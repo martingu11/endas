@@ -13,15 +13,21 @@ target_sources(endas PRIVATE
     DA/ObservationOperator.cpp
     DA/CovarianceOperator.cpp
     DA/DiagonalCovariance.cpp
+    DA/StateSpace.cpp
+    DA/StateSpaceGrid.cpp
 
     DA/Algorithm/KalmanSmoother.cpp
     DA/Algorithm/EnsembleKalmanSmoother.cpp
     DA/Algorithm/EnKSVariantEnKS.cpp
     DA/Algorithm/EnKSVariantESTKS.cpp
+    
     Caching/ArrayCache.cpp
     Caching/MemoryArrayCache.cpp
+    
     Random/Random.cpp
     Random/MultivariateRandomNormal.cpp
+
+    Spatial/CoordinateSystem.cpp
 
     Model/Lorenz95.cpp
 )

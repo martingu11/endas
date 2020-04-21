@@ -14,6 +14,14 @@
 namespace endas
 {
 
+
+/**
+ * Basic type for indexing arrays. 
+ * This is an alias to `Eigen::Index`.
+ */ 
+typedef Eigen::Index index_t;
+
+
 /**
  * One-dimensional array type. When used in linear algebra operations, the array is interpreted
  * as a column vector.

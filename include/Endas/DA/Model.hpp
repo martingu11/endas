@@ -3,8 +3,8 @@
  * @author Martin Gunia
  */
 
-#ifndef __ENDAS_ALGORITHM_MODEL_HPP__
-#define __ENDAS_ALGORITHM_MODEL_HPP__
+#ifndef __ENDAS_DA_MODEL_HPP__
+#define __ENDAS_DA_MODEL_HPP__
 
 #include <Endas/Core/Core.hpp>
 #include <Endas/DA/CovarianceOperator.hpp>

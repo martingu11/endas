@@ -3,8 +3,8 @@
  * @author Martin Gunia
  */
 
-#ifndef __ENDAS_COVARIANCE_OPERATOR_HPP__
-#define __ENDAS_COVARIANCE_OPERATOR_HPP__
+#ifndef __ENDAS_DA_COVARIANCE_OPERATOR_HPP__
+#define __ENDAS_DA_COVARIANCE_OPERATOR_HPP__
 
 #include <Endas/Core/LinAlg.hpp>
 

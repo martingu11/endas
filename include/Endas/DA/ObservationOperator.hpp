@@ -2,8 +2,8 @@
  * @file ObservationOperator.hpp
  * @author Martin Gunia
  */
-#ifndef __ENDAS_OBSERVATION_OPERATOR_HPP__
-#define __ENDAS_OBSERVATION_OPERATOR_HPP__
+#ifndef __ENDAS_DA_OBSERVATION_OPERATOR_HPP__
+#define __ENDAS_DA_OBSERVATION_OPERATOR_HPP__
 
 #include <Endas/Core/LinAlg.hpp>
 
