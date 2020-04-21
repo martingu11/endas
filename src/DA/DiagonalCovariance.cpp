@@ -1,5 +1,5 @@
 
-#include <Endas/Error/DiagonalCovariance.hpp>
+#include <Endas/DA/DiagonalCovariance.hpp>
 #include <Endas/Endas.hpp>
 #include <Endas/Random/Random.hpp>
 

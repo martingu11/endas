@@ -4,8 +4,8 @@
 
 #include <Endas/Endas.hpp>
 #include <Endas/Random/Random.hpp>
-#include <Endas/Algorithm/KalmanSmoother.hpp>
-#include <Endas/Error/DiagonalCovariance.hpp>
+#include <Endas/DA/Algorithm/KalmanSmoother.hpp>
+#include <Endas/DA/DiagonalCovariance.hpp>
 
 #if ENDAS_PLOTTING_ENABLED
 #   define WITHOUT_NUMPY

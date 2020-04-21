@@ -1,4 +1,4 @@
-#include <Endas/Core/Ensemble.hpp>
+#include <Endas/DA/Ensemble.hpp>
 #include <Endas/Endas.hpp>
 
 

@@ -7,8 +7,8 @@
 
 #include <stddef.h>
 
-#include "LinAlg.hpp"
-#include <Endas/Error/CovarianceOperator.hpp>
+#include <Endas/Core/LinAlg.hpp>
+#include <Endas/DA/CovarianceOperator.hpp>
 
 
 namespace endas

@@ -1,6 +1,8 @@
-#include <Endas/Algorithm/EnsembleKalmanSmoother.hpp>
+#include <Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp>
+#include <Endas/DA/Ensemble.hpp>
 #include <Endas/Endas.hpp>
-#include "../Compatibility.hpp"
+
+#include "../../Compatibility.hpp"
 
 using namespace std;
 using namespace endas;

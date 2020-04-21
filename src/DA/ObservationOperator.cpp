@@ -1,5 +1,5 @@
 
-#include <Endas/Observation/ObservationOperator.hpp>
+#include <Endas/DA/ObservationOperator.hpp>
 #include <Endas/Endas.hpp>
 
 

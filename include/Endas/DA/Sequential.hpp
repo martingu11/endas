@@ -1,5 +1,5 @@
 /**
- * @file Algorithm.hpp
+ * @file Sequential.hpp
  * @author Martin Gunia
  */
 
@@ -7,10 +7,8 @@
 #define __ENDAS_ALGORITHM_ALGORITHM_HPP__
 
 #include "Model.hpp"
-#include <Endas/Core/Core.hpp>
-#include <Endas/Core/LinAlg.hpp>
-#include <Endas/Error/CovarianceOperator.hpp>
-#include <Endas/Observation/ObservationOperator.hpp>
+#include "CovarianceOperator.hpp"
+#include "ObservationOperator.hpp"
 
 #include <functional>
 #include <limits>

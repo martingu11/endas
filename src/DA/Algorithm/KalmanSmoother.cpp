@@ -1,7 +1,7 @@
-#include <Endas/Algorithm/KalmanSmoother.hpp>
+#include <Endas/DA/Algorithm/KalmanSmoother.hpp>
 #include <Endas/Caching/MemoryArrayCache.hpp>
 #include <Endas/Endas.hpp>
-#include "../Compatibility.hpp"
+#include "../../Compatibility.hpp"
 
 #include <vector>
 

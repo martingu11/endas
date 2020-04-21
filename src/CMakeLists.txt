@@ -4,48 +4,27 @@ add_library(endas SHARED "")
 target_sources(endas PRIVATE
     Endas.cpp
     Core/LinAlg.cpp
-    Core/Ensemble.cpp
     Core/Exception.cpp
     Core/Profiling.cpp
-    Algorithm/Model.cpp
-    Algorithm/Algorithm.cpp
-    Algorithm/KalmanSmoother.cpp
-    Algorithm/EnsembleKalmanSmoother.cpp
-    Algorithm/EnKSVariantEnKS.cpp
-    Algorithm/EnKSVariantESTKS.cpp
+
+    DA/Ensemble.cpp
+    DA/Model.cpp
+    DA/Sequential.cpp
+    DA/ObservationOperator.cpp
+    DA/CovarianceOperator.cpp
+    DA/DiagonalCovariance.cpp
+
+    DA/Algorithm/KalmanSmoother.cpp
+    DA/Algorithm/EnsembleKalmanSmoother.cpp
+    DA/Algorithm/EnKSVariantEnKS.cpp
+    DA/Algorithm/EnKSVariantESTKS.cpp
     Caching/ArrayCache.cpp
     Caching/MemoryArrayCache.cpp
-    Observation/ObservationOperator.cpp
-    Error/CovarianceOperator.cpp
-    Error/DiagonalCovariance.cpp
-    Model/Lorenz95.cpp
     Random/Random.cpp
     Random/MultivariateRandomNormal.cpp
-    
+
+    Model/Lorenz95.cpp
 )
-
-
-# EnDAS header files to be included in IDEs
-target_sources(endas PRIVATE
-    ${CMAKE_SOURCE_DIR}/include/Endas/Endas.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Core/LinAlg.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Core/Ensemble.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Core/Exception.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Core/Profiling.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Algorithm/Model.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Algorithm/Algorithm.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Algorithm/KalmanSmoother.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Algorithm/EnsembleKalmanSmoother.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Caching/ArrayCache.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Caching/MemoryArrayCache.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Observation/ObservationOperator.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Error/CovarianceOperator.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Error/DiagonalCovariance.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Model/Lorenz95.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Random/Random.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Random/MultivariateRandomNormal.hpp
-)
-
 
 target_include_directories(endas PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

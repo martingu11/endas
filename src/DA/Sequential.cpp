@@ -1,4 +1,4 @@
-#include <Endas/Algorithm/Algorithm.hpp>
+#include <Endas/DA/Sequential.hpp>
 #include <Endas/Endas.hpp>
 
 

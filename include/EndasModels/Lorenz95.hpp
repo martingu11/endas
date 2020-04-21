@@ -6,7 +6,7 @@
 #ifndef __ENDAS_MODELS_LORENZ95_HPP__
 #define __ENDAS_MODELS_LORENZ95_HPP__
 
-#include <Endas/Algorithm/Algorithm.hpp>
+#include <Endas/DA/Model.hpp>
 #include <memory>
 
 

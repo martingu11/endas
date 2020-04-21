@@ -2,7 +2,7 @@
 #define __ENDAS_ALGORITHMS_KALMAN_SMOOTHER_HPP__
 
 
-#include <Endas/Algorithm/Algorithm.hpp>
+#include <Endas/DA/Sequential.hpp>
 #include <Endas/Caching/ArrayCache.hpp>
 
 #include <memory>

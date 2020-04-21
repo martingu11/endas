@@ -1,5 +1,5 @@
 
-#include <Endas/Error/CovarianceOperator.hpp>
+#include <Endas/DA/CovarianceOperator.hpp>
 #include <Endas/Endas.hpp>
 
 

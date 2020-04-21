@@ -3,7 +3,6 @@
 
 #include "Config.h"
 #include "Core/LinAlg.hpp"
-#include "Core/Ensemble.hpp"
 #include "Core/Exception.hpp"
 #include "Core/Profiling.hpp"
 

@@ -2,9 +2,9 @@
 #define __ENDAS_EXAMPLES_UTILS_HPP__
 
 #include <Endas/Endas.hpp>
-#include <Endas/Error/CovarianceOperator.hpp>
-#include <Endas/Algorithm/KalmanSmoother.hpp>
-#include <Endas/Algorithm/EnsembleKalmanSmoother.hpp>
+#include <Endas/DA/CovarianceOperator.hpp>
+#include <Endas/DA/Algorithm/KalmanSmoother.hpp>
+#include <Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp>
 
 #include <vector>
 #include <chrono>

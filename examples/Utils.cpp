@@ -1,4 +1,5 @@
 #include "Utils.hpp"
+#include <Endas/DA/Ensemble.hpp>
 
 using namespace std;
 using namespace endas;

@@ -7,9 +7,8 @@
 #define __ENDAS_ALGORITHM_MODEL_HPP__
 
 #include <Endas/Core/Core.hpp>
-#include <Endas/Core/LinAlg.hpp>
-#include <Endas/Error/CovarianceOperator.hpp>
-#include <Endas/Observation/ObservationOperator.hpp>
+#include <Endas/DA/CovarianceOperator.hpp>
+#include <Endas/DA/ObservationOperator.hpp>
 
 #include <functional>
 

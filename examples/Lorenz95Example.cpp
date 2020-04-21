@@ -6,10 +6,11 @@
 #include <Endas/Endas.hpp>
 #include <Endas/Core/Profiling.hpp>
 #include <Endas/Random/Random.hpp>
-#include <Endas/Algorithm/KalmanSmoother.hpp>
-#include <Endas/Algorithm/EnsembleKalmanSmoother.hpp>
-#include <Endas/Error/DiagonalCovariance.hpp>
-#include <Endas/Model/Lorenz95.hpp>
+#include <Endas/DA/Ensemble.hpp>
+#include <Endas/DA/DiagonalCovariance.hpp>
+#include <Endas/DA/Algorithm/KalmanSmoother.hpp>
+#include <Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp>
+#include <EndasModels/Lorenz95.hpp>
 
 
 #if ENDAS_PLOTTING_ENABLED
@@ -83,9 +84,7 @@ int main(int argc, char *argv[])
     x0[20] = 8.008;
 
 
-    // Simple dynamic model for propagating the system state forward in time. The model is 
-    // a rotation of the state around the first dimension by pi/6. The model is therefore 
-    // periodic with 12 steps needed to complete one cycle.
+    // Lorenz 96 nonlinear evolution model.
     Lorenz95Model model(n, F);
 
     // Smoother lag. Zero disables smoothing (only filter solution is computed)

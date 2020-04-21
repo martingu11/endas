@@ -1,5 +1,6 @@
-#include <Endas/Model/Lorenz95.hpp>
+#include <EndasModels/Lorenz95.hpp>
 #include <Endas/Endas.hpp>
+
 #include "../Compatibility.hpp"
 
 #include <unordered_map>

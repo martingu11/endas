@@ -96,6 +96,8 @@ configure_file(${PROJECT_SOURCE_DIR}/include/Endas/Config.h.in ${PROJECT_SOURCE_
 add_subdirectory(src)
 add_subdirectory(examples)
 
+add_subdirectory(include)
+
 
 
 
