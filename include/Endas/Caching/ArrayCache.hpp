@@ -13,6 +13,30 @@
 namespace endas
 {
 
+
+/** 
+ * Single array entry in ArrayCache.
+ */ 
+class ENDAS_DLL ArrayCacheEntry
+{
+public:
+
+    Array2d array;
+    bool isDirty;
+
+    ArrayCacheEntry();
+    ~ArrayCacheEntry();
+    
+    ArrayCacheEntry(const ArrayCacheEntry&) = delete;
+    ArrayCacheEntry& operator=(const ArrayCacheEntry&) = delete;
+
+    ArrayCacheEntry(ArrayCacheEntry&&) = default;
+    ArrayCacheEntry& operator=(ArrayCacheEntry&&) = default;
+
+    void markDirty() { isDirty = true; }
+};
+
+
 /**
  * Abstract array data cache.
  */
@@ -51,21 +75,21 @@ public:
      * must be called to notify the cache that the array contents have changed (which may
      * require new sync to disk, for example).
      */
-    virtual std::shared_ptr<Array2d> get(handle_t handle) const = 0;
+    virtual std::shared_ptr<ArrayCacheEntry> get(handle_t handle) const = 0;
 
 
     /**
      * Retrieves data with exclusive access and removes it from the cache.
      *
      * This is a convenience operation which is equaivalent to calling get() followed by
-     * remove(). The returned array will be removed form the cache but will only be 
+     * remove(). The returned array will be removed from the cache but will only be 
      * destroyed when there are no references to it.
      * 
      * @param handle    Handle to the array instance to retrieve.
      *
      * @return  Original data object.
      */
-    virtual std::shared_ptr<Array2d> pop(handle_t handle);
+    virtual std::shared_ptr<ArrayCacheEntry> pop(handle_t handle);
 
 
     /** 
@@ -79,12 +103,6 @@ public:
      * Removes all data form the cache. This also invalidates all previously returned handles.
      */
     virtual void clear() = 0;
-
-    /**
-     * Marks array as modified.
-     * The array should be checked out via get(), otherwise the operation does nothing.
-     */
-    virtual void markDirty(handle_t handle) = 0;
 
 };
 

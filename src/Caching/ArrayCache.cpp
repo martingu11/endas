@@ -6,12 +6,18 @@
 using namespace std;
 using namespace endas;
 
- ArrayCache::~ArrayCache() { }
 
 
-shared_ptr<Array2d> ArrayCache::pop(handle_t handle)
+ArrayCacheEntry::ArrayCacheEntry() : isDirty(false) { }
+
+ArrayCacheEntry::~ArrayCacheEntry() { }
+
+
+ArrayCache::~ArrayCache() { }
+
+shared_ptr<ArrayCacheEntry> ArrayCache::pop(handle_t handle)
 {
-    shared_ptr<Array2d> A = get(handle);
+    shared_ptr<ArrayCacheEntry> A = get(handle);
     if (A) remove(handle);
     return A;
 }

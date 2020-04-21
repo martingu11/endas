@@ -57,6 +57,8 @@ public:
     virtual bool mcOnly() const override;
     virtual void randomMultivariateNormal(Ref<Array2d> out) const override;
     virtual void solve(const Ref<const Matrix> b, Ref<Matrix> out) const override;
+    virtual void addTo(Ref<Array2d> x, double mult = 1.0) const override;
+
     virtual void toMatrixView(Ref<Matrix> out) const override;
 
 private:

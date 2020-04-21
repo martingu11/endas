@@ -4,69 +4,94 @@
 #include "../Compatibility.hpp"
 
 #include <vector>
-
+#include <deque>
 
 using namespace std;
 using namespace endas;
 
 using handle_t = ArrayCache::handle_t;
 
+typedef SequentialEnsembleSmoother::OnResultFn OnResultFn;
+
+
+EnKSVariant::~EnKSVariant() { }
+
+void EnKSVariant::init(int n, int N)
+{ }
+
+void EnKSVariant::applyCovInflation(Ref<Array2d> E, double factor, int k) const
+{
+    inflateInPlace(E, factor);
+}
+
+void EnKSVariant::processGlobalEnsemble(const Ref<const Array2d> Ag, const ObservationOperator& H,
+                                        int k, vector<Array2d>& dataOut) const
+{ }
 
 /* Smoother data for one time step. */
 struct ENKSData
 {
     int k;
-    handle_t xf, Pf, xa, Pa;
+    handle_t E;
 };
-
-
 
 struct EnsembleKalmanSmoother::Data
 {
+    unique_ptr<EnKSVariant> variant;
+
+    int n, N;
     int lag;
-    shared_ptr<ArrayCache> cache;
+    double covInflation;
+
+    // Localiaztion
+    int numDomains;
 
     // Data for the current update
     bool updateActive;
-    unique_ptr<Ref<ColVec>> upX; // Have to use pointer to Ref<> until we have Ptr<>
-    unique_ptr<Ref<Matrix>> upP;
     int upK;
+    unique_ptr<Ref<Array2d>> upE; // Have to use pointer to Ref<> until we have Ptr<>
+    Matrix upX; // Ensemble transform matrix
+    bool upHaveX; // Is upX already holding a transform?
 
+    
     // Smoother data
-    handle_t smXf;  // Handle to the prior state vector for current update
-    handle_t smPf;  // Handle to the prior error cov. for current update
-    vector<ENKSData> ksSteps; // Data for all smoother steps
+    double forgettingFactor;
+    shared_ptr<ArrayCache> cache;
+    deque<ENKSData> ksSteps; // Data for all smoother steps
 
-    Data() : lag(0), updateActive(false) { }
+    Data() 
+    : lag(0), covInflation(1.0), forgettingFactor(1.0), 
+      updateActive(false), numDomains(0)
+    { }
 
     Data(const Data&) = delete;
 
-
-    void pushSmootherStep(int k, handle_t xf, handle_t Pf, handle_t xa, handle_t Pa)
+    void pushSmootherStep(int k, handle_t E)
     {
-        ksSteps.push_back({ k, xf, Pf, xa, Pa });
+        ksSteps.push_back({ k, E });
     }
 
-    ENKSData popSmootherStep()
-    {
-        ENDAS_ASSERT(ksSteps.size() > 0);
-        auto ksdata = ksSteps.back();
-        ksSteps.pop_back();
-        return ksdata;
-    }
+    //void assimilate(Ref<Array2d> E, void* Egdata, const Ref<const Array> z, 
+    //                const ObservationOperator& H, const CovarianceOperator& R);
 
+    void laggedSmoother(OnResultFn& onresult, bool finishing);
 
 };
 
 
-EnsembleKalmanSmoother::EnsembleKalmanSmoother(const EnKFVariant& variant, int lag, 
-                                               shared_ptr<ArrayCache> cache)
-: mData()
+EnsembleKalmanSmoother::EnsembleKalmanSmoother(const EnKSVariant& variant,  int n, int N,
+                                               int lag, shared_ptr<ArrayCache> cache)
+: mData(make_unique<Data>())
 {
     ENDAS_ASSERT(lag >= 0);
 
+    mData->n = n;
+    mData->N = N;
+    mData->variant = variant.clone();
     mData->lag = lag;
     mData->cache = (cache)? cache : make_shared<MemoryArrayCache>();
+
+    mData->variant->init(n, N);
 }
 
 
@@ -74,14 +99,34 @@ EnsembleKalmanSmoother::~EnsembleKalmanSmoother()
 { }
 
 
+void EnsembleKalmanSmoother::setCovInflationFactor(double factor)
+{
+    ENDAS_ASSERT(factor >= 1.0);
+    mData->covInflation = factor;
+}
+
+void setSmootherForgettingFactor(double factor);
+
+void EnsembleKalmanSmoother::setSmootherForgettingFactor(double factor)
+{
+    ENDAS_ASSERT(factor <= 1.0);
+    mData->forgettingFactor = factor;
+}
 
 
-void EnsembleKalmanSmoother::beginSmoother(const Ref<const Array2d>E0, int k0)
+void EnsembleKalmanSmoother::beginSmoother(const Ref<const Array2d> E0, int k0)
 {
     ENDAS_ASSERT(!mData->updateActive);
+    ENDAS_ASSERT(E0.rows() == mData->n);
+    ENDAS_ASSERT(E0.cols() == mData->N);
+
     if (mData->lag == 0) return;
 
     mData->ksSteps.clear();
+    mData->upE.reset();
+    
+    auto E0handle = mData->cache->put(E0);
+    mData->pushSmootherStep(k0, E0handle);
 }
 
 
@@ -89,64 +134,111 @@ void EnsembleKalmanSmoother::beginSmoother(const Ref<const Array2d>E0, int k0)
 void EnsembleKalmanSmoother::beginAnalysis(Ref<Array2d> E, int k)
 {
     ENDAS_ASSERT(!mData->updateActive);
+    ENDAS_ASSERT(E.rows() == mData->n);
+    ENDAS_ASSERT(E.cols() == mData->N);
 
-    /*mData->upX = make_unique<Ref<ColVec>>(x);
-    mData->upP = make_unique<Ref<Matrix>>(P);
+    int N = E.cols();
+
     mData->upK = k;
-    mData->smXf = mData->cache->put(x);
-    mData->smPf = mData->cache->put(P);*/
+    mData->upE = make_unique<Ref<Array2d>>(E);
+    mData->upX.resize(N, N);
+    mData->upHaveX = false;
+
+    // Multiplicative covariance inflation 
+    if (mData->covInflation != 1.0)
+    {
+        mData->variant->applyCovInflation(*mData->upE, mData->covInflation, k);
+    }
 
     mData->updateActive = true;
 }
 
-void EnsembleKalmanSmoother::assimilate(const Ref<const Array> z, const ObservationOperator& H, 
-                                        const CovarianceOperator& R)
+
+
+void EnsembleKalmanSmoother::assimilate(const Ref<const Array> z, 
+                                        const ObservationOperator& H, const CovarianceOperator& R)
 {
     ENDAS_ASSERT(mData->updateActive);
 
     // Nothing to do
     if (z.size() == 0) return;
 
-    /*ENDAS_ASSERT(z.size() == H.rows());
+    ENDAS_ASSERT(z.size() == H.nobs());
 
-    auto& upX = *mData->upX;
-    auto& upP = *mData->upP;
+    auto& Eg = *mData->upE;
+    int n = Eg.rows();
+    int N = Eg.cols();
 
-    Matrix PHt = upP * H.transpose();
+    // Global analysis
+    if (mData->numDomains == 0)
+    {
+        // Compute whatever the variant will need from the global ensemble. This typically means 
+        // some form of H(E)
+        vector<Array2d> Egdata;
+        {
+            ENDAS_PERF_SCOPE(ProcessGlobalEnsemble);
+            mData->variant->processGlobalEnsemble(Eg, H, mData->upK, Egdata);
+        }
 
-    // Innovation    
-    Matrix dz = z;
-    dz.noalias() -= H * upX;
+        // Compute the analysis ensemble transform
+        {
+            ENDAS_PERF_SCOPE(EnsembleTransform);
+            if (!mData->upHaveX)
+            {
+                mData->variant->ensembleTransform(Eg, Egdata, z, R, mData->upK, mData->upX);
+            }
+            else
+            {
+                Matrix X(N, N);
 
-    // Innovation covariance F = H P H' + R
-    Matrix F = R;
-    F.noalias() += H * PHt;
+                mData->variant->ensembleTransform(Eg, Egdata, z, R, mData->upK, X);
+                mData->upX = mData->upX * X;
+            }
+        }
 
-    // State update as x = x + P H' F^-1 dz
-    Eigen::LLT<Ref<Matrix>> cholF(F);
-    upX.noalias() +=  PHt * cholF.solve(dz);
+        // We only care about X if we are running smoother (if not, we will use upX conveniently 
+        // as a pre-allocated array)
+        mData->upHaveX = mData->upHaveX || mData->lag > 0;
+    }
+    else
+    {
+        ENDAS_NOT_IMPLEMENTED;
+    }
 
-    // Error covariance update as P = P - P H' F^-1 H P 
-    upP.noalias() -= PHt * cholF.solve(H * upP);*/
+
 }
+
+
+//void 
+//EnsembleKalmanSmoother::Data::assimilate(Ref<Array2d> E, void* Egdata, const Ref<const Array> z, 
+//                                         const ObservationOperator& H, const CovarianceOperator& R)
+//{
+//
+//}
+
 
 
 void EnsembleKalmanSmoother::endAnalysis()
 {
     ENDAS_ASSERT(mData->updateActive);
 
+    // First the lagged smoother by updating all previous EnKF states with the transformation matrix
+    // from the current analysis update. For lag=0 this does nothing
+
+    mData->laggedSmoother(this->mOnResultFn, false);
+
+    // Done with smoothing. Store the filter result for this update step and we're done
+
     // Filter only -> solution is available
-    /*if (mData->lag == 0)
+    if (mData->lag == 0)
     {
-        if (mOnResultFn) mOnResultFn(*mData->upX, *mData->upP, mData->upK);
+        if (mOnResultFn) mOnResultFn(*mData->upE, mData->upK);
     }
-    // Smoother -> store smoother data for this time step
     else
     {
-        auto xhandle = mData->cache->put(*mData->upX);
-        auto Phandle = mData->cache->put(*mData->upP);
-        mData->pushSmootherStep(mData->upK, mData->smXf, mData->smPf, xhandle, Phandle);
-    }*/
+        auto Ehandle = mData->cache->put(*mData->upE);
+        mData->pushSmootherStep(mData->upK, Ehandle);
+    }
 
     mData->updateActive = false;
 }
@@ -157,60 +249,86 @@ void EnsembleKalmanSmoother::endSmoother()
 {
     ENDAS_ASSERT(!mData->updateActive);
     if (mData->lag == 0) return;
-    if (mData->ksSteps.size() == 0) return;
-
     ENDAS_ASSERT(mOnResultFn);
 
-    /*
-    // The last filter solution is also the smoother solution
-    auto sm_last = mData->popSmootherStep();
-
-    // We won't need model tangent linear for the last time step
-    mData->model.stepFinished(sm_last.k);
-
-    auto xs = mData->cache->pop(sm_last.xa);
-    auto Ps = mData->cache->pop(sm_last.Pa);
-    ENDAS_ASSERT(xs);
-    ENDAS_ASSERT(Ps);
-
-    mData->onResultFn(*xs, *Ps, sm_last.k);
-
-    // Backward recursion 
-    Matrix MtPa(Ps->rows(), Ps->cols());
-    auto sm_k1 = sm_last;
-
-    while (mData->ksSteps.size() > 0)
-    {
-        auto sm_k = mData->popSmootherStep();
-
-        auto xf = mData->cache->pop(sm_k1.xf);
-        auto Pf = mData->cache->pop(sm_k1.Pf);
-        auto xa = mData->cache->pop(sm_k.xa);
-        auto Pa = mData->cache->pop(sm_k.Pa);
-        ENDAS_ASSERT(xf);
-        ENDAS_ASSERT(Pf);
-        ENDAS_ASSERT(xa);
-        ENDAS_ASSERT(Pa);
-
-        MtPa = *Pa;
-        mData->model.tl(MtPa, sm_k.k);
-
-        Eigen::LLT<Matrix> cholPf(*Pf);
-        Matrix J = cholPf.solve(MtPa).transpose();
-        
-        //if (mData->forgetFactor != 1.0) J*= mData->forgetFactor;
-
-        xa->matrix().noalias() += J * (xs->matrix() - xf->matrix());
-        Pa->matrix().noalias() += J * (Ps->matrix() - Pf->matrix()).transpose() * J.transpose();
-        //Pa->matrix().noalias() += J * (J * (Ps->matrix() - Pf->matrix()).transpose());
-
-        xs = xa;
-        Ps = Pa;
-        sm_k1 = sm_k;
-
-        mData->onResultFn(*xs, *Ps, sm_k.k);
-    }*/
+    mData->laggedSmoother(this->mOnResultFn, true);
 }
+
+
+
+
+inline void smootherApplyForgetFactor(Ref<Matrix> X, double f)
+{
+    if (f == 1.0) return;
+
+    // Apply forgetting factor `f` to `X`. This is done as X = ((X - I)*f ) + I
+    for (int j = 0; j != X.cols(); j++)
+    {
+        for (int i = 0; i != X.rows(); i++)
+        {
+            if (i == j) X(i, j) = (X(i, j) - 1.0) * f + 1.0;
+            else X(i, j)*= f;
+        }
+    }
+    //X.diagonal().array() -= 1.0;  // X = X - I
+    //X.array() *= forgettingFactor;
+    //X.diagonal().array() += 1.0;  // X = X + I
+}
+
+
+
+void EnsembleKalmanSmoother::Data::laggedSmoother(OnResultFn& onresult, bool finishing)
+{
+    if (ksSteps.size() == 0) return;
+
+    ENDAS_PERF_SCOPE(Smoother);
+
+    int kend = ksSteps.size();
+    for (int j = kend-1; j != kend-1-lag; j--)
+    {
+        if (j < 0) break;
+
+        // Is the smoother result ready for this step?
+        bool jIsResult = (j == kend - lag) || finishing;
+
+        const auto& jdata = ksSteps[j];
+
+        auto Ej = cache->get(jdata.E);
+        ENDAS_ASSERT(Ej);
+
+
+        // For global analysis, upE and upX are the global ensemble and transform arrays, so we only 
+        // need to compute Ej * upX
+        if (numDomains == 0)
+        {
+            if (upHaveX && !finishing)
+            {
+                smootherApplyForgetFactor(upX, forgettingFactor);
+                Ej->array.matrix() = Ej->array.matrix() * upX;
+            }
+        }
+        else
+        {
+            ENDAS_NOT_IMPLEMENTED;
+        }
+        
+        // Have lagged result
+        if (jIsResult)
+        {
+            if (onresult) onresult(Ej->array, jdata.k);
+
+            // We will not need the ensemble for step k anymore
+            cache->remove(jdata.E);
+        }
+        // We will still need Ej, let cache know it has been updated
+        else
+        {
+            Ej->markDirty();
+        }
+    }
+
+}
+
 
 
 

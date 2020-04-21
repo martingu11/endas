@@ -44,6 +44,11 @@ template <class Derived> using SoftRef = Eigen::Ref<Derived, 0, Eigen::InnerStri
 
 
 /** 
+ * Returns reference to a shared instance of an empty array object. 
+ */
+ENDAS_DLL const Array2d& emptyArray();
+
+/** 
  * Returns reference to a shared instance of an empty matrix object. 
  */
 ENDAS_DLL const Matrix& emptyMatrix();
@@ -68,6 +73,42 @@ ENDAS_DLL Array makeArray(std::initializer_list<real_t> values);
  *     });  
  */
 ENDAS_DLL Matrix makeMatrix(int rows, int cols, std::initializer_list<real_t> values);
+
+
+
+/**
+ * Computes matrix product out=AB, where A is an NxM dense matrix and B is an MxM diagonal 
+ * matrix. The diagonal matrix B is specified by the array of diagonal elements.
+ * 
+ * @param A     Dense matrix A
+ * @param b     Array of diagonal elements of B
+ * @param out   Pre-allocated matrix (same size as `A`) where to store the result. 
+ * 
+ * @note There are no aliasing issues with this kind of matrix product and `out=A` can be used
+ *       to perform the multiplication in-place.
+ */
+ENDAS_DLL void denseXdiag(const Ref<const Matrix> A, const Ref<const Array> b, Ref<Matrix> out);
+
+/**
+ * Computes matrix product out=AB, where A is an NxN diagonal matrix and B is a dense NxM matrix.
+ * The diagonal matrix B is specified by the array of diagonal elements.
+ * 
+ * @param a     Array of diagonal elements of A
+ * @param B     Dense matrix B
+ * @param out   Pre-allocated matrix (same size as `A`) where to store the result. 
+ * 
+ * @note There are no aliasing issues with this kind of matrix product and `out=B` can be used
+ *       to perform the multiplication in-place.
+ */
+ENDAS_DLL void diagXdense(const Ref<const Array> a, const Ref<const Matrix> B, Ref<Matrix> out);
+
+
+/**
+ * Computes inverse symmetric square root of A. 
+ */
+ENDAS_DLL void inverseSymmetricSqrt(const Ref<const Matrix> A, Ref<Matrix> out, bool noalias = false);
+
+
 
 
 }

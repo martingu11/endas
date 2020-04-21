@@ -67,11 +67,26 @@ void DiagonalCovariance::randomMultivariateNormal(Ref<Array2d> out) const
 void DiagonalCovariance::solve(const Ref<const Matrix> b, Ref<Matrix> out) const
 {
     auto invdiag = inverseDiagonal();
-    for (int i = 0; i != b.rows(); i++)
-    {
-        out.row(i) = invdiag(i) * b.row(i);
-    }
+    diagXdense(invdiag, b, out);
 }
+
+
+void DiagonalCovariance::addTo(Ref<Array2d> x, double mult) const
+{
+    ENDAS_ASSERT(x.rows() == this->mSize);
+    ENDAS_ASSERT(x.cols() == this->mSize);
+
+    if (mult == 1.0)
+    {
+        x.matrix().diagonal().array() += this->diagonal();
+    }
+    else
+    {
+        x.matrix().diagonal().array() += this->diagonal() * mult;
+    }
+    
+}
+
 
 void DiagonalCovariance::toMatrixView(Ref<Matrix> out) const
 {

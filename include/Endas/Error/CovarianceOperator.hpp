@@ -56,6 +56,18 @@ public:
 
 
     /**
+     * Computes `x = x + R * mult`, where `R` is the covariance matrix represented by this operator.
+     * 
+     * Please note that not all covariance operator implementations support this. Use `mcOnly()` to 
+     * check if the matrix form is available. 
+     * 
+     * @param x   Reference to the array to modify.
+     * @throw NotSupportedError if the operation is not supported.
+     */
+    virtual void addTo(Ref<Array2d> x, double mult = 1.0) const;
+
+
+    /**
      * Returns dense matrix representation of the covariance. 
      * 
      * Please note that not all covariance operator implementations support this. Use `mcOnly()` to 

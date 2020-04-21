@@ -6,8 +6,13 @@
 #ifndef __ENDAS_ALGORITHM_MODEL_HPP__
 #define __ENDAS_ALGORITHM_MODEL_HPP__
 
+#include <Endas/Core/Core.hpp>
 #include <Endas/Core/LinAlg.hpp>
+#include <Endas/Error/CovarianceOperator.hpp>
+#include <Endas/Observation/ObservationOperator.hpp>
+
 #include <functional>
+
 
 namespace endas
 {
@@ -94,9 +99,43 @@ public:
 
 
 
+/**
+ * Trivial state evolution model represented by a matrix.
+ */ 
+class ENDAS_DLL MatrixModel : public LinearizedEvolutionModel
+{
+public:
+
+    /** 
+     * MatrixModel constructor.
+     * 
+     * @param M     Model matrix. The referenced matrix instance is copied.
+     */
+    MatrixModel(const Ref<const Matrix> M);
+
+    /**
+     * MatrixModel constructor.
+     * 
+     * @param n     State size.
+     * @param M     Any callable with signature `void(Ref<Matrix>)` that populates the model
+     *              matrix coefficients.
+     */
+    MatrixModel(int n, const std::function<void(Ref<Matrix>)> M);
+
+    /** Returns reference to the internal model matrix. */
+    const Matrix& get() const;
+    
+    virtual void apply(Ref<Array2d> x, int k, double dt, bool store = true) const override;
+    virtual void tl(Ref<Array2d> x, int k) const override;
+    virtual void adj(Ref<Array2d> x, int k) const override;
+
+private:
+    Matrix mModel;
+};
+
+
 
 
 }
-
 
 #endif

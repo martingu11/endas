@@ -35,3 +35,8 @@ void CovarianceOperator::solve(const Ref<const Matrix> b, Ref<Matrix> out) const
     ENDAS_NOT_SUPPORTED("Covariance operator does not support solve()");
 }
 
+
+void CovarianceOperator::addTo(Ref<Array2d> x, double mult) const
+{
+    ENDAS_NOT_SUPPORTED("Covariance operator does not support addTo()");
+}

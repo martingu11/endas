@@ -1,5 +1,4 @@
-#include <Endas/Model/Trivial.hpp>
-
+#include <Endas/Algorithm/Model.hpp>
 
 using namespace std;
 using namespace endas;
@@ -14,6 +13,11 @@ MatrixModel::MatrixModel(int n, const std::function<void(Ref<Matrix>)> M)
 : mModel(n, n)
 {
     M(this->mModel);
+}
+
+const Matrix& MatrixModel::get() const
+{
+    return mModel;
 }
 
 void MatrixModel::apply(Ref<Array2d> x, int k, double dt, bool store) const
@@ -32,8 +36,3 @@ void MatrixModel::adj(Ref<Array2d> x, int k) const
     x.matrix() = x.matrix() * this->mModel.transpose();
 }
 
-
-const Ref<const Matrix> MatrixModel::get() const
-{
-    return mModel;
-}

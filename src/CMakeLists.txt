@@ -4,15 +4,20 @@ add_library(endas SHARED "")
 target_sources(endas PRIVATE
     Endas.cpp
     Core/LinAlg.cpp
+    Core/Ensemble.cpp
     Core/Exception.cpp
+    Core/Profiling.cpp
+    Algorithm/Model.cpp
     Algorithm/Algorithm.cpp
     Algorithm/KalmanSmoother.cpp
     Algorithm/EnsembleKalmanSmoother.cpp
+    Algorithm/EnKSVariantEnKS.cpp
+    Algorithm/EnKSVariantESTKS.cpp
     Caching/ArrayCache.cpp
     Caching/MemoryArrayCache.cpp
+    Observation/ObservationOperator.cpp
     Error/CovarianceOperator.cpp
     Error/DiagonalCovariance.cpp
-    Model/Trivial.cpp
     Model/Lorenz95.cpp
     Random/Random.cpp
     Random/MultivariateRandomNormal.cpp
@@ -24,17 +29,19 @@ target_sources(endas PRIVATE
 target_sources(endas PRIVATE
     ${CMAKE_SOURCE_DIR}/include/Endas/Endas.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Core/LinAlg.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/Core/Ensemble.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Core/Exception.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/Core/Profiling.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/Algorithm/Model.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Algorithm/Algorithm.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Algorithm/KalmanSmoother.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Algorithm/EnsembleKalmanSmoother.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Caching/ArrayCache.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Caching/MemoryArrayCache.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/Observation/ObservationOperator.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Error/CovarianceOperator.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Error/DiagonalCovariance.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Model/Model.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Model/Lorenz95.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Model/Trivial.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Random/Random.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Random/MultivariateRandomNormal.hpp
 )

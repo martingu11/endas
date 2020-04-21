@@ -6,15 +6,26 @@
 #ifndef __ENDAS_ALGORITHM_ALGORITHM_HPP__
 #define __ENDAS_ALGORITHM_ALGORITHM_HPP__
 
+#include "Model.hpp"
+#include <Endas/Core/Core.hpp>
 #include <Endas/Core/LinAlg.hpp>
 #include <Endas/Error/CovarianceOperator.hpp>
 #include <Endas/Observation/ObservationOperator.hpp>
 
 #include <functional>
+#include <limits>
 
 
 namespace endas
 {
+
+/**
+ * Special lag value indicating that a fixed-interval Kalman Smoother should be used, if available.
+ * If not supported, the Kalman Smoother implementation will fall back on fixed-lag implementation
+ * with a very large lag value.
+ */
+constexpr int LAG_FIKS = std::numeric_limits<int>::max();
+
 
 /**
  * Sequential filter interface.
@@ -129,7 +140,7 @@ public:
     /** 
      * Function called from endAnalysis() when solution is available. 
      */
-    typedef std::function<void(const Ref<const Array2d> x, const CovarianceOperator& P, int k)> OnResultFn;
+    typedef std::function<void(const Ref<const Array2d> E, int k)> OnResultFn;
 
     SequentialEnsembleFilter();
     ~SequentialEnsembleFilter();
@@ -206,6 +217,10 @@ public:
     virtual void endSmoother() = 0;
 };
 
+
+
+ENDAS_DLL void ensembleForecast(Ref<Array2d> E, const GenericEvolutionModel& model,
+                                const CovarianceOperator& Q, int k, double dt);
 
 
 

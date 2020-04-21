@@ -12,7 +12,7 @@ using namespace endas;
 struct MemoryArrayCache::Data
 {
     handle_t handleCounter;
-    unordered_map<ArrayCache::handle_t, shared_ptr<Array2d>> entries;
+    unordered_map<ArrayCache::handle_t, shared_ptr<ArrayCacheEntry>> entries;
 };
 
 
@@ -26,15 +26,16 @@ MemoryArrayCache::~MemoryArrayCache()
 
 ArrayCache::handle_t MemoryArrayCache::put(const Ref<const Array2d> data)
 {
-    shared_ptr<Array2d> copy = make_shared<Array2d>(data);
+    shared_ptr<ArrayCacheEntry> e = make_shared<ArrayCacheEntry>();
+    e->array = data;
 
     handle_t handle = mData->handleCounter++;
-    mData->entries.insert(make_pair(handle, copy));
+    mData->entries.insert(make_pair(handle, e));
     return handle;
 }
 
 
-shared_ptr<Array2d> MemoryArrayCache::get(handle_t handle) const
+shared_ptr<ArrayCacheEntry> MemoryArrayCache::get(handle_t handle) const
 {
     ENDAS_ASSERT(handle != ArrayCache::NullHandle);
 
@@ -53,10 +54,5 @@ void MemoryArrayCache::clear()
 {
     mData->entries.clear();
     mData->handleCounter = 0;
-}
-
-void MemoryArrayCache::markDirty(handle_t handle)
-{ 
-    ENDAS_ASSERT(handle != ArrayCache::NullHandle);
 }
 

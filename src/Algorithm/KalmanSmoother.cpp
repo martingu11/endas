@@ -65,7 +65,7 @@ struct KalmanSmoother::Data
 
 
 KalmanSmoother::KalmanSmoother(const Model& model, int lag, shared_ptr<ArrayCache> cache)
-: mData(new Data(model))
+: mData(make_unique<Data>(model))
 {
     ENDAS_ASSERT(lag >= 0);
 
@@ -84,6 +84,8 @@ void KalmanSmoother::beginSmoother(const Ref<const Array>x0, const Ref<const Mat
     if (mData->lag == 0) return;
 
     mData->ksSteps.clear();
+    mData->upX.reset();
+    mData->upP.reset();
 
     auto x0handle = mData->cache->put(x0);
     auto P0handle = mData->cache->put(P0);
@@ -94,13 +96,24 @@ void KalmanSmoother::beginSmoother(const Ref<const Array>x0, const Ref<const Mat
 void KalmanSmoother::forecast(Ref<Array> x, Ref<Matrix> P, const Ref<const Matrix> Q, int k, double dt)
 {
     ENDAS_ASSERT(!mData->updateActive);
+    ENDAS_PERF_SCOPE(Forecast);
 
     // Propagate model 
-    mData->model.apply(x, k, dt, true);
+    {
+        ENDAS_PERF_SCOPE(Model);
+        mData->model.apply(x, k, dt, true);
+    }
 
     // Propagate error covariance Pk+1 = M Pk M' + Q
-    mData->model.tl(P, k);
-    mData->model.adj(P, k);
+    {
+        ENDAS_PERF_SCOPE(ModelTangentLinear);
+        mData->model.tl(P, k);
+    }
+    {
+        ENDAS_PERF_SCOPE(ModelAdjoint);
+        mData->model.adj(P, k);
+    }
+
     if (Q.size() > 0) P+= Q;
 
     // Model can drop any data for step `k`
@@ -124,6 +137,8 @@ void KalmanSmoother::beginAnalysis(Ref<Array> x, Ref<Matrix> P, int k)
 void KalmanSmoother::assimilate(const Ref<const Array> z, const Ref<const Matrix> H, const Ref<const Matrix> R)
 {
     ENDAS_ASSERT(mData->updateActive);
+
+    ENDAS_PERF_SCOPE(Update);
 
     // Nothing to do
     if (z.size() == 0) return;
@@ -182,6 +197,9 @@ void KalmanSmoother::endSmoother()
 
     ENDAS_ASSERT(mOnResultFn);
 
+    ENDAS_PERF_SCOPE(Smoother);
+
+
     /// @todo Currently we're having RTS implementation only but fixed-lag KS would 
     /// be desirable too.
 
@@ -196,10 +214,10 @@ void KalmanSmoother::endSmoother()
     ENDAS_ASSERT(xs);
     ENDAS_ASSERT(Ps);
 
-    mOnResultFn(*xs, *Ps, sm_last.k);
+    mOnResultFn(xs->array, Ps->array, sm_last.k);
 
     // Backward recursion 
-    Matrix MtPa(Ps->rows(), Ps->cols());
+    Matrix MtPa(Ps->array.rows(), Ps->array.cols());
     auto sm_k1 = sm_last;
 
     while (mData->ksSteps.size() > 0)
@@ -215,23 +233,23 @@ void KalmanSmoother::endSmoother()
         ENDAS_ASSERT(xa);
         ENDAS_ASSERT(Pa);
 
-        MtPa = *Pa;
+        MtPa = Pa->array;
         mData->model.tl(MtPa, sm_k.k);
 
-        Eigen::LLT<Matrix> cholPf(*Pf);
+        Eigen::LLT<Matrix> cholPf(Pf->array);
         Matrix J = cholPf.solve(MtPa).transpose();
         
         //if (mData->forgetFactor != 1.0) J*= mData->forgetFactor;
 
-        xa->matrix().noalias() += J * (xs->matrix() - xf->matrix());
-        Pa->matrix().noalias() += J * (Ps->matrix() - Pf->matrix()).transpose() * J.transpose();
+        xa->array.matrix().noalias() += J * (xs->array.matrix() - xf->array.matrix());
+        Pa->array.matrix().noalias() += J * (Ps->array.matrix() - Pf->array.matrix()).transpose() * J.transpose();
         //Pa->matrix().noalias() += J * (J * (Ps->matrix() - Pf->matrix()).transpose());
 
         xs = xa;
         Ps = Pa;
         sm_k1 = sm_k;
 
-        mOnResultFn(*xs, *Ps, sm_k.k);
+        mOnResultFn(xs->array, Ps->array, sm_k.k);
     }
 }
 

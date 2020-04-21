@@ -13,7 +13,7 @@ using namespace endas;
 struct L95Trajectory
 {
     double dt;
-    Array x;
+    Array2d x;
     Array2d k1, k2, k3, k4;
 
     L95Trajectory(int n, int N, double _dt)

@@ -1,8 +1,7 @@
-#ifndef __ENDAS_ALGORITHMS_KF_HPP__
-#define __ENDAS_ALGORITHMS_KF_HPP__
+#ifndef __ENDAS_ALGORITHMS_KALMAN_SMOOTHER_HPP__
+#define __ENDAS_ALGORITHMS_KALMAN_SMOOTHER_HPP__
 
 
-#include <Endas/Model/Model.hpp>
 #include <Endas/Algorithm/Algorithm.hpp>
 #include <Endas/Caching/ArrayCache.hpp>
 
