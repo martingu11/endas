@@ -7,7 +7,8 @@
 #include <Endas/Core/Profiling.hpp>
 #include <Endas/Random/Random.hpp>
 #include <Endas/DA/Ensemble.hpp>
-#include <Endas/DA/DiagonalCovariance.hpp>
+#include <Endas/DA/StateSpaceGeneric.hpp>
+#include <Endas/DA/CovarianceOperator.hpp>
 #include <Endas/DA/Algorithm/KalmanSmoother.hpp>
 #include <Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp>
 #include <EndasModels/Lorenz95.hpp>
@@ -93,15 +94,26 @@ int main(int argc, char *argv[])
     // Kalman Filter we will be using
     endas::KalmanSmoother ks(model, lag);
 
+
+    // Localization strategy for the ensemble smoothers:
+    // Using generic one-dimensional state space where the index of each state variable is also its 
+    // coordinate. Each state variable will be updated independently, i.e. in its own local domain.
+
+    Generic1dStateSpace stateSpace(n);
+    GenericStateSpacePartitioning partitioner(stateSpace);
+
+
     // Ensemble Kalman Filters we will be using
     endas::EnsembleKalmanSmoother enks(EnKS(), n, N, lag);
-    enks.setCovInflationFactor(1.05);   // These are rough guesses, not tuned values.
-    enks.setSmootherForgettingFactor(0.95);
+    enks.setCovInflationFactor(1.15);   // These are rough guesses, not tuned values.
+    enks.setSmootherForgettingFactor(0.9);
+    //enks.localize(shared_ptr_wrap(partitioner));
 
     // Ensemble Kalman Filters we will be using
     endas::EnsembleKalmanSmoother etks(ESTKS(), n, N, lag);
-    etks.setCovInflationFactor(1.05);   // These are rough guesses, not tuned values.
-    etks.setSmootherForgettingFactor(0.95);
+    etks.setCovInflationFactor(1.15);   // These are rough guesses, not tuned values.
+    etks.setSmootherForgettingFactor(0.9);
+    //enks.localize(shared_ptr_wrap(partitioner));
 
     //-----------------------------------------------------------------------------------
     // End of setup

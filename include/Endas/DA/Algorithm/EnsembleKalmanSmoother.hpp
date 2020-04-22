@@ -3,6 +3,8 @@
 
 
 #include <Endas/DA/Sequential.hpp>
+#include <Endas/DA/StateSpace.hpp>
+#include <Endas/DA/Taper.hpp>
 #include <Endas/Caching/ArrayCache.hpp>
 
 #include <memory>
@@ -101,6 +103,8 @@ class ENDAS_DLL EnsembleKalmanSmoother : public SequentialEnsembleSmoother
 {
 public:
 
+    using SequentialEnsembleSmoother::assimilate;
+
     /** 
      * Constructs EnsembleKalmanSmoother.
      * 
@@ -123,16 +127,35 @@ public:
      */
     void setCovInflationFactor(double factor);
 
+
     /**
      * Sets the 'forgetting factor' of the smoother.
      */
     void setSmootherForgettingFactor(double factor);
 
+
+    /**
+     * Sets up analysis using localized domains.
+     * 
+     * @param partitioner   State space partitioning implementation to use.
+     * @param taperFn       Optional covariance tapering function.
+     * 
+     * The tapering function is used for reducing the influence of observations based on their 
+     * distance from the local domain. If not given, the influence of observations is will not 
+     * depend on the distance.
+     */
+    virtual void localize(std::shared_ptr<const StateSpacePartitioning> partitioner, 
+                          std::shared_ptr<const TaperFn> taperFn = nullptr);
+
+    /**
+     * Resets the smoother to global analysis scheme.
+     */
+    virtual void globalize();
+
  
     virtual void beginSmoother(const Ref<const Array2d> E0, int k0) override;
     virtual void beginAnalysis(Ref<Array2d> E, int k) override;
-    virtual void assimilate(const Ref<const Array> z, const ObservationOperator& H, 
-                            const CovarianceOperator& R) override;
+    virtual void assimilate(const ObservationManager& omgr) override;
     virtual void endAnalysis() override;
     virtual void endSmoother() override;
 

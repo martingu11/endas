@@ -21,7 +21,7 @@ void ESTKS::init(int n, int N)
 
     mT = Matrix::Constant(N, N-1, -a);
     mT.diagonal().array() = 1.0 - a;
-    mT.row(n-1).array() = -1.0 / sqrt(N);
+    mT.row(N-1).array() = -1.0 / sqrt(N);
 }
 
 
@@ -53,7 +53,7 @@ void ESTKS::ensembleTransform(Ref<Array2d> E, vector<Array2d>& Egdata,
                               const Ref<const Array> z, const CovarianceOperator& R, int k, 
                               Ref<Matrix> Xout) const
 {
-    double rho = 0.9;
+    double rho = 1.0 - (mInflation - 1.0);
 
     auto Hx = Egdata[0].matrix();
     auto HE = Egdata[1].matrix();

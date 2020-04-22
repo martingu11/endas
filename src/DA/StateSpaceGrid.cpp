@@ -8,7 +8,7 @@ using namespace endas;
 
 struct StateSpaceGrid::Data
 {
-    GridShape shape;
+    ArrayShape shape;
     AABox extent;
     shared_ptr<const CoordinateSystem> crs;
 
@@ -16,7 +16,7 @@ struct StateSpaceGrid::Data
 };
 
 
-StateSpaceGrid::StateSpaceGrid(const GridShape& shape, std::shared_ptr<const CoordinateSystem> crs, 
+StateSpaceGrid::StateSpaceGrid(const ArrayShape& shape, std::shared_ptr<const CoordinateSystem> crs, 
                                const AABox& extent)
 : mData(make_unique<Data>())
 { 
@@ -42,7 +42,7 @@ index_t StateSpaceGrid::size() const
     return mData->size;
 }
 
-const GridShape& StateSpaceGrid::shape() const
+const ArrayShape& StateSpaceGrid::shape() const
 {
     return mData->shape;
 }

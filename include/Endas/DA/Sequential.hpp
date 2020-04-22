@@ -9,6 +9,7 @@
 #include "Model.hpp"
 #include "CovarianceOperator.hpp"
 #include "ObservationOperator.hpp"
+#include "ObservationManager.hpp"
 
 #include <functional>
 #include <limits>
@@ -173,12 +174,24 @@ public:
     /**
      * Assimilates observations in the vector `z` to the state vector `x`.
      * 
+     * @param omgr  Observation manager providing observed values, observation operator and 
+     *              observation error.
+     */
+    virtual void assimilate(const ObservationManager& omgr) = 0;
+
+
+    /**
+     * Assimilates observations in the vector `z` to the state vector `x`.
+     * 
+     * This is a convenience method that wraps `z`, `H` and `R` with .
+     * 
      * @param z     Array of observations.
      * @param H     Observation operator.
      * @param R     Observation error covariance operator.
      */
     virtual void assimilate(const Ref<const Array> z, const ObservationOperator& H, 
-                            const CovarianceOperator& R) = 0;
+                            const CovarianceOperator& R);
+
     
     /**
      * Must be called after all observations have been assimilated.

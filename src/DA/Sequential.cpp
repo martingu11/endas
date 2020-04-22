@@ -30,6 +30,13 @@ void SequentialEnsembleFilter::onResult(OnResultFn fn)
 }
 
 
+void SequentialEnsembleFilter::assimilate(const Ref<const Array> z, const ObservationOperator& H, 
+                                          const CovarianceOperator& R)
+{
+    SimpleObservationManager omgr(z, shared_ptr_wrap(H), shared_ptr_wrap(R));
+    this->assimilate(omgr);
+}
+
 
 
 void endas::ensembleForecast(Ref<Array2d> E, const GenericEvolutionModel& model,
