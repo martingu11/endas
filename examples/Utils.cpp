@@ -1,5 +1,7 @@
 #include "Utils.hpp"
 #include <Endas/DA/Ensemble.hpp>
+#include <Endas/DA/ObservationOperator.hpp>
+#include <Endas/DA/CovarianceOperator.hpp>
 
 using namespace std;
 using namespace endas;
@@ -70,11 +72,10 @@ endas::runKF(KalmanSmoother& kf, int nsteps, double dt, const Ref<const Array> x
     Array x = x0;
 
     // We will need P, Q and R as plain matrices for KalmanSmoother
-    Matrix Pmat, Qmat, Rmat, Hmat;
-    P0.toMatrix(Pmat);
-    Q.toMatrix(Qmat);
-    R.toMatrix(Rmat);
-    H.toMatrix(Hmat);
+    Matrix Pmat = P0.asMatrix();
+    const Matrix& Qmat = Q.asMatrix();
+    const Matrix& Rmat = R.asMatrix();
+    const Matrix& Hmat = H.asMatrix();
 
     Array2d resultX(n, nsteps);
     Array2d resultSD(n, nsteps);
@@ -158,7 +159,9 @@ endas::runEnKF(EnsembleKalmanSmoother& kf, const GenericEvolutionModel& model,
         // Do we have observations for this step? If yes, assimilate
         if (obsTimeSteps[obsIndex] == k)
         {
-            kf.assimilate(obs.col(obsIndex++), H, R);
+            Ref<const Array> z = obs.col(obsIndex++);
+
+            kf.assimilate(z, H, R);
         }
 
         kf.endAnalysis();

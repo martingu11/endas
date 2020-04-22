@@ -8,7 +8,13 @@ using namespace endas;
 
 
 
-const Array2d& endas::emptyArray()
+const Array& endas::emptyArray()
+{
+    static const Array emptyArray;
+    return emptyArray;
+}
+
+const Array2d& endas::emptyArray2d()
 {
     static const Array2d emptyArray2d;
     return emptyArray2d;
@@ -20,20 +26,6 @@ const Matrix& endas::emptyMatrix()
     static const Matrix emptyMatrix;
     return emptyMatrix;
 }
-
-
-/*Vector endas::makeVector(std::initializer_list<real_t> values)
-{
-    Vector vec(values.size());
-
-    real_t* ptr = vec.data();
-    real_t* end = ptr + vec.size();
-    for (auto&& x : values)
-    {
-        (*ptr++) = x;
-    }
-    return vec;
-}*/
 
 
 Array endas::makeArray(std::initializer_list<real_t> values)
@@ -85,6 +77,43 @@ void endas::diagXdense(const Ref<const Array> a, const Ref<const Matrix> B, Ref<
     {
         out.row(i) = B.row(i) * a(i);
     } 
+}
+
+
+void endas::select(const Ref<const Array> A, const Ref<const Array> indices, Ref<Array> out)
+{
+    for (int i = 0; i != indices.size(); i++)
+    {
+        out(i) = A(indices(i));
+    }
+}
+
+void endas::selectRows(const Ref<const Array2d> A, const Ref<const Array> rows, Ref<Array2d> out)
+{
+    for (int i = 0; i != rows.size(); i++)
+    {
+        out.row(i) = A.row(rows(i));
+    }
+}
+
+void endas::selectCols(const Ref<const Array2d> A, const Ref<const Array> cols, Ref<Array2d> out)
+{
+    for (int i = 0; i != cols.size(); i++)
+    {
+        out.col(i) = A.col(cols(i));
+    }
+}
+
+void endas::selectColsRows(const Ref<const Array2d> A, const Ref<const Array> cols, 
+                           const Ref<const Array> rows, Ref<Array2d> out)
+{
+    for (int i = 0; i != cols.size(); i++)
+    {
+        for (int j = 0; j != rows.size(); j++)
+        {
+            out(i, j) = A(cols(i), rows(j));
+        }
+    }
 }
 
 

@@ -51,10 +51,32 @@ template <class Derived> using Ref = Eigen::Ref<Derived>;
 template <class Derived> using SoftRef = Eigen::Ref<Derived, 0, Eigen::InnerStride<>>;
 
 
-/** 
- * Returns reference to a shared instance of an empty array object. 
+/**
+ * Shape of a multi-dimensional array.
  */
-ENDAS_DLL const Array2d& emptyArray();
+typedef Eigen::Array<int, Eigen::Dynamic, 1> ArrayShape;
+
+/**
+ * Shape of a two-dimensional array.
+ */
+typedef Eigen::Array<int, 2, 1> ArrayShape2d;
+
+/**
+ * Shape of a three-dimensional array.
+ */
+typedef Eigen::Array<int, 2, 1> ArrayShape3d;
+
+
+/** 
+ * Returns reference to a shared instance of an empty one-dimensional array object. 
+ */
+ENDAS_DLL const Array& emptyArray();
+
+/** 
+ * Returns reference to a shared instance of an empty two-dimensional array object. 
+ */
+ENDAS_DLL const Array2d& emptyArray2d();
+
 
 /** 
  * Returns reference to a shared instance of an empty matrix object. 
@@ -109,6 +131,17 @@ ENDAS_DLL void denseXdiag(const Ref<const Matrix> A, const Ref<const Array> b, R
  *       to perform the multiplication in-place.
  */
 ENDAS_DLL void diagXdense(const Ref<const Array> a, const Ref<const Matrix> B, Ref<Matrix> out);
+
+
+
+ENDAS_DLL void select(const Ref<const Array> A, const Ref<const Array> indices, Ref<Array> out);
+
+ENDAS_DLL void selectRows(const Ref<const Array2d> A, const Ref<const Array> rows, Ref<Array2d> out);
+
+ENDAS_DLL void selectCols(const Ref<const Array2d> A, const Ref<const Array> cols, Ref<Array2d> out);
+
+ENDAS_DLL void selectColsRows(const Ref<const Array2d> A, const Ref<const Array> cols, 
+                              const Ref<const Array> rows, Ref<Array2d> out);
 
 
 /**

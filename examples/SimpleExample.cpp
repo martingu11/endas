@@ -4,8 +4,9 @@
 
 #include <Endas/Endas.hpp>
 #include <Endas/Random/Random.hpp>
+#include <Endas/DA/CovarianceOperator.hpp>
 #include <Endas/DA/Algorithm/KalmanSmoother.hpp>
-#include <Endas/DA/DiagonalCovariance.hpp>
+
 
 #if ENDAS_PLOTTING_ENABLED
 #   define WITHOUT_NUMPY
@@ -94,11 +95,10 @@ int main(int argc, char *argv[])
         Array x = makeArray({0.5, 0.5, 0.5});  
         
         // We will need P, Q and R as plain matrices for KalmanSmoother
-        Matrix Pmat, Qmat, Rmat, Hmat;
-        P0.toMatrix(Pmat);
-        Q.toMatrix(Qmat);
-        R.toMatrix(Rmat);
-        R.toMatrix(Hmat);
+        Matrix Pmat = P0.asMatrix();
+        const Matrix& Qmat = Q.asMatrix();
+        const Matrix& Rmat = R.asMatrix();
+        const Matrix& Hmat = H.asMatrix();
 
         Array2d resultX(3, nsteps);
         Array2d resultSD(3, nsteps);

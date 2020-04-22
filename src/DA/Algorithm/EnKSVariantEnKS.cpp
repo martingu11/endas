@@ -60,7 +60,7 @@ void EnKS::ensembleTransform(Ref<Array2d> E, vector<Array2d>& Egdata,
     else
     {
         Matrix F = HX * HX.transpose();
-        R.addTo(F, N-1);  // F = F + (N-1)R
+        R.fmadd(F, N-1);  // F = F + (N-1)R
 
         ENDAS_PERF_BEGIN(Invert);
         Eigen::LLT<Ref<Matrix>> cholF(F);

@@ -11,10 +11,12 @@ target_sources(endas PRIVATE
     DA/Model.cpp
     DA/Sequential.cpp
     DA/ObservationOperator.cpp
+    DA/ObservationManager.cpp
     DA/CovarianceOperator.cpp
-    DA/DiagonalCovariance.cpp
     DA/StateSpace.cpp
     DA/StateSpaceGrid.cpp
+    DA/StateSpaceGeneric.cpp
+    DA/Taper.cpp
 
     DA/Algorithm/KalmanSmoother.cpp
     DA/Algorithm/EnsembleKalmanSmoother.cpp
