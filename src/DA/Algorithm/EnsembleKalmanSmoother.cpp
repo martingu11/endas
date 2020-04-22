@@ -16,6 +16,10 @@ using handle_t = ArrayCache::handle_t;
 typedef SequentialEnsembleSmoother::OnResultFn OnResultFn;
 
 
+//-------------------------------------------------------------------------------------------------
+// EnKSVariant
+//-------------------------------------------------------------------------------------------------
+
 EnKSVariant::~EnKSVariant() { }
 
 void EnKSVariant::init(int n, int N)
@@ -29,6 +33,11 @@ void EnKSVariant::applyCovInflation(Ref<Array2d> E, double factor, int k) const
 void EnKSVariant::processGlobalEnsemble(const Ref<const Array2d> Ag, const ObservationOperator& H,
                                         int k, vector<Array2d>& dataOut) const
 { }
+
+
+//-------------------------------------------------------------------------------------------------
+// EnsembleKalmanSmoother
+//-------------------------------------------------------------------------------------------------
 
 /* Smoother data for one time step. */
 struct ENKSData
@@ -45,25 +54,49 @@ struct EnsembleKalmanSmoother::Data
     int lag;
     double covInflation;
 
-    // Localization
-    int numDomains;
+    shared_ptr<ArrayCache> cache;
 
     // Data for the current update
-    bool updateActive;
     int upK;
+    bool updateActive;
+    bool upHaveAssimilatedObs;
+   
     unique_ptr<Ref<Array2d>> upE; // Have to use pointer to Ref<> until we have Ptr<>
     Matrix upX; // Ensemble transform matrix
     bool upHaveX; // Is upX already holding a transform?
 
-    
     // Smoother data
-    double forgettingFactor;
-    shared_ptr<ArrayCache> cache;
+    double smForgetFactor;
     deque<ENKSData> ksSteps; // Data for all smoother steps
 
+    // Data for localization
+    shared_ptr<const StateSpacePartitioning> locSSP;
+    shared_ptr<const TaperFn> locTaperFn;
+
+    int locNumDomains;
+    int locNumNonemptyDomains;
+    index_t locTotalStateSize; // The sum of all locSSP.getLocalStateSize() values
+
+    // Data for the augmented ensemble (global state including additional elements)
+    Array2d locEaug;
+
+    // (N*D) x N super-array of all X matrices  (D = number of nonempty domains)
+    Array2d locX;
+
+    // D-sized array of flags whether locX is in use for a domain
+    Eigen::Array<bool, Eigen::Dynamic, 1> locHaveX;
+    
+    // A 2xD array containing the position where each domain starts in locEaug (here D is the 
+    // number of ALL domains)
+    Eigen::Array<index_t, 2, Eigen::Dynamic> locStateLimits; 
+
+
+    bool isLocalized() { return locNumDomains > 1; }
+
+
     Data() 
-    : lag(0), covInflation(1.0), forgettingFactor(1.0), 
-      updateActive(false), numDomains(0)
+    : lag(0), covInflation(1.0), smForgetFactor(1.0), 
+      updateActive(false), locNumDomains(0)
     { }
 
     Data(const Data&) = delete;
@@ -73,15 +106,36 @@ struct EnsembleKalmanSmoother::Data
         ksSteps.push_back({ k, E });
     }
 
-    //void assimilate(Ref<Array2d> E, void* Egdata, const Ref<const Array> z, 
-    //                const ObservationOperator& H, const CovarianceOperator& R);
+    template <class Fn>
+    void foreachNonemptyDomain(Fn fn)
+    {
+        int i = 0;
+        for (int d = 0; d != locNumDomains; d++)
+        {
+            index_t start = locStateLimits.col(d)(0);
+            index_t nloc = locStateLimits.col(d)(1);
+            if (nloc == 0) continue;
+            fn(d, i++, start, nloc);
+        }
+    }
+
+    void assimilateOne(const ObservationManager::Data& odata, 
+                       const Ref<const Array2d> Eg, Ref<Array2d> E, Ref<Matrix> X, bool& haveX);
 
     void laggedSmoother(OnResultFn& onresult, bool finishing);
+
+    
+    // Unpacks E into the augmented ensemble (locEaug) when local domains are in use.
+    void unpackEnsemble(const Ref<const Array2d> E, Ref<Array2d> Eaug);
+
+    // Packs the augmented ensemble (locEaug) back to E when local domains are in use.
+    void packEnsemble(const Ref<const Array2d> Eaug, Ref<Array2d> E);
 
 };
 
 
-EnsembleKalmanSmoother::EnsembleKalmanSmoother(const EnKSVariant& variant,  int n, int N,
+
+EnsembleKalmanSmoother::EnsembleKalmanSmoother(const EnKSVariant& variant, int n, int N,
                                                int lag, shared_ptr<ArrayCache> cache)
 : mData(make_unique<Data>())
 {
@@ -109,10 +163,100 @@ void EnsembleKalmanSmoother::setCovInflationFactor(double factor)
 
 void setSmootherForgettingFactor(double factor);
 
+
 void EnsembleKalmanSmoother::setSmootherForgettingFactor(double factor)
 {
     ENDAS_ASSERT(factor <= 1.0);
-    mData->forgettingFactor = factor;
+    mData->smForgetFactor = factor;
+}
+
+
+void EnsembleKalmanSmoother::localize(shared_ptr<const StateSpacePartitioning> partitioner, 
+                                      shared_ptr<const TaperFn> taperFn)
+{
+    ENDAS_ASSERT(partitioner);
+    mData->locSSP = partitioner;
+    mData->locTaperFn = taperFn;
+
+    mData->locNumDomains = mData->locSSP->numDomains();
+    ENDAS_ASSERT(mData->locNumDomains > 0);
+
+    // Effectively global analysis
+    if (mData->locNumDomains == 1)
+    {
+        globalize();
+        return;
+    }
+
+    // Go once through all domains and check their state size. It is possible that the overall state 
+    // size (locTotalStateSize) is larger than n if local domains contains some padding. Therefore we 
+    // will use an 'augmented' global state with additional elements, if needed. 
+
+    mData->locNumNonemptyDomains = 0;
+    mData->locTotalStateSize = 0;
+    mData->locStateLimits.resize(mData->locNumDomains, 2);
+
+    for (int d = 0; d != mData->locNumDomains; d++)
+    {
+        index_t nloc = mData->locSSP->getLocalStateSize(d);
+        ENDAS_ASSERT(nloc >= 0); // 0 is allowed (empty domain) as it simplifies SSP implementations
+
+        mData->locStateLimits.col(d)(0) = mData->locTotalStateSize;
+        mData->locStateLimits.col(d)(1) = nloc;
+        mData->locTotalStateSize+= nloc;
+
+        if (nloc > 0) ++mData->locNumNonemptyDomains;
+    }
+
+    // Pre-allocate the augmented global ensemble and X arrays. 
+    mData->locEaug.resize(mData->locTotalStateSize, mData->N);
+    mData->locX.resize(mData->locNumNonemptyDomains * mData->N, mData->N);
+    mData->locHaveX.resize(mData->locNumNonemptyDomains * mData->N, 1);
+}
+
+
+void EnsembleKalmanSmoother::globalize()
+{
+    mData->locSSP.reset();
+    mData->locTaperFn.reset();
+    mData->locNumDomains = 1; 
+    mData->locTotalStateSize = mData->n;
+    mData->locStateLimits.resize(0, 0);
+    mData->locEaug.resize(0, 0);
+    mData->locX.resize(0, 0);  
+    mData->locHaveX.resize(0, 0);
+}
+
+
+void EnsembleKalmanSmoother::Data::unpackEnsemble(const Ref<const Array2d> E, Ref<Array2d> Eaug)
+{
+    foreachNonemptyDomain([&](int d, int i, index_t start, index_t nloc)
+    {
+        locSSP->getLocalState(d, E, Eaug.block(start, 0, nloc, N));
+    });
+    /*for (int d = 0; d != locNumDomains; d++)
+    {
+        index_t start = locStateLimits.col(d)(0);
+        index_t nloc = locStateLimits.col(d)(1);
+        if (nloc == 0) continue;
+        
+    }*/
+}
+
+void EnsembleKalmanSmoother::Data::packEnsemble(const Ref<const Array2d> Eaug, Ref<Array2d> E)
+{
+    foreachNonemptyDomain([&](int d, int i, index_t start, index_t nloc)
+    {
+        locSSP->putLocalState(d, Eaug.block(start, 0, nloc, N), E);
+    });
+
+    /*for (int d = 0; d != locNumDomains; d++)
+    {
+        index_t start = locStateLimits.col(d)(0);
+        index_t nloc = locStateLimits.col(d)(1);
+        if (nloc == 0) continue;
+        locSSP->putLocalState(d, Eaug.block(start, 0, nloc, N), E);
+    }*/
 }
 
 
@@ -126,8 +270,17 @@ void EnsembleKalmanSmoother::beginSmoother(const Ref<const Array2d> E0, int k0)
 
     mData->ksSteps.clear();
     mData->upE.reset();
-    
-    auto E0handle = mData->cache->put(E0);
+
+    handle_t E0handle;
+    if (!mData->isLocalized())
+    {
+         E0handle = mData->cache->put(E0);
+    }
+    else
+    {
+        mData->unpackEnsemble(E0, mData->locEaug);
+        E0handle = mData->cache->put(mData->locEaug);
+    }
     mData->pushSmootherStep(k0, E0handle);
 }
 
@@ -145,11 +298,17 @@ void EnsembleKalmanSmoother::beginAnalysis(Ref<Array2d> E, int k)
     mData->upE = make_unique<Ref<Array2d>>(E);
     mData->upX.resize(N, N);
     mData->upHaveX = false;
+    mData->upHaveAssimilatedObs = false;
 
-    // Multiplicative covariance inflation 
+    // Apply covariance inflation 
     if (mData->covInflation != 1.0)
     {
         mData->variant->applyCovInflation(*mData->upE, mData->covInflation, k);
+    }
+
+    if (mData->isLocalized())
+    {
+        mData->unpackEnsemble(E, mData->locEaug);
     }
 
     mData->updateActive = true;
@@ -157,69 +316,90 @@ void EnsembleKalmanSmoother::beginAnalysis(Ref<Array2d> E, int k)
 
 
 
-void EnsembleKalmanSmoother::assimilate(const Ref<const Array> z, 
-                                        const ObservationOperator& H, const CovarianceOperator& R)
+void EnsembleKalmanSmoother::assimilate(const ObservationManager& omgr)
 {
     ENDAS_ASSERT(mData->updateActive);
-
-    // Nothing to do
-    if (z.size() == 0) return;
-
-    ENDAS_ASSERT(z.size() == H.nobs());
 
     ENDAS_PERF_SCOPE(AssimilateObservations);
 
     auto& Eg = *mData->upE;
-    int n = Eg.rows();
     int N = Eg.cols();
 
     // Global analysis
-    if (mData->numDomains == 0)
+    if (!mData->isLocalized())
     {
-        // Compute whatever the variant will need from the global ensemble. This typically means 
-        // some form of H(E)
-        vector<Array2d> Egdata;
-        {
-            ENDAS_PERF_SCOPE(ProcessGlobalEnsemble);
-            mData->variant->processGlobalEnsemble(Eg, H, mData->upK, Egdata);
-        }
-
-        // Compute the analysis ensemble transform
-        {
-            ENDAS_PERF_SCOPE(EnsembleTransform);
-            if (!mData->upHaveX)
-            {
-                mData->variant->ensembleTransform(Eg, Egdata, z, R, mData->upK, mData->upX);
-            }
-            else
-            {
-                Matrix X(N, N);
-
-                mData->variant->ensembleTransform(Eg, Egdata, z, R, mData->upK, X);
-                mData->upX = mData->upX * X;
-            }
-        }
-
-        // We only care about X if we are running smoother (if not, we will use upX conveniently 
-        // as a pre-allocated array)
-        mData->upHaveX = mData->upHaveX || mData->lag > 0;
+        ObservationManager::Data odata = omgr.getObservations(NullDomain);
+        mData->assimilateOne(odata, Eg, Eg, mData->upX, mData->upHaveX);
     }
+    // Localized analysis
     else
     {
-        ENDAS_NOT_IMPLEMENTED;
+        // Have assimilate dobservations already in this analysis step -> need to reconstruct
+        // global ensemble to be able to call H() on it
+        if (mData->upHaveAssimilatedObs)
+        {
+            mData->packEnsemble(mData->locEaug, Eg);
+        }
+
+        mData->foreachNonemptyDomain([&](int d, int i, index_t start, index_t nloc)
+        {
+            ObservationManager::Data odata = omgr.getObservations(d);
+
+            // No observations for this domain
+            if (odata.obs.size() == 0) return;
+
+            // Local (augmented) state and X
+            auto Ed = mData->locEaug.block(start, 0, nloc, N);
+            auto Xd  = mData->locX.block(i*N, 0, nloc, N);
+            bool& haveXd = mData->locHaveX(i);
+            
+            mData->assimilateOne(odata, Eg, Ed, Xd.matrix(), haveXd);
+        });
     }
-
-
 }
 
 
-//void 
-//EnsembleKalmanSmoother::Data::assimilate(Ref<Array2d> E, void* Egdata, const Ref<const Array> z, 
-//                                         const ObservationOperator& H, const CovarianceOperator& R)
-//{
-//
-//}
+void EnsembleKalmanSmoother::Data::assimilateOne(const ObservationManager::Data& odata, 
+                                                 const Ref<const Array2d> Eg, Ref<Array2d> E, 
+                                                 Ref<Matrix> X, bool& haveX)
+{
+    if (odata.obs.size() == 0) return;
 
+    ENDAS_ASSERT(odata.H);
+    ENDAS_ASSERT(odata.R);
+    ENDAS_ASSERT(odata.H->nobs() == odata.obs.size());
+    ENDAS_ASSERT(odata.R->size() == odata.obs.size());
+
+
+    // Compute whatever the variant will need from the global ensemble. This typically means 
+    // some form of H(E)
+    vector<Array2d> Egdata;
+    {
+        ENDAS_PERF_SCOPE(ProcessGlobalEnsemble);
+        variant->processGlobalEnsemble(Eg, *odata.H, upK, Egdata);
+    }
+
+    // Compute the analysis ensemble transform
+    {
+        ENDAS_PERF_SCOPE(EnsembleTransform);
+        if (!haveX)
+        {
+            variant->ensembleTransform(E, Egdata, odata.obs, *odata.R, upK, X);
+        }
+        else
+        {
+            Matrix XX(N, N);
+            variant->ensembleTransform(E, Egdata, odata.obs, *odata.R, upK, XX);
+            X = X * XX;
+        }
+    }
+
+    // We only care about X if we are running smoother (if not, we will use upX conveniently 
+    // as a pre-allocated array)
+    haveX = haveX || lag > 0;  
+
+    upHaveAssimilatedObs = true; 
+}
 
 
 void EnsembleKalmanSmoother::endAnalysis()
@@ -231,7 +411,13 @@ void EnsembleKalmanSmoother::endAnalysis()
 
     mData->laggedSmoother(this->mOnResultFn, false);
 
-    // Done with smoothing. Store the filter result for this update step and we're done
+    // Done with smoothing. Store the filter result for this update step and we're done. 
+    // If localized analysis was done and `upE` is not up to date, we need to reconstruct it first
+    if (mData->isLocalized() && (mData->upHaveAssimilatedObs || mData->lag > 0))
+    {
+        mData->packEnsemble(mData->locEaug, *mData->upE);
+    }
+
 
     // Filter only -> solution is available
     if (mData->lag == 0)
@@ -240,7 +426,10 @@ void EnsembleKalmanSmoother::endAnalysis()
     }
     else
     {
-        auto Ehandle = mData->cache->put(*mData->upE);
+        handle_t Ehandle = (!mData->isLocalized())? 
+            mData->cache->put(*mData->upE) :
+            mData->cache->put(mData->locEaug);
+
         mData->pushSmootherStep(mData->upK, Ehandle);
     }
 
@@ -257,7 +446,6 @@ void EnsembleKalmanSmoother::endSmoother()
 
     mData->laggedSmoother(this->mOnResultFn, true);
 }
-
 
 
 
@@ -300,26 +488,52 @@ void EnsembleKalmanSmoother::Data::laggedSmoother(OnResultFn& onresult, bool fin
         auto Ej = cache->get(jdata.E);
         ENDAS_ASSERT(Ej);
 
-
-        // For global analysis, upE and upX are the global ensemble and transform arrays, so we only 
-        // need to compute Ej * upX
-        if (numDomains == 0)
+        if (!finishing)
         {
-            if (upHaveX && !finishing)
+            // For global analysis, upE and upX are the global ensemble and transform arrays, so we only 
+            // need to compute Ej * upX
+            if (!isLocalized())
             {
-                smootherApplyForgetFactor(upX, forgettingFactor);
-                Ej->array.matrix() = Ej->array.matrix() * upX;
+                if (upHaveX)
+                {
+                    smootherApplyForgetFactor(upX, smForgetFactor);
+                    Ej->array.matrix() = Ej->array.matrix() * upX;
+                }
             }
-        }
-        else
-        {
-            ENDAS_NOT_IMPLEMENTED;
+            // For local analyses we operate on the augmented ensemble and use the per-domain X matrices
+            else
+            {
+                foreachNonemptyDomain([&](int d, int i, index_t start, index_t nloc)
+                {
+                    if (!locHaveX(i)) return;
+
+                    // Local (augmented) state and X
+                    auto Ed = Ej->array.block(start, 0, nloc, N);
+                    auto Xd  = locX.block(i*N, 0, nloc, N).matrix();
+                    smootherApplyForgetFactor(Xd, smForgetFactor);
+
+                    Ed.matrix() = Ed.matrix() * Xd;
+                });
+            }
         }
         
         // Have lagged result
         if (jIsResult)
         {
-            if (onresult) onresult(Ej->array, jdata.k);
+            if (onresult) 
+            {
+                // Localized analysis -> result is in Ej which is the augmented ensemble. Reconstruct
+                // original first. Here we resue `upE` since it only holds useful data if no observations
+                // were assimilated at this step. In that case we will have to reconstruct `upE` from the 
+                // augmented ensemble later (in endAnalysis()) at some cost.
+                if (isLocalized())
+                {   
+                    packEnsemble(Ej->array, *upE);
+                    onresult(*upE, jdata.k);
+                }
+                else 
+                    onresult(Ej->array, jdata.k);
+            }
 
             // We will not need the ensemble for step k anymore
             cache->remove(jdata.E);
@@ -332,8 +546,4 @@ void EnsembleKalmanSmoother::Data::laggedSmoother(OnResultFn& onresult, bool fin
     }
 
 }
-
-
-
-
 
