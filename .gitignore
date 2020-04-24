@@ -14,8 +14,10 @@ __pycache__/
 # Distribution / packaging
 .Python
 docs/_build
-docs/doxygen
+docs/doxy*
+docs/cppapi
 docs/reference/generated
+
 build/
 develop-eggs/
 dist/

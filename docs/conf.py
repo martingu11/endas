@@ -10,22 +10,31 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
 
-# -- Project information -----------------------------------------------------
+# on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
+import os
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
+if not on_rtd:  # only import and set the theme if we're building docs locally
+    import sphinx_rtd_theme
+    html_theme = 'sphinx_rtd_theme'
+    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
+
+
+# -- Project information -----------------------------------------------------
 project = 'EnDAS'
-copyright = '2019, Martin Gunia'
+copyright = '2020, Martin Gunia'
 author = 'Martin Gunia'
 
 # The short X.Y version.
-version = '0.1'
+version = '0.2'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '0.2'
 
 
 # -- General configuration ---------------------------------------------------
@@ -37,8 +46,54 @@ extensions = [ 'sphinx.ext.autodoc',
                'sphinx.ext.autosummary',
                'sphinx.ext.mathjax',
                #"sphinx.ext.imgmath",
-               'sphinx.ext.napoleon'
+               'sphinx.ext.napoleon',
+               'breathe',
+               'exhale'
 ]
+
+
+
+breathe_projects = {
+    "EnDAS": "./doxyoutput/xml"
+}
+
+breathe_default_project = "EnDAS"
+
+doxygen_input = '''
+INPUT = ../include
+JAVADOC_AUTOBRIEF = YES
+STRIP_FROM_INC_PATH = ../include
+EXTRACT_LOCAL_CLASSES = NO
+HIDE_UNDOC_MEMBERS = YES
+HIDE_UNDOC_CLASSES = YES
+HIDE_FRIEND_COMPOUNDS = YES
+SHOW_USED_FILES = NO
+'''
+
+# Setup the exhale extension
+exhale_args = {
+    # These arguments are required
+    "containmentFolder":     "./cppapi",
+    "rootFileName":          "cppapi_root.rst",
+    "rootFileTitle":         "C/C++ API",
+    "doxygenStripFromPath":  "..",
+    # Suggested optional arguments
+    "createTreeView":        True,
+    # TIP: if using the sphinx-bootstrap-theme, you need
+    # "treeViewIsBootstrap": True,
+    "exhaleExecutesDoxygen": True,
+    "exhaleDoxygenStdin": doxygen_input
+}
+
+
+# Tell sphinx what the primary language being documented is.
+primary_domain = 'cpp'
+
+# Tell sphinx what the pygments highlight language should be.
+highlight_language = 'cpp'
+
+
+
 
 
 autodoc_member_order = "bysource"
@@ -110,4 +165,4 @@ html_theme_options = {
 
 
 def setup(app):
-    app.add_stylesheet('css/custom.css')
+   app.add_stylesheet('css/custom.css')

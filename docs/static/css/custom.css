@@ -1,6 +1,4 @@
 
-
-
 .literal .pre { color : black}
 
 p { text-align : justify }
@@ -12,3 +10,8 @@ div.figure {
     margin-right: 50px;
 }
 
+em.property
+{
+    /** A bit of a hack to correct for the additional space added to HTML around em.property elements */
+    margin-right: -5px;
+}

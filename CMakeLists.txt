@@ -19,6 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(DISABLE_BLAS_LAPACK "Disable usage of BLAS/LAPACK (Eigen's internal implementation will be used)" OFF)
+option(DISABLE_OPENMP "Disable usage of OpenMP" OFF)
 option(DISABLE_PLOTTING "Disable plotting in examples" OFF)
 option(DISABLE_PROFILING "Disable collection of performance profiling information in algorithms" OFF)
 
@@ -31,6 +32,10 @@ if (NOT DISABLE_BLAS_LAPACK)
    find_package(LAPACKE)    
 endif()
 
+if (NOT DISABLE_OPENMP)
+   find_package(OpenMP 2 COMPONENTS CXX)
+endif()   
+
 if (NOT DISABLE_PLOTTING)
    find_package(Python2 COMPONENTS Development)
 endif()
@@ -38,6 +43,7 @@ endif()
 
 set (ENDAS_USING_BLAS 0)
 set (ENDAS_USING_LAPACK 0)
+set (ENDAS_USING_OPENMP 0)
 set (ENDAS_USING_PYTHON 0)
 set (ENDAS_PROFILING_DISABLED 0)
 
@@ -60,6 +66,13 @@ if (LAPACK_FOUND AND LAPACKE_FOUND)
    set (ENDAS_USING_LAPACK 1)
 else()
    message(STATUS "LAPACK   : no")
+endif()
+
+if (OpenMP_CXX_FOUND)
+   message(STATUS "OpenMP   : yes (${OpenMP_CXX_FLAGS})")
+   set (ENDAS_USING_OPENMP 1)
+else()
+   message(STATUS "OpenMP   : no")
 endif()
 
 if (TARGET Python2::Python)
