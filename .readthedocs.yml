@@ -11,11 +11,11 @@ sphinx:
   configuration: docs/conf.py
 
 # Optionally set the version of Python and requirements required to build your docs
-python:
-  version: 3.7
-  install:
-    - requirements: docs/requirements.txt
-    - method: setuptools
-      path: .
-
-  system_packages: true
+#python:
+#  version: 3.7
+#  install:
+#    - requirements: docs/requirements.txt
+#    - method: setuptools
+#      path: .
+#
+#  system_packages: true
