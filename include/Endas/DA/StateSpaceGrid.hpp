@@ -7,6 +7,7 @@
 #define __ENDAS_DA_STATESPACE_GRID_HPP__
 
 #include "StateSpace.hpp"
+#include "StateSpacePartitioning.hpp"
 #include <memory>
 
 namespace endas
@@ -85,6 +86,10 @@ public:
     virtual index_t getLocalStateSize(int d) const override;
     virtual void getLocalState(int d, const Ref<const Array2d> Xg, Ref<Array2d> outXl) const override;
     virtual void putLocalState(int d, const Ref<const Array2d> Xl, Ref<Array2d> Xg) const override;
+
+
+    virtual std::shared_ptr<const PartitionPointQuery> 
+    indexPoints(const Ref<const Array2d> coords) const override;
 
 private:
     struct Data;

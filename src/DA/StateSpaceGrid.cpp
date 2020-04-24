@@ -25,7 +25,7 @@ StateSpaceGrid::StateSpaceGrid(const ArrayShape& shape, std::shared_ptr<const Co
         ENDAS_NOT_SUPPORTED("StateSpaceGrid only supports up to 2 spatial dimensions");
     }
 
-    ENDAS_ASSERT(shape.size() == crs->ndim());
+    ENDAS_ASSERT(shape.size() == crs->dim());
 
     mData->shape = shape;
     mData->extent = extent;
