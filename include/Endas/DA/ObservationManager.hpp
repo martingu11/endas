@@ -8,18 +8,22 @@
 #include "ObservationOperator.hpp"
 #include "CovarianceOperator.hpp"
 #include "StateSpace.hpp"
+#include "StateSpacePartitioning.hpp"
 #include "Taper.hpp"
 
 #include <memory>
-
+#include <utility>
 
 namespace endas
 {
 
 /** 
- * Special purpose local domain index specifying "no domain".
+ * Special purpose local domain index specifying the global domain.
+ * 
+ * This should be the domain index returned from ObservationManager::fetchObservations()
+ * when analysis localization is not in use.
  */
-static constexpr int NullDomain = -1;
+static constexpr int GlobalAnalysisDomainId = -1;
 
 
 /**
@@ -39,61 +43,66 @@ public:
      */
     struct Data
     {
-        Ref<const Array> obs;
-        std::shared_ptr<const ObservationOperator> H;
+        /** Local domain index of the data or GlobalAnalysisDomainId. */
+        int domain; 
+        
+        /** Array of observed values. */
+        Array obs; 
+        
+        /** Observation operator corresponding to `obs`. */
+        std::shared_ptr<const ObservationOperator> H;   
+        
+        /** Error covariance operator corresponding to `obs`. */
         std::shared_ptr<const CovarianceOperator> R;
 
+        /** Constructs empty data entry. */
         Data()
         : obs(emptyArray()), H(nullptr), R(nullptr)
         { }
 
-        Data(Ref<const Array> _obs, std::shared_ptr<const ObservationOperator> _H,
+        /** Constructs data entry. */
+        Data(int _domain, Array _obs, std::shared_ptr<const ObservationOperator> _H,
              std::shared_ptr<const CovarianceOperator> _R)
-        : obs(_obs), H(_H), R(_R)
+        : domain(_domain), obs(std::move(_obs)), H(_H), R(_R)
         { }
+
+        /** Returns `true` if the entry is empty. */
+        bool empty() const { return obs.size() == 0; }
     };
 
-    virtual ~ObservationManager();
+    virtual ~ObservationManager() { }
 
 
-    //virtual void beginAnalysis(int k, std::shared_ptr<const StateSpacePartitioning> partitioner,
-    //                           const TaperFn* taperFn) const = 0;
+
+    /**
+     * Called before assimilation of observations to notify ObservationManager that observations
+     * will be requested. The manager should initialize its internal state so that observations 
+     * can be fetched using fetchObservations().
+     * 
+     * @param k             Analysis time step index.
+     * @param partitioner   State space partitioner if used (i.e. analysis is localized) or 
+     *                      `nullptr`
+     * @param taperFn       Observation covariance tapering function if used or `nullptr`
+     */
+    virtual void beginFetch(int k, const StateSpacePartitioning* partitioner, 
+                            const TaperFn* taperFn) const = 0;
 
 
 
     /** 
-     * Returns observational data for given analysis domain.
+     * Returns observation data.
      * 
-     * @param domain       Index of the analysis domain for which data is to be retrieved. 
-     *                     endas::NullDomain is passed if analysis is global.
-     * @param partitioner  
+     * If analysis is global (null partitioner was passed to beginFetch()), this should return all 
+     * observations at once and set `domain` of the returned data instance to 
+     * `GlobalAnalysisDomainId`. If analysis is local, this should return data for a single local 
+     * domain and set `domain` to the domain index. The order in which data for domains is returned
+     * can be arbitrary.
+     * 
+     * If there are no more observations, returns `Data()`.
      */
-    virtual Data getObservations(int domain) const = 0;
+    virtual Data fetchObservations() const = 0;
 
 };
-
-
-
-class ENDAS_DLL SimpleObservationManager  : public ObservationManager
-{
-public:
-
-    SimpleObservationManager(const Ref<const Array> obs, 
-                             std::shared_ptr<const ObservationOperator> H,
-                             std::shared_ptr<const CovarianceOperator> R);
-
-                      
-
-    virtual Data getObservations(int domain) const override;
-
-private:
-    
-    const Ref<const Array> mObs; 
-    std::shared_ptr<const ObservationOperator> mH;
-    std::shared_ptr<const CovarianceOperator> mR;
-};
-
-
 
 
 

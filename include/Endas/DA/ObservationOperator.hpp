@@ -7,6 +7,7 @@
 
 #include <Endas/Core/LinAlg.hpp>
 
+
 namespace endas
 {
 
@@ -80,7 +81,7 @@ public:
      * @see The ObservationManager interface offers more flexibility for handling localization of
      * observations and should generally be preferred for more complex cases.
      */
-    virtual std::shared_ptr<const ObservationOperator> subset(const Ref<const Array> indices) const;
+    virtual std::shared_ptr<const ObservationOperator> subset(const IndexArray& indices) const;
 
 };
 
@@ -96,17 +97,9 @@ public:
     /** 
      * MatrixObservationOperator constructor.
      * 
-     * @param H     Operator matrix. The referenced matrix instance is copied.
+     * @param H     Operator matrix. The referenced matrix instance is copied or moved.
      */
-    MatrixObservationOperator(const Ref<const Matrix> H);
-
-
-    /** 
-     * MatrixObservationOperator constructor.
-     * 
-     * @param H     Operator matrix.
-     */
-    //MatrixObservationOperator(Matrix&& H);
+    MatrixObservationOperator(Matrix H);
 
 
     virtual index_t nobs() const override;

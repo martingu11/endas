@@ -28,6 +28,23 @@ const Matrix& endas::emptyMatrix()
 }
 
 
+Array endas::makeSequence(real_t start, real_t end, real_t step)
+{
+    index_t size = (index_t)ceil((end - start) / step);
+
+    Array A(size);
+    index_t i = 0;
+    while (start < end)
+    {
+        A(i++) = start;
+        start+= step;
+    }
+    return move(A);
+}
+
+
+
+
 Array endas::makeArray(std::initializer_list<real_t> values)
 {
     Array vec(values.size());
@@ -38,7 +55,7 @@ Array endas::makeArray(std::initializer_list<real_t> values)
     {
         (*ptr++) = x;
     }
-    return vec;
+    return move(vec);
 }
 
 
@@ -52,7 +69,8 @@ Matrix endas::makeMatrix(int rows, int cols, std::initializer_list<real_t> value
     for (int i = 0; i != mat.rows(); i++)
         for (int j = 0; j != mat.cols(); j++)
             mat(i, j) = *value++;
-    return mat;
+    
+    return move(mat);
 }
 
 
@@ -80,39 +98,37 @@ void endas::diagXdense(const Ref<const Array> a, const Ref<const Matrix> B, Ref<
 }
 
 
-void endas::select(const Ref<const Array> A, const Ref<const Array> indices, Ref<Array> out)
+void endas::select(const Ref<const Array> A, const IndexArray& indices, Ref<Array> out)
 {
-    for (int i = 0; i != indices.size(); i++)
-    {
-        out(i) = A(indices(i));
-    }
+    index_t ii = 0;
+    for (index_t i : indices) out(ii++) = A(i);
 }
 
-void endas::selectRows(const Ref<const Array2d> A, const Ref<const Array> rows, Ref<Array2d> out)
+void endas::selectRows(const Ref<const Array2d> A, const IndexArray& rows, Ref<Array2d> out)
 {
-    for (int i = 0; i != rows.size(); i++)
-    {
-        out.row(i) = A.row(rows(i));
-    }
+    index_t rr = 0;
+    for (index_t r : rows) out.row(rr++) = A.row(r);
 }
 
-void endas::selectCols(const Ref<const Array2d> A, const Ref<const Array> cols, Ref<Array2d> out)
+void endas::selectCols(const Ref<const Array2d> A, const IndexArray& cols, Ref<Array2d> out)
 {
-    for (int i = 0; i != cols.size(); i++)
-    {
-        out.col(i) = A.col(cols(i));
-    }
+    index_t cc = 0;
+    for (index_t c : cols) out.col(cc++) = A.col(c);
+
 }
 
-void endas::selectColsRows(const Ref<const Array2d> A, const Ref<const Array> cols, 
-                           const Ref<const Array> rows, Ref<Array2d> out)
+void endas::selectRowsCols(const Ref<const Array2d> A, const IndexArray& rows, 
+                           const IndexArray& cols, Ref<Array2d> out)
 {
-    for (int i = 0; i != cols.size(); i++)
+    index_t ii = 0;
+    for (index_t i : cols)
     {
-        for (int j = 0; j != rows.size(); j++)
+        index_t jj = 0;
+        for (index_t j : rows)
         {
-            out(i, j) = A(cols(i), rows(j));
+            out(ii, jj++) = A(i, j);
         }
+        ++ii;
     }
 }
 

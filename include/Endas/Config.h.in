@@ -23,6 +23,10 @@
 #define ENDAS_PROFILING_DISABLED ${ENDAS_PROFILING_DISABLED}
 
 
+#define EIGEN_HAS_ITERATRORS 0
+#define EIGEN_HAS_RESHAPE 0
+
+
 /** Numeric type used for representing nearly all data in EnDAS. */
 typedef double real_t;
 

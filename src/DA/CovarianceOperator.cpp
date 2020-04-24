@@ -48,7 +48,7 @@ void CovarianceOperator::fmadd(Ref<Array2d> A, double c) const
 }
 
 
-shared_ptr<const CovarianceOperator> CovarianceOperator::subset(const Ref<const Array> indices) const
+shared_ptr<const CovarianceOperator> CovarianceOperator::subset(const IndexArray& indices) const
 {
     // Fallback method using dense matrix
     if (!mcOnly())
@@ -56,7 +56,7 @@ shared_ptr<const CovarianceOperator> CovarianceOperator::subset(const Ref<const 
         const Matrix& P = this->asMatrix();
         
         Matrix Psub(indices.size(), indices.size());
-        selectColsRows(P, indices, indices, Psub);
+        selectRowsCols(P, indices, indices, Psub);
         return make_shared<DenseCovariance>(move(Psub));
     }
     else
@@ -160,7 +160,7 @@ const Matrix& DiagonalCovariance::asMatrix() const
     return mDense;
 }
 
-shared_ptr<const CovarianceOperator> DiagonalCovariance::subset(const Ref<const Array> indices) const
+shared_ptr<const CovarianceOperator> DiagonalCovariance::subset(const IndexArray& indices) const
 {
     Array diagSub(indices.size());
     select((mInitWithInverse)? mInvDiag : mDiag, indices, diagSub);
@@ -181,22 +181,16 @@ struct DenseCovariance::Data
     Eigen::LLT<Matrix> cholP;
     std::unique_ptr<MultivariateRandomNormal> mrn;
 
-    Data(const Ref<const Matrix>& _P) : P(_P), haveCholP(false) { }
-    Data(const Matrix&& _P) : P(_P), haveCholP(false) { }
+    Data(Matrix _P) : P(move(_P)), haveCholP(false) { }
 };
 
 
-DenseCovariance::DenseCovariance(const Ref<const Matrix>& P)
-: mData(make_unique<Data>(P))
+DenseCovariance::DenseCovariance(Matrix P)
+: mData(make_unique<Data>(move(P)))
 { 
     ENDAS_ASSERT(mData->P.cols() == mData->P.rows());
 }
 
-DenseCovariance::DenseCovariance(const Matrix&& P) 
-: mData(make_unique<Data>(P))
-{ 
-    ENDAS_ASSERT(mData->P.cols() == mData->P.rows());
-}
 
 DenseCovariance::~DenseCovariance()
 { }

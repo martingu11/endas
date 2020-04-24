@@ -49,9 +49,7 @@ public:
      * If lag is 0, `fn` is called on the filter solutions. More usefully, when lag > 0, `fn` will be 
      * called for every smoother solution that becomes available.
      * 
-     * @param fn    Any callable compatible with OnResultFn.
-     * 
-     * The callable is copied.
+     * @param fn    Any callable compatible with OnResultFn. The callable is copied.
      */
     virtual void onResult(OnResultFn fn);
 
@@ -152,9 +150,7 @@ public:
      * If lag is 0, `fn` is called on the filter solutions. More usefully, when lag > 0, `fn` will be 
      * called for every smoother solution that becomes available.
      * 
-     * @param fn    Any callable compatible with OnResultFn.
-     * 
-     * The callable is copied.
+     * @param fn    Any callable compatible with OnResultFn. The callable is copied.
      */
     virtual void onResult(OnResultFn fn);
 
@@ -172,25 +168,12 @@ public:
     virtual void beginAnalysis(Ref<Array2d> E, int k) = 0;
 
     /**
-     * Assimilates observations in the vector `z` to the state vector `x`.
+     * Assimilates observations from the given observation manager.
      * 
      * @param omgr  Observation manager providing observed values, observation operator and 
-     *              observation error.
+     *              observation error covariance.
      */
     virtual void assimilate(const ObservationManager& omgr) = 0;
-
-
-    /**
-     * Assimilates observations in the vector `z` to the state vector `x`.
-     * 
-     * This is a convenience method that wraps `z`, `H` and `R` with .
-     * 
-     * @param z     Array of observations.
-     * @param H     Observation operator.
-     * @param R     Observation error covariance operator.
-     */
-    virtual void assimilate(const Ref<const Array> z, const ObservationOperator& H, 
-                            const CovarianceOperator& R);
 
     
     /**

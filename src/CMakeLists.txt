@@ -11,7 +11,7 @@ target_sources(endas PRIVATE
     DA/Model.cpp
     DA/Sequential.cpp
     DA/ObservationOperator.cpp
-    DA/ObservationManager.cpp
+    DA/SimpleObservationManager.cpp
     DA/CovarianceOperator.cpp
     DA/StateSpace.cpp
     DA/StateSpaceGrid.cpp

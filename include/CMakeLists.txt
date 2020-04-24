@@ -12,14 +12,17 @@ target_sources(endas PRIVATE
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/Sequential.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/ObservationOperator.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/ObservationManager.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/DA/SimpleObservationManager.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/CovarianceOperator.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/StateSpace.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/DA/StateSpacePartitioning.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/StateSpaceGrid.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/StateSpaceGeneric.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/Taper.hpp
     
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/Algorithm/KalmanSmoother.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/DA/Algorithm/EnsembleKalmanSmootherVariant.hpp
 
     ${CMAKE_SOURCE_DIR}/include/Endas/Caching/ArrayCache.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Caching/MemoryArrayCache.hpp

@@ -23,8 +23,18 @@ GaspariCohnTaper::GaspariCohnTaper(double L)
 
 void GaspariCohnTaper::taper(const Ref<const Array> x, const Ref<const Array> d, Ref<Array> out) const
 {
+    ENDAS_NOT_IMPLEMENTED;
+}
 
 
+
+NoTaper::NoTaper(double L)
+: TaperFn(L) 
+{ }
+
+void NoTaper::taper(const Ref<const Array> x, const Ref<const Array> d, Ref<Array> out) const
+{
+    ENDAS_NOT_IMPLEMENTED;
 }
 
 
@@ -34,8 +44,7 @@ LinearTaper::LinearTaper(double L)
 
 void LinearTaper::taper(const Ref<const Array> x, const Ref<const Array> d, Ref<Array> out) const
 {
-
-    
+    ENDAS_NOT_IMPLEMENTED;
 }
 
 
@@ -45,8 +54,7 @@ SphericalTaper::SphericalTaper(double L)
 
 void SphericalTaper::taper(const Ref<const Array> x, const Ref<const Array> d, Ref<Array> out) const
 {
-
-    
+    ENDAS_NOT_IMPLEMENTED;
 }
 
 

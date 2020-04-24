@@ -1,4 +1,4 @@
-#include <Endas/DA/StateSpace.hpp>
+#include <Endas/DA/StateSpacePartitioning.hpp>
 
 using namespace std;
 using namespace endas;
@@ -8,21 +8,9 @@ using namespace endas;
 StateSpace::~StateSpace()
 { }
 
-int GriddedStateSpace::ndim() const
+int GriddedStateSpace::dim() const
 {
-    return this->crs().ndim();
-}
-
-
-StateSpacePartitioning::StateSpacePartitioning(shared_ptr<const StateSpace> ss)
-: mSS(ss)
-{ 
-    ENDAS_ASSERT(ss);
-}
-
-const StateSpace& StateSpacePartitioning::stateSpace() const
-{
-    return *mSS;
+    return this->crs().dim();
 }
 
 StateSpacePartitioning::~StateSpacePartitioning()

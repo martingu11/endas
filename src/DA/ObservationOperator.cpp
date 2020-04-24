@@ -19,14 +19,14 @@ const Matrix& ObservationOperator::asMatrix() const
 
 
 
-shared_ptr<const ObservationOperator> ObservationOperator::subset(const Ref<const Array> indices) const
+shared_ptr<const ObservationOperator> ObservationOperator::subset(const IndexArray& indices) const
 {
     // Fallback method using dense matrix
     if (isMatrix())
     {
         const Matrix& H = this->asMatrix();
 
-        Matrix Hsub(indices.size(), indices.size());
+        Matrix Hsub(indices.size(), H.cols());
         selectRows(H, indices, Hsub);
         return make_shared<MatrixObservationOperator>(move(Hsub));
     }
@@ -43,13 +43,9 @@ shared_ptr<const ObservationOperator> ObservationOperator::subset(const Ref<cons
 //-------------------------------------------------------------------------------------------------
 
 
-MatrixObservationOperator::MatrixObservationOperator(const Ref<const Matrix> H)
-: mH(H)
+MatrixObservationOperator::MatrixObservationOperator(Matrix H)
+: mH(move(H))
 { }
-
-//MatrixObservationOperator::MatrixObservationOperator(Matrix&& H)
-//: mH(H)
-//{ }
 
 index_t MatrixObservationOperator::nobs() const { return mH.rows(); }
 index_t MatrixObservationOperator::nstate() const { return mH.cols(); }

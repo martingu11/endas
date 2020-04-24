@@ -28,9 +28,9 @@ public:
 
 
     /**
-     * Returns the number of dimensions.
+     * Returns the number of spatial dimensions.
      */
-    virtual int ndim() const = 0;
+    virtual int dim() const = 0;
 
     /**
      * Returns `true` if this is a Cartesian coordinate system.
@@ -65,11 +65,11 @@ public:
     /**
      * EuclideanCS constructor.
      * 
-     * @param ndim  Number of dimensions, must be >= 1.
+     * @param dim  Number of dimensions, must be >= 1.
      */
-    EuclideanCS(int ndim);
+    EuclideanCS(int dim);
 
-    virtual int ndim() const override;
+    virtual int dim() const override;
     virtual bool isCartesian() const override;
     virtual void distance(const Ref<const Array2d> A, const Ref<const Array2d> B,
                           Ref<Array> out) const override;
@@ -86,7 +86,7 @@ private:
  * LatLonCS implements coordinate system on a perfect sphere with coordinates of any point expressed 
  * as latitude and longitude. The currently implemented coordinate system is strictly two-dimensional, 
  * i.e. there is no vertical component. The coordinates are assumed to be in degrees and the first 
- * coordinate (first row) must be the latitude, second (second row) the longitude.
+ * coordinate is the latitude, second the longitude.
  * 
  * This class is a simple implementation of a polar coordinate system assuming a perfect sphere of 
  * radius `R` and uses the `Haversine formula <https://en.wikipedia.org/wiki/Haversine_formula>`_ to 
@@ -106,7 +106,7 @@ public:
      */
     LatLonCS(double R = 6.371e6);
 
-    virtual int ndim() const override;
+    virtual int dim() const override;
     virtual bool isCartesian() const override;
     virtual void distance(const Ref<const Array2d> A, const Ref<const Array2d> B,
                           Ref<Array> out) const override;

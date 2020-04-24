@@ -19,7 +19,7 @@ EuclideanCS::EuclideanCS(int ndim)
 : mNdim(ndim)
 { }
 
-int EuclideanCS::ndim() const 
+int EuclideanCS::dim() const 
 {
     return mNdim;
 }
@@ -45,7 +45,7 @@ LatLonCS::LatLonCS(double R)
 : mR(R)
 { }
 
-int LatLonCS::ndim() const 
+int LatLonCS::dim() const 
 {
     return 2;
 }

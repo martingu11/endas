@@ -7,7 +7,9 @@
 #define __ENDAS_DA_COVARIANCE_OPERATOR_HPP__
 
 #include <Endas/Core/LinAlg.hpp>
+
 #include <memory>
+
 
 
 namespace endas
@@ -107,7 +109,7 @@ public:
      * @see The ObservationManager interface offers more flexibility for handling localization of
      * covariance and should generally be preferred for more complex cases.
      */
-    virtual std::shared_ptr<const CovarianceOperator> subset(const Ref<const Array> indices) const;
+    virtual std::shared_ptr<const CovarianceOperator> subset(const IndexArray& indices) const;
 
 };
 
@@ -161,7 +163,7 @@ public:
     virtual void fmadd(Ref<Array2d> A, double c = 1.0) const override;
     virtual const Matrix& asMatrix() const override;
 
-    virtual std::shared_ptr<const CovarianceOperator> subset(const Ref<const Array> indices) const override;
+    virtual std::shared_ptr<const CovarianceOperator> subset(const IndexArray& indices) const override;
 
 private:
    
@@ -188,11 +190,9 @@ public:
      * Constructs diagonal covariance with given diagonal or its inverse.
      * The passed array is copied.
      * 
-     * @param P       Covariance matrix. The matrix is copied.
+     * @param P       Covariance matrix. The matrix is copied or moved.
      */
-    DenseCovariance(const Ref<const Matrix>& P);
-
-    DenseCovariance(const Matrix&& P);
+    DenseCovariance(Matrix P);
 
     ~DenseCovariance();
 
