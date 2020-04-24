@@ -7,6 +7,8 @@
 
 #include <vector>
 #include <deque>
+#include <iostream>
+
 
 using namespace std;
 using namespace endas;
@@ -83,12 +85,15 @@ struct EnsembleKalmanSmoother::Data
     // (N*D) x N super-array of all X matrices  (D = number of nonempty domains)
     Array2d locX;
 
-    // D-sized array of flags whether locX is in use for a domain
+    // Array of flags whether locX is in use for a domain for ALL domains
     Eigen::Array<bool, Eigen::Dynamic, 1> locHaveX;
     
-    // A 2xD array containing the position where each domain starts in locEaug (here D is the 
-    // number of ALL domains)
+    // A 2xD array (here D is the number of ALL domains) containing the position where 
+    // each domain starts in locEaug (row(0)) and the local state size (row(1))
     Eigen::Array<index_t, 2, Eigen::Dynamic> locStateLimits; 
+
+    // Array containing the starting index of X matrices in locX of ALL domains
+    Eigen::Array<index_t, Eigen::Dynamic, 1> locXLimits; 
 
 
     bool isLocalized() { return locNumDomains > 1; }
@@ -194,7 +199,8 @@ void EnsembleKalmanSmoother::localize(shared_ptr<const StateSpacePartitioning> p
 
     mData->locNumNonemptyDomains = 0;
     mData->locTotalStateSize = 0;
-    mData->locStateLimits.resize(mData->locNumDomains, 2);
+    mData->locStateLimits.resize(2, mData->locNumDomains);
+    mData->locXLimits.resize(1, mData->locNumDomains);
 
     for (int d = 0; d != mData->locNumDomains; d++)
     {
@@ -205,13 +211,15 @@ void EnsembleKalmanSmoother::localize(shared_ptr<const StateSpacePartitioning> p
         mData->locStateLimits.col(d)(1) = nloc;
         mData->locTotalStateSize+= nloc;
 
+        mData->locXLimits(d) = mData->locNumNonemptyDomains * mData->N;
+
         if (nloc > 0) ++mData->locNumNonemptyDomains;
     }
 
     // Pre-allocate the augmented global ensemble and X arrays. 
     mData->locEaug.resize(mData->locTotalStateSize, mData->N);
     mData->locX.resize(mData->locNumNonemptyDomains * mData->N, mData->N);
-    mData->locHaveX.resize(mData->locNumNonemptyDomains * mData->N, 1);
+    mData->locHaveX.resize(mData->locNumDomains * mData->N, 1);
 }
 
 
@@ -221,7 +229,8 @@ void EnsembleKalmanSmoother::globalize()
     mData->locTaperFn.reset();
     mData->locNumDomains = 1; 
     mData->locTotalStateSize = mData->n;
-    mData->locStateLimits.resize(0, 0);
+    mData->locStateLimits.resize(2, 0);
+    mData->locXLimits.resize(1, 0);
     mData->locEaug.resize(0, 0);
     mData->locX.resize(0, 0);  
     mData->locHaveX.resize(0, 0);
@@ -308,6 +317,8 @@ void EnsembleKalmanSmoother::beginAnalysis(Ref<Array2d> E, int k)
 
     if (mData->isLocalized())
     {
+        mData->locHaveX.fill(false);
+
         mData->unpackEnsemble(E, mData->locEaug);
     }
 
@@ -325,36 +336,56 @@ void EnsembleKalmanSmoother::assimilate(const ObservationManager& omgr)
     auto& Eg = *mData->upE;
     int N = Eg.cols();
 
+    omgr.beginFetch(mData->upK, mData->locSSP.get(), mData->locTaperFn.get());
+
+
     // Global analysis
     if (!mData->isLocalized())
     {
-        ObservationManager::Data odata = omgr.getObservations(NullDomain);
-        mData->assimilateOne(odata, Eg, Eg, mData->upX, mData->upHaveX);
+        ObservationManager::Data odata = omgr.fetchObservations();
+        if (!odata.empty())
+        {
+            ENDAS_ASSERT(odata.domain == GlobalAnalysisDomainId);
+            mData->assimilateOne(odata, Eg, Eg, mData->upX, mData->upHaveX);
+        }
     }
     // Localized analysis
     else
     {
-        // Have assimilate dobservations already in this analysis step -> need to reconstruct
+        // Have assimilated observations already in this analysis step -> need to reconstruct
         // global ensemble to be able to call H() on it
         if (mData->upHaveAssimilatedObs)
         {
             mData->packEnsemble(mData->locEaug, Eg);
         }
 
-        mData->foreachNonemptyDomain([&](int d, int i, index_t start, index_t nloc)
-        {
-            ObservationManager::Data odata = omgr.getObservations(d);
+        //cout << "Local assim " << mData->locNumDomains << endl;
 
-            // No observations for this domain
-            if (odata.obs.size() == 0) return;
+        // Fetch observations from the manager and assimilate...
+        ObservationManager::Data odata;
+        while ((odata = omgr.fetchObservations()).empty() == false)
+        {
+            int d = odata.domain;
+
+            //cout << "Got data for " << d << endl;
+
+            ENDAS_ASSERT(d != GlobalAnalysisDomainId && d >= 0 && d < mData->locNumDomains);
+
+            index_t start = mData->locStateLimits.col(d)(0);
+            index_t nloc = mData->locStateLimits.col(d)(1);
+            index_t Xstart = mData->locXLimits(d);
 
             // Local (augmented) state and X
             auto Ed = mData->locEaug.block(start, 0, nloc, N);
-            auto Xd  = mData->locX.block(i*N, 0, nloc, N);
-            bool& haveXd = mData->locHaveX(i);
-            
+            auto Xd  = mData->locX.block(Xstart, 0, N, N);
+            bool& haveXd = mData->locHaveX(d);
+
+            //cout << "  Assim " << d << endl;
+
             mData->assimilateOne(odata, Eg, Ed, Xd.matrix(), haveXd);
-        });
+
+            //cout << "  Done " << d << endl;
+        }
     }
 }
 
@@ -363,8 +394,6 @@ void EnsembleKalmanSmoother::Data::assimilateOne(const ObservationManager::Data&
                                                  const Ref<const Array2d> Eg, Ref<Array2d> E, 
                                                  Ref<Matrix> X, bool& haveX)
 {
-    if (odata.obs.size() == 0) return;
-
     ENDAS_ASSERT(odata.H);
     ENDAS_ASSERT(odata.R);
     ENDAS_ASSERT(odata.H->nobs() == odata.obs.size());
@@ -505,11 +534,11 @@ void EnsembleKalmanSmoother::Data::laggedSmoother(OnResultFn& onresult, bool fin
             {
                 foreachNonemptyDomain([&](int d, int i, index_t start, index_t nloc)
                 {
-                    if (!locHaveX(i)) return;
+                    if (!locHaveX(d)) return;
 
                     // Local (augmented) state and X
                     auto Ed = Ej->array.block(start, 0, nloc, N);
-                    auto Xd  = locX.block(i*N, 0, nloc, N).matrix();
+                    auto Xd  = locX.block(i*N, 0, N, N).matrix();
                     smootherApplyForgetFactor(Xd, smForgetFactor);
 
                     Ed.matrix() = Ed.matrix() * Xd;
