@@ -1,13 +1,10 @@
 # EnDAS
 
----
-**The master branch is currently being reworked towards the C++/C/Python implementation.** The `0.1-py` branch
-contains the original Python version. 
----
-
 Ensemble Data Assimilation for C++, C and (eventually) Python.
 
-## Overview
+> **NOTE**: The master branch contains the latest C++ implementation of the library. The original 
+  Python-only version is on the `0.1-py` branch.
+
 
 EnDAS is a data assimilation library that focuses on ensemble data assimilation algorithms 
 (although few others are also included for comparison). The main features are:
@@ -25,4 +22,9 @@ EnDAS is a data assimilation library that focuses on ensemble data assimilation 
 
 ## Installation
 
-For installation instruction see [this page](INSTALL.md).
+See [this page](https://endas.readthedocs.io/en/latest/installation.html) for installation instructions.
+
+## Documentation
+
+EnDAS documentation can be found [here](https://endas.readthedocs.io/en/latest/).
+
