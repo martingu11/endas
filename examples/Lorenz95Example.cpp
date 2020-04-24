@@ -9,6 +9,8 @@
 #include <Endas/DA/Ensemble.hpp>
 #include <Endas/DA/StateSpaceGeneric.hpp>
 #include <Endas/DA/CovarianceOperator.hpp>
+#include <Endas/DA/Taper.hpp>
+
 #include <Endas/DA/Algorithm/KalmanSmoother.hpp>
 #include <Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp>
 #include <EndasModels/Lorenz95.hpp>
@@ -42,7 +44,7 @@ int main(int argc, char *argv[])
     int n = 40;
 
     // Ensemble size
-    int N = 30;
+    int N = 20;
 
     // Forcing term of the Lorenz 96 model */
     int F = 8;
@@ -77,8 +79,13 @@ int main(int argc, char *argv[])
     DiagonalCovariance R(Array::Constant(n, 0.15 * sigClim).pow(2));
 
     // Observation operator. All state variables are observed
-    int nobs = 40;
+    int nobs = n;
     MatrixObservationOperator H(Matrix::Identity(n, n));
+
+    // Observation 'coordinates' for use in localization. The index of the observed state variable
+    // will serve as the coordinate. We need 1 x nobs array
+    Array2d obsCoords = makeSequence(0, nobs).transpose();
+
 
     // Initial system state with x21 perturbed a little
     Array x0 = Array::Constant(n, 8.0);
@@ -89,7 +96,7 @@ int main(int argc, char *argv[])
     Lorenz95Model model(n, F);
 
     // Smoother lag. Zero disables smoothing (only filter solution is computed)
-    int lag = 15;
+    int lag = 10;
 
     // Kalman Filter we will be using
     endas::KalmanSmoother ks(model, lag);
@@ -98,22 +105,19 @@ int main(int argc, char *argv[])
     // Localization strategy for the ensemble smoothers:
     // Using generic one-dimensional state space where the index of each state variable is also its 
     // coordinate. Each state variable will be updated independently, i.e. in its own local domain.
-
-    Generic1dStateSpace stateSpace(n);
-    GenericStateSpacePartitioning partitioner(stateSpace);
+    GenericStateSpace stateSpace(n);
+    NoTaper taperFn(0);
 
 
     // Ensemble Kalman Filters we will be using
     endas::EnsembleKalmanSmoother enks(EnKS(), n, N, lag);
-    enks.setCovInflationFactor(1.15);   // These are rough guesses, not tuned values.
-    enks.setSmootherForgettingFactor(0.9);
-    //enks.localize(shared_ptr_wrap(partitioner));
+    enks.setCovInflationFactor(1.05);   // These are rough guesses, not tuned values.
+    enks.localize(shared_ptr_wrap(stateSpace), shared_ptr_wrap(taperFn));
 
     // Ensemble Kalman Filters we will be using
     endas::EnsembleKalmanSmoother etks(ESTKS(), n, N, lag);
-    etks.setCovInflationFactor(1.15);   // These are rough guesses, not tuned values.
-    etks.setSmootherForgettingFactor(0.9);
-    //enks.localize(shared_ptr_wrap(partitioner));
+    etks.setCovInflationFactor(1.05);   // These are rough guesses, not tuned values.
+    etks.localize(shared_ptr_wrap(stateSpace), shared_ptr_wrap(taperFn));
 
     //-----------------------------------------------------------------------------------
     // End of setup
@@ -152,14 +156,14 @@ int main(int argc, char *argv[])
         Array2d enksX, enksErr;
         {
             ENDAS_PERF_SCOPE(ENKS);
-            tie(enksX, enksErr) = runEnKF(enks, model, nsteps, dt, E0, obs, obsTimes, H, Q, R);
+            tie(enksX, enksErr) = runEnKF(enks, model, nsteps, dt, E0, obs, obsCoords, obsTimes, H, Q, R);
         }
 
         cout << "Running ETKS..." << endl;
         Array2d etksX, etksErr;
         {
             ENDAS_PERF_SCOPE(ETKS);
-            tie(etksX, etksErr) = runEnKF(etks, model, nsteps, dt, E0, obs, obsTimes, H, Q, R);
+            tie(etksX, etksErr) = runEnKF(etks, model, nsteps, dt, E0, obs, obsCoords, obsTimes, H, Q, R);
         }
 
 

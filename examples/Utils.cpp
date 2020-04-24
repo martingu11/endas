@@ -2,6 +2,7 @@
 #include <Endas/DA/Ensemble.hpp>
 #include <Endas/DA/ObservationOperator.hpp>
 #include <Endas/DA/CovarianceOperator.hpp>
+#include <Endas/DA/SimpleObservationManager.hpp>
 
 using namespace std;
 using namespace endas;
@@ -121,7 +122,8 @@ endas::runKF(KalmanSmoother& kf, int nsteps, double dt, const Ref<const Array> x
 std::tuple<Array2d, Array2d> 
 endas::runEnKF(EnsembleKalmanSmoother& kf, const GenericEvolutionModel& model,
                int nsteps, double dt, const Ref<const Array2d> E0, 
-               const Ref<const Array2d> obs, const std::vector<int>& obsTimeSteps,
+               const Ref<const Array2d> obs, const Ref<const Array2d> obsCoords, 
+               const std::vector<int>& obsTimeSteps,
                const ObservationOperator& H, const CovarianceOperator& Q, 
                const CovarianceOperator& R)
 {
@@ -160,8 +162,8 @@ endas::runEnKF(EnsembleKalmanSmoother& kf, const GenericEvolutionModel& model,
         if (obsTimeSteps[obsIndex] == k)
         {
             Ref<const Array> z = obs.col(obsIndex++);
-
-            kf.assimilate(z, H, R);
+            SimpleObservationManager omgr(z, obsCoords, shared_ptr_wrap(H), shared_ptr_wrap(R));
+            kf.assimilate(omgr);
         }
 
         kf.endAnalysis();

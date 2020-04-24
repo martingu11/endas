@@ -112,7 +112,8 @@ runKF(KalmanSmoother& ks, int nsteps, double dt, const Ref<const Array> x0,
 std::tuple<Array2d, Array2d> 
 runEnKF(EnsembleKalmanSmoother& ks, const GenericEvolutionModel& model,
         int nsteps, double dt, const Ref<const Array2d> E0, 
-        const Ref<const Array2d> obs, const std::vector<int>& obsTimeSteps,
+        const Ref<const Array2d> obs, const Ref<const Array2d> obsCoords, 
+        const std::vector<int>& obsTimeSteps,
         const ObservationOperator& H, const CovarianceOperator& Q, 
         const CovarianceOperator& R);
 
