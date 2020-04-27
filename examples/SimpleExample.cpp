@@ -29,7 +29,8 @@ constexpr double PI = 3.141592653589793238462643383279502884;
 
 int main(int argc, char *argv[])
 {
-    endas::getRngEngine().seed(1234);
+    // Use pre-seeded RNG for deterministic output.
+    endas::getRandomNumberGenerator().seed(1234);
 
     //-----------------------------------------------------------------------------------
     // Experiment setup

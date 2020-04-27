@@ -22,14 +22,13 @@ MultivariateRandomNormal::MultivariateRandomNormal(const Ref<const Array> mean,
 
 void MultivariateRandomNormal::operator()(Ref<Array2d> out) const
 {
-    rng_engine_t& gen = getRngEngine();
-    static normal_distribution<> dist;
+    RandomNumberGenerator& gen = getRandomNumberGenerator();
 
     for (int i = 0; i != out.cols(); i++)
     {
         auto col = out.col(i);
 
-        mX = mX.unaryExpr([&](real_t x) { return dist(gen); });
+        gen.standardNormal(col);
         col.matrix().noalias() = mTransform * mX.matrix();
         if (mMean.size() > 0) col+= mMean;
     }

@@ -117,15 +117,13 @@ const Ref<const Array> DiagonalCovariance::inverseDiagonal() const
 
 void DiagonalCovariance::randomMultivariateNormal(Ref<Array2d> out) const
 {
-    rng_engine_t& gen = getRngEngine();
-    static normal_distribution<> dist;
+    RandomNumberGenerator& gen = getRandomNumberGenerator();
 
     if (mDiagSD.size() == 0)
     {
         mDiagSD = diagonal().sqrt();
     }
-
-    out = out.unaryExpr([&](real_t x){ return dist(gen); });
+    gen.standardNormal(out);
     out.colwise() *= mDiagSD;
 }
 
