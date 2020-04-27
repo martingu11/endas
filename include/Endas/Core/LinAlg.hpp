@@ -34,6 +34,25 @@ typedef Eigen::Array<real_t, Eigen::Dynamic, 1> Array;
 typedef Eigen::Array<real_t, Eigen::Dynamic, Eigen::Dynamic> Array2d;
 
 
+/** 
+ * An array of indexes.
+ * This is aimed at subsetting arrays and matrices. 
+ */
+typedef std::vector<index_t> IndexArray;
+
+
+/**
+ * One-dimensional array of complex numbers. 
+ */
+typedef Eigen::Array<std::complex<real_t>, Eigen::Dynamic, 1> ComplexArray;
+
+/**
+ * Two-dimensional array of complex numbers. 
+ */
+typedef Eigen::Array<std::complex<real_t>, Eigen::Dynamic, Eigen::Dynamic> ComplexArray2d;
+
+
+
 /** Matrix type. */
 typedef Eigen::MatrixXd Matrix;
 
@@ -42,15 +61,31 @@ typedef Eigen::Matrix<real_t, Eigen::Dynamic, 1> ColVec;
 
 
 /** 
- * Opaque reference to a matrix or array object (actual matrix, array or expressions).
+ * Opaque reference to a matrix or array object (actual matrix, array or expressions) with 
+ * contiguous memory layout.
+ * 
+ * @rst
+ * .. note::
+ *    Ref is tailored for performance as most arrays passed to functions are expected to be 
+ *    **contiguous**. This enables Eigen to vectorize some expressions, avoids additional pointer
+ *    arithmetic on element access and prevents cache trashing. The downside is that when 
+ *    non-contiguous arrays are passed to a const Ref, temporary (contiguous) **copy is made**. 
+ *    Passing non-contiguous arrays via non-const Ref will result in compilation failure. To avoid
+ *    both scenrios use SoftRef where needed.
+ * @endrst
+ * 
  */
 template <class Derived> using Ref = Eigen::Ref<Derived>;
 
 /**
  * Opaque reference to a matrix or array object (actual matrix, array or expressions).
- * Unlike Ref<>, SoftRef<> does not require the referenced memory layout to be contiguous.
+ * Unlike Ref, SoftRef does not require the referenced memory layout to be contiguous along either 
+ * dimension.
+ * 
+ * This should be used only where actually needed, i.e. when it is expected that non-contiguous
+ * arrays will be passed. See Ref documentation for more info.
  */
-template <class Derived> using SoftRef = Eigen::Ref<Derived, 0, Eigen::InnerStride<>>;
+template <class Derived> using SoftRef = Eigen::Ref<Derived, 0, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>;
 
 
 /**
@@ -68,13 +103,6 @@ typedef Eigen::Array<int, 2, 1> ArrayShape2d;
  */
 typedef Eigen::Array<int, 2, 1> ArrayShape3d;
 
-
-
-/** 
- * An array of indexes.
- * This is aimed at subsetting arrays and matrices. 
- */
-typedef std::vector<index_t> IndexArray;
 
 
 /** 
