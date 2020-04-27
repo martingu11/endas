@@ -29,8 +29,10 @@ target_sources(endas PRIVATE
 
     ${CMAKE_SOURCE_DIR}/include/Endas/Random/Random.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Random/MultivariateRandomNormal.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/Random/GaussianRandomField.hpp
 
     ${CMAKE_SOURCE_DIR}/include/Endas/Spatial/Spatial.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/Spatial/Variogram.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Spatial/CoordinateSystem.hpp
 )
 

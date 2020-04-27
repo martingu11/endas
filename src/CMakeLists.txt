@@ -28,8 +28,10 @@ target_sources(endas PRIVATE
     
     Random/Random.cpp
     Random/MultivariateRandomNormal.cpp
+    Random/GaussianRandomField.cpp
 
     Spatial/CoordinateSystem.cpp
+    Spatial/Variogram.cpp
 
     Model/Lorenz95.cpp
 )
@@ -38,6 +40,9 @@ target_include_directories(endas PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
+
+target_include_directories(endas PRIVATE ${THIRDPARTY_DIR}/simplefft/include)
+
 
 target_link_libraries(endas PUBLIC Eigen3::Eigen)
 
