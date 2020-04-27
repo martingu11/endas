@@ -18,11 +18,18 @@
 #   define EIGEN_USE_LAPACKE
 #endif
 
+
+// Defined as 1 if plotting functionality should be disabled (requires Python), otherwise 0
 #define ENDAS_PLOTTING_ENABLED ${ENDAS_USING_PYTHON}
 
+// Defined as 1 if colleciton of profiling data should be disabled, otherwise 0
 #define ENDAS_PROFILING_DISABLED ${ENDAS_PROFILING_DISABLED}
 
+// Defined as 1 if EnDAS should run in "deterministic" mode, otherwise 0
+#define ENDAS_DETERMINISTIC ${ENDAS_DETERMINISTIC}
 
+
+// Eigen capabilities. Currently assuming version 3.3
 #define EIGEN_HAS_ITERATRORS 0
 #define EIGEN_HAS_RESHAPE 0
 

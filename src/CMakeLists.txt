@@ -51,6 +51,11 @@ if (ENDAS_USING_LAPACK)
 endif()
 
 
+if (ENDAS_USING_OPENMP)
+    target_link_libraries(endas PRIVATE OpenMP::OpenMP_CXX)
+endif()
+
+
 
 install(TARGETS endas DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
