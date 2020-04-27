@@ -110,12 +110,26 @@ void endas::selectRows(const Ref<const Array2d> A, const IndexArray& rows, Ref<A
     for (index_t r : rows) out.row(rr++) = A.row(r);
 }
 
+void endas::distributeRows(const Ref<const Array2d> A, const IndexArray& rows, Ref<Array2d> out)
+{
+    index_t rr = 0;
+    for (index_t r : rows) out.row(r) = A.row(rr++);
+}
+
+
 void endas::selectCols(const Ref<const Array2d> A, const IndexArray& cols, Ref<Array2d> out)
 {
     index_t cc = 0;
     for (index_t c : cols) out.col(cc++) = A.col(c);
 
 }
+
+void endas::distributeCols(const Ref<const Array2d> A, const IndexArray& cols, Ref<Array2d> out)
+{
+    index_t cc = 0;
+    for (index_t c : cols) out.col(c) = A.col(cc++);
+}
+
 
 void endas::selectRowsCols(const Ref<const Array2d> A, const IndexArray& rows, 
                            const IndexArray& cols, Ref<Array2d> out)

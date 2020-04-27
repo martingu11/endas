@@ -101,7 +101,7 @@ typedef Eigen::Array<int, 2, 1> ArrayShape2d;
 /**
  * Shape of a three-dimensional array.
  */
-typedef Eigen::Array<int, 2, 1> ArrayShape3d;
+typedef Eigen::Array<int, 3, 1> ArrayShape3d;
 
 
 
@@ -195,6 +195,13 @@ ENDAS_DLL void selectCols(const Ref<const Array2d> A, const IndexArray& cols, Re
 
 ENDAS_DLL void selectRowsCols(const Ref<const Array2d> A, const IndexArray& rows, 
                               const IndexArray& cols, Ref<Array2d> out);
+
+/** 
+ * 
+ */ 
+ENDAS_DLL void distributeRows(const Ref<const Array2d> A, const IndexArray& rows, Ref<Array2d> out);
+
+ENDAS_DLL void distributeCols(const Ref<const Array2d> A, const IndexArray& cols, Ref<Array2d> out);
 
 
 

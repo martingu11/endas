@@ -20,10 +20,13 @@ EnDAS is a data assimilation library that focuses on ensemble data assimilation 
 -  Utilities for generating random fields
 
 
+
+
+
 Requirements
 ------------
 
-EnDAS is written in C++11 and its only required dependency is Eigen `Eigen <http://eigen.tuxfamily.org>`_. 
+EnDAS is written in C++11 and its only required dependency is `Eigen <http://eigen.tuxfamily.org>`_. 
 Please see the :doc:`Installation instructions page <installation>` for more information.
 
 
@@ -33,13 +36,15 @@ Installation
 See the :doc:`Installation instructions page <installation>`.
 
 
-Examples
---------
+Where to start?
+---------------
 
-TO BE COMPLETETED.
+
 
 Code examples can be found in the **examples** directory of the
 `EnDAS repository on GitHub <https://github.com/martingu11/endas>`_.
+
+
 
 
 Indices and tables

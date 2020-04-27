@@ -1,7 +1,7 @@
 
 .literal .pre { color : black}
 
-p { text-align : justify }
+/* p { text-align : justify } */
 
 li > p { text-align : left }
 

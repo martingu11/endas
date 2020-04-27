@@ -14,14 +14,16 @@ target_sources(endas PRIVATE
     DA/SimpleObservationManager.cpp
     DA/CovarianceOperator.cpp
     DA/StateSpace.cpp
-    DA/StateSpaceGrid.cpp
-    DA/StateSpaceGeneric.cpp
+    DA/GenericStateSpace.cpp
     DA/Taper.cpp
 
     DA/Algorithm/KalmanSmoother.cpp
     DA/Algorithm/EnsembleKalmanSmoother.cpp
     DA/Algorithm/EnKSVariantEnKS.cpp
     DA/Algorithm/EnKSVariantESTKS.cpp
+
+    DA/Grid/GridStateSpace.cpp
+    DA/Grid/GridStateSpacePartitioning.cpp
     
     Caching/ArrayCache.cpp
     Caching/MemoryArrayCache.cpp

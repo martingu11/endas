@@ -10,6 +10,8 @@
 #include <Endas/Spatial/Spatial.hpp>
 #include <Endas/Spatial/CoordinateSystem.hpp>
 
+#include <Eigen/Geometry>
+
 
 namespace endas
 {
@@ -47,6 +49,10 @@ class GriddedStateSpace : public StateSpace
 {
 public:
 
+    /** Rectangular region within the state space grid. */
+    typedef Eigen::AlignedBox<index_t, Eigen::Dynamic> Block;
+
+
     /**
      * Returns the grid dimension (1 for discrete line, 2 for rectangular grid etc...).
      * This is a convenient alias for `crs().dim()`.
@@ -67,6 +73,67 @@ public:
      * Returns the coordinate system of the state space.
      */
     virtual const CoordinateSystem& crs() const = 0;
+
+
+    /** 
+     * Returns size of the subset of the state vector that is inside the given rectangular region.
+     */
+    virtual index_t size(const Block& block) const = 0;
+
+
+    /**
+     * Returns indices to state vector elements within the given block.
+     * 
+     * @rst
+     * .. tip::
+     *    Use :func:`hasEfficientSubset()` to determine whether :func:`getIndices()` is more efficient 
+     *    than :func:`getSubset()` and :func:`putSubset()`.
+     * @endrst
+     */
+    virtual void getIndices(const Block& block, IndexArray& out) const = 0;
+
+
+    /** 
+     * Returns `true` if the getSubset() method offers more efficient alternative to getIndices().
+     * 
+     * For dense grids, access to sub-regions via getSubset() and putSubset() is typically more 
+     * efficient than subsetting state vector using indices returned from getIndices(). For sparse
+     * grids or grids whose state vector is shuffled in some way the getIndices() approach will be
+     * more efficient. 
+     * 
+     * The default implementation returns ``false``.
+     */
+    virtual bool hasEfficientSubset() const;
+
+    /** 
+     * Reads subset of the state vector for given block.
+     * 
+     * @rst
+     * .. tip::
+     *    The default implementation falls back on calling :func:`getIndices()` and will perform poorly if 
+     *    :func:`putSubset()` is also called at some point. Use :func:`hasEfficientSubset()` to 
+     *    determine whether :func:`getSubset()` and :func:`putSubset()` offer efficientg access and 
+     *    use :func:`getIndices()` directly otherwise (likely storing the indices for later as well).
+     * @endrst
+     * 
+     * @param block  Subset of the grid to read.
+     * @param X      State vector or an ensemble of state vectors to read from.
+     * @param out    State vector or an ensemble of state vectors to write the subset to.
+     */
+    virtual void getSubset(const Block& block, const Ref<const Array2d> X, Ref<Array2d> out) const;
+
+
+    /** 
+     * Writes subset of the state vector for given block.
+     *
+     * See getSubset() documentation for more information on performance of getSubset() and putSubset().
+     * 
+     * @param block  Subset of the grid to write.
+     * @param X      State vector or an ensemble of state vectors to read from.
+     * @param out    State vector or an ensemble of state vectors to write to.
+     */
+    virtual void putSubset(const Block& block, const Ref<const Array2d> X, Ref<Array2d> out) const;
+
 
     /**
      * Returns flat array of indexes identifying grid cells included in the state vector. 

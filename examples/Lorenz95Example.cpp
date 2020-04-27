@@ -7,7 +7,7 @@
 #include <Endas/Core/Profiling.hpp>
 #include <Endas/Random/Random.hpp>
 #include <Endas/DA/Ensemble.hpp>
-#include <Endas/DA/StateSpaceGeneric.hpp>
+#include <Endas/DA/GenericStateSpace.hpp>
 #include <Endas/DA/CovarianceOperator.hpp>
 #include <Endas/DA/Taper.hpp>
 

@@ -65,6 +65,10 @@ public:
 
 
 
+#define ENDAS_REQUIRE(expr, extype, msg) { if (!(expr)) throw extype(msg); }
+
+
+
 
 }
 

@@ -1,4 +1,4 @@
-#include <Endas/DA/StateSpaceGeneric.hpp>
+#include <Endas/DA/GenericStateSpace.hpp>
 #include "../Compatibility.hpp"
 
 

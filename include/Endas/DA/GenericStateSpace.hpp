@@ -1,10 +1,10 @@
 /**
- * @file StateSpaceGeneric.hpp
+ * @file GenericStateSpace.hpp
  * @author Martin Gunia
  */
 
-#ifndef __ENDAS_DA_STATESPACE_GENERIC_HPP__
-#define __ENDAS_DA_STATESPACE_GENERIC_HPP__
+#ifndef __ENDAS_DA_GENERIC_STATESPACE_HPP__
+#define __ENDAS_DA_GENERIC_STATESPACE_HPP__
 
 #include "StateSpace.hpp"
 #include "StateSpacePartitioning.hpp"
