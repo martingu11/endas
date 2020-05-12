@@ -74,30 +74,6 @@ Matrix endas::makeMatrix(int rows, int cols, std::initializer_list<real_t> value
 }
 
 
-
-void endas::denseXdiag(const Ref<const Matrix> A, const Ref<const Array> b, Ref<Matrix> out)
-{
-    ENDAS_ASSERT(b.size() == A.cols());
-    ENDAS_ASSERT(A.rows() == out.rows() && A.cols() == out.cols());
-
-    for (int j = 0; j != A.cols(); j++)
-    {
-        out.col(j) = A.col(j) * b(j);
-    }
-}
-
-void endas::diagXdense(const Ref<const Array> a, const Ref<const Matrix> B, Ref<Matrix> out)
-{
-    ENDAS_ASSERT(a.size() == B.rows());
-    ENDAS_ASSERT(B.rows() == out.rows() && B.cols() == out.cols());
-
-    for (int i = 0; i != B.rows(); i++)
-    {
-        out.row(i) = B.row(i) * a(i);
-    } 
-}
-
-
 void endas::select(const Ref<const Array> A, const IndexArray& indices, Ref<Array> out)
 {
     index_t ii = 0;
@@ -154,8 +130,7 @@ void endas::inverseSymmetricSqrt(const Ref<const Matrix> A, Ref<Matrix> out, boo
     const Matrix& U = Asvd.matrixU();
     Array s = Asvd.singularValues().array().pow(-0.5);
 
-    Matrix SU(U.cols(), U.rows()); 
-    diagXdense(s, U.transpose(), SU);
+    Matrix SU = s.matrix().asDiagonal() * U.transpose();
 
     if (noalias)
     {

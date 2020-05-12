@@ -130,7 +130,7 @@ void DiagonalCovariance::randomMultivariateNormal(Ref<Array2d> out) const
 void DiagonalCovariance::solve(const Ref<const Matrix> b, Ref<Matrix> out) const
 {
     auto invdiag = inverseDiagonal();
-    diagXdense(invdiag, b, out);
+    out.noalias() = invdiag.matrix().asDiagonal() * b;
 }
 
 

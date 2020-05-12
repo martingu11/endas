@@ -71,7 +71,7 @@ typedef Eigen::Matrix<real_t, Eigen::Dynamic, 1> ColVec;
  *    arithmetic on element access and prevents cache trashing. The downside is that when 
  *    non-contiguous arrays are passed to a const Ref, temporary (contiguous) **copy is made**. 
  *    Passing non-contiguous arrays via non-const Ref will result in compilation failure. To avoid
- *    both scenrios use SoftRef where needed.
+ *    both scenarios, use SoftRef where needed.
  * @endrst
  * 
  */
@@ -156,35 +156,6 @@ ENDAS_DLL Array makeArray(std::initializer_list<real_t> values);
  *     });  
  */
 ENDAS_DLL Matrix makeMatrix(int rows, int cols, std::initializer_list<real_t> values);
-
-
-
-/**
- * Computes matrix product out=AB, where A is an NxM dense matrix and B is an MxM diagonal 
- * matrix. The diagonal matrix B is specified by the array of diagonal elements.
- * 
- * @param A     Dense matrix A
- * @param b     Array of diagonal elements of B
- * @param out   Pre-allocated matrix (same size as `A`) where to store the result. 
- * 
- * @note There are no aliasing issues with this kind of matrix product and `out=A` can be used
- *       to perform the multiplication in-place.
- */
-ENDAS_DLL void denseXdiag(const Ref<const Matrix> A, const Ref<const Array> b, Ref<Matrix> out);
-
-/**
- * Computes matrix product out=AB, where A is an NxN diagonal matrix and B is a dense NxM matrix.
- * The diagonal matrix B is specified by the array of diagonal elements.
- * 
- * @param a     Array of diagonal elements of A
- * @param B     Dense matrix B
- * @param out   Pre-allocated matrix (same size as `A`) where to store the result. 
- * 
- * @note There are no aliasing issues with this kind of matrix product and `out=B` can be used
- *       to perform the multiplication in-place.
- */
-ENDAS_DLL void diagXdense(const Ref<const Array> a, const Ref<const Matrix> B, Ref<Matrix> out);
-
 
 
 ENDAS_DLL void select(const Ref<const Array> A, const IndexArray& indices, Ref<Array> out);
