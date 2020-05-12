@@ -30,6 +30,12 @@ const Matrix& MatrixModel::get() const
     return mModel;
 }
 
+Matrix& MatrixModel::get()
+{
+    return mModel;
+}
+
+
 void MatrixModel::operator()(Ref<Array2d> x, int k, double dt, bool store) const
 {
     x.matrix() = this->mModel * x.matrix();

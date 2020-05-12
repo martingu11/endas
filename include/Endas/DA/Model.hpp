@@ -22,15 +22,14 @@ namespace endas
  * 
  * The EvolutionModel and derived base classes are used primarily with the toy models included with
  * ENDAS. For use with real-world models, it is usually not necessary to wrap your model in a class 
- * derived from EvolutionModel (or in any class for that matter). 
- * 
- * For convenience, EvolutionModel is implicitly constructible from any callable (function, functor) 
- * with signature 
+ * (derived from EvolutionModel or not). For convenience, EvolutionModel is implicitly constructible 
+ * from any callable (function, functor) with signature 
  * 
  *     void(Ref<Array2d> x, int k, double dt)
  * 
- * The callable object is stored via ``std::function`` and is therefore copied. If implementing your
- * own model as a class, it is preferred to derive from EvolutionModel to avoid the copy.
+ * The callable object is stored via ``std::function`` and is therefore copied. If you are implementing 
+ * your own model as a class, it is preferred to derive from EvolutionModel and override `operator()` 
+ * to avoid the copy.
  */
 class ENDAS_DLL EvolutionModel
 {
@@ -50,7 +49,7 @@ public:
      * Propagates state vector from time `t` to `t+dt`.
      * 
      * The state vector `x` is modified in-place. The parameter `store` informs the model whether
-     * the model trajectory should be stored for linearization. Therefore, it only applies to models
+     * model trajectory should be stored for linearization. Therefore, it only applies to models
      * that also implement the LinearizedEvolutionModel interface and the parameter can be ignored 
      * otherwise.
      * 
@@ -83,6 +82,9 @@ public:
     /**
      * Applies tangent-linear of the model at step `k` to `x`.
      * 
+     * The tangent-linear may rely on trajectory data for the time step `k` to be present. Therefore
+     * `operator()` should be called with `store=true`. The array `x` is modified in-place.
+     * 
      * @param x     Matrix to apply the tangent-linear to.
      * @param k     The time step index at which the tangent-linear is applied.
      */
@@ -91,6 +93,9 @@ public:
     
     /**
      * Applies adjoint of the model at step `k` to `x`.
+     * 
+     * The adjoint may rely on trajectory data for the time step `k` to be present. Therefore
+     * `operator()` should be called with `store=true`. The array `x` is modified in-place.
      * 
      * @param x     Matrix to apply the adjoint to.
      * @param k     The time step index at which the adjoint is applied.
@@ -122,7 +127,7 @@ public:
     /** 
      * MatrixModel constructor.
      * 
-     * Use ``std::move()`` to contructs MatrixModel without copying the passed in matrix as follows:
+     * Use ``std::move()`` to contruct MatrixModel without copying the passed in matrix as follows:
      * 
      *     Matrix M = ...;
      *     MatrixModel model(M);               // M is copied
@@ -138,6 +143,9 @@ public:
     /** Returns reference to the internal model matrix. */
     const Matrix& get() const;
     
+    /** Returns reference to the internal model matrix. */
+    Matrix& get();
+
     virtual void operator()(Ref<Array2d> x, int k, double dt, bool store = true) const override;
     virtual void tl(Ref<Array2d> x, int k) const override;
     virtual void adj(Ref<Array2d> x, int k) const override;

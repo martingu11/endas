@@ -111,9 +111,10 @@ public:
      * @rst
      * .. tip::
      *    The default implementation falls back on calling :func:`getIndices()` and will perform poorly if 
-     *    :func:`putSubset()` is also called at some point. Use :func:`hasEfficientSubset()` to 
-     *    determine whether :func:`getSubset()` and :func:`putSubset()` offer efficientg access and 
-     *    use :func:`getIndices()` directly otherwise (likely storing the indices for later as well).
+     *    :func:`putSubset()` is also called at some point (because indices are computed twice). Use 
+     *    :func:`hasEfficientSubset()` to determine whether :func:`getSubset()` and :func:`putSubset()` 
+     *    offer efficient access and use :func:`getIndices()` directly otherwise (likely storing the 
+     *    indices for later as well).
      * @endrst
      * 
      * @param block  Subset of the grid to read.

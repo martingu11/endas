@@ -119,7 +119,8 @@ index_t GridStateSpacePartitioning::getLocalStateSize(int d) const
     return mData->domains[d].size;
 }
 
-void GridStateSpacePartitioning::getLocalState(int d, const Ref<const Array2d> Xg, Ref<Array2d> outXl) const
+void GridStateSpacePartitioning::getLocalState(int d, const Ref<const Array2d> Xg, 
+                                               Ref<Array2d> out) const
 {
     ENDAS_ASSERT(d >= 0 && d < mData->domains.size());
     const auto& domain = mData->domains[d];
@@ -130,16 +131,17 @@ void GridStateSpacePartitioning::getLocalState(int d, const Ref<const Array2d> X
     // Using indices
     if (domain.indices.size() > 0)
     {
-        selectRows(Xg, domain.indices, outXl);
+        selectRows(Xg, domain.indices, out);
     }
     // Using getSubset()
     else
     {
-        mData->ss->getSubset(domain.block, Xg, outXl);
+        mData->ss->getSubset(domain.block, Xg, out);
     }
 }
 
-void GridStateSpacePartitioning::putLocalState(int d, const Ref<const Array2d> Xl, Ref<Array2d> Xg) const
+void GridStateSpacePartitioning::putLocalState(int d, const Ref<const Array2d> Xl, 
+                                               Ref<Array2d> Xg) const
 {
     ENDAS_ASSERT(d >= 0 && d < mData->domains.size());
     const auto& domain = mData->domains[d];
@@ -162,7 +164,8 @@ void GridStateSpacePartitioning::putLocalState(int d, const Ref<const Array2d> X
 }
 
 
-shared_ptr<const PartitionPointQuery> GridStateSpacePartitioning::indexPoints(const Ref<const Array2d> coords) const
+shared_ptr<const PartitionPointQuery> 
+GridStateSpacePartitioning::indexPoints(const Ref<const Array2d> coords) const
 {
     ENDAS_NOT_IMPLEMENTED;
 }

@@ -82,7 +82,7 @@ ObservationManager::Data SimpleObservationManager::fetchObservations() const
         while (mData->currentDomain != mData->numDomains)
         {
             // Query which observations we will need for this domain. This will be all that fall within the
-            // localization tapoer function support range.
+            // localization taper function support range.
             obsIndices.clear();
             mData->obsQuery->rangeQuery(mData->currentDomain, mData->taperFn->supportRange(), obsIndices);
 

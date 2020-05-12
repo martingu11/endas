@@ -19,13 +19,13 @@ namespace endas
 /**
  * Generic implementation of a state space with elements organized on a multi-dimensional grid.
  * 
- * The grid can be either dense, with fixed number of variables per cell, or state variables can
- * be assigned to grid cells arbitrarily via a provided mapping. For dense cells, the state vector 
+ * The grid can be either dense with fixed number of variables per cell, or state variables can
+ * be assigned to grid cells arbitrarily via a provided mapping. For dense grids, the state vector 
  * must be organized so that grid cells are laid out in column-major order in the vector (one dimensional 
  * dense grids are assumed to have a single column). Furthermore, variables for a single cell must 
  * be adjacent in the state vector and always in the same order. When the state variable-to-grid-cell
  * mapping is provided, no assumptions are made on how the state vector is organized. Please note 
- * that ``hasEfficientSubset()`` will return ``false`` if StateSpaceGrid is initialized this way.
+ * that ``hasEfficientSubset()`` will return ``false`` for mapped grids.
  * 
  *  
  * @rst
