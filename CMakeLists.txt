@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.13)
 project(EnDAS VERSION 0.1)
 
 include (GNUInstallDirs)
+include (CheckLanguage)
 include (WriteCompilerDetectionHeader)
 
 
@@ -15,6 +16,13 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+check_language(Fortran)
+if (CMAKE_Fortran_COMPILER)
+   enable_language(Fortran)
+endif()
+
+
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -47,6 +55,7 @@ set (ENDAS_USING_OPENMP 0)
 set (ENDAS_USING_PYTHON 0)
 set (ENDAS_PROFILING_DISABLED 0)
 set (ENDAS_DETERMINISTIC 0)
+set (ENDAS_HAS_FORTRAN 0)
 
 
 message(STATUS "Configuration summary:")
@@ -83,6 +92,14 @@ if (TARGET Python2::Python)
 else()
    message(STATUS "Python2      : no")
 endif()
+
+if(CMAKE_Fortran_COMPILER)
+   message(STATUS "Fortran      : yes ")
+   set(ENDAS_HAS_FORTRAN 1)
+else()
+   message(STATUS "Fortran      : no (not building: QGModel)")
+endif()
+
 
 if (DISABLE_PROFILING)
    message(STATUS "Profiling    : disabled")

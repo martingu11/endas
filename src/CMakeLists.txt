@@ -36,7 +36,27 @@ target_sources(endas PRIVATE
     Spatial/Variogram.cpp
 
     Model/Lorenz95.cpp
+    Model/QG/QG.cpp
+    Model/QG/calc.f90
+    Model/QG/helmholtz.f90
+    Model/QG/parameters.f90
+    Model/QG/qgflux.f90
+    Model/QG/qgstep.f90
+    Model/QG/utils.f90
 )
+
+if (CMAKE_Fortran_COMPILER)
+    target_sources(endas PRIVATE
+        Model/QG/calc.f90
+        Model/QG/helmholtz.f90
+        Model/QG/parameters.f90
+        Model/QG/qgflux.f90
+        Model/QG/qgstep.f90
+        Model/QG/utils.f90
+    )
+endif()
+
+
 
 target_include_directories(endas PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

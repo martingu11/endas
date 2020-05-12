@@ -34,6 +34,9 @@
 #define EIGEN_HAS_RESHAPE 0
 
 
+#define ENDAS_HAS_FORTRAN ${ENDAS_HAS_FORTRAN}
+
+
 /** Numeric type used for representing nearly all data in EnDAS. */
 typedef double real_t;
 
