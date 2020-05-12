@@ -63,7 +63,7 @@ lineStyle["color"] = "green";
  */
 std::tuple<Array2d, Array2d, std::vector<int>> 
 generateTestData(int nsteps, const Ref<const Array> x0,
-                 const GenericEvolutionModel& model, double dt,
+                 const EvolutionModel& model, double dt,
                  const ObservationOperator& H, const CovarianceOperator& Q, 
                  const CovarianceOperator& R, 
                  int obsInterval = 1);
@@ -110,7 +110,7 @@ runKF(KalmanSmoother& ks, int nsteps, double dt, const Ref<const Array> x0,
 
 
 std::tuple<Array2d, Array2d> 
-runEnKF(EnsembleKalmanSmoother& ks, const GenericEvolutionModel& model,
+runEnKF(EnsembleKalmanSmoother& ks, const EvolutionModel& model,
         int nsteps, double dt, const Ref<const Array2d> E0, 
         const Ref<const Array2d> obs, const Ref<const Array2d> obsCoords, 
         const std::vector<int>& obsTimeSteps,

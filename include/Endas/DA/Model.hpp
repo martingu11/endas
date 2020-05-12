@@ -18,17 +18,54 @@ namespace endas
 
 
 /**
- * Generic state evolution model.
+ * Base class for state evolution models.
  * 
- * The model can be any callable with signature `void(x, k, dt)` that updates the state vector
- * or ensemble `x` from time step `k` to `k+1`. 
+ * The EvolutionModel and derived base classes are used primarily with the toy models included with
+ * ENDAS. For use with real-world models, it is usually not necessary to wrap your model in a class 
+ * derived from EvolutionModel (or in any class for that matter). 
  * 
- * @param x     Column vector or matrix holding the state vector or ensemble of state vectors, 
- *              respectively.
- * @param k     Time step index corresponding to `x` before the model call.
- * @param dt    Time stepping interval to be applied.
- */ 
-typedef std::function<void(Ref<Array2d> x, int k, double dt)> GenericEvolutionModel; 
+ * For convenience, EvolutionModel is implicitly constructible from any callable (function, functor) 
+ * with signature 
+ * 
+ *     void(Ref<Array2d> x, int k, double dt)
+ * 
+ * The callable object is stored via ``std::function`` and is therefore copied. If implementing your
+ * own model as a class, it is preferred to derive from EvolutionModel to avoid the copy.
+ */
+class ENDAS_DLL EvolutionModel
+{
+public:
+
+    EvolutionModel();
+
+
+    /**
+     * Constructs EvolutionModel as a wrapper for a callable object. 
+     */
+    EvolutionModel(std::function<void(Ref<Array2d> x, int k, double dt)> fn);
+
+    virtual ~EvolutionModel();
+
+   /**
+     * Propagates state vector from time `t` to `t+dt`.
+     * 
+     * The state vector `x` is modified in-place. The parameter `store` informs the model whether
+     * the model trajectory should be stored for linearization. Therefore, it only applies to models
+     * that also implement the LinearizedEvolutionModel interface and the parameter can be ignored 
+     * otherwise.
+     * 
+     * @param x      The state vector or ensemble of state vectors.
+     * @param k      The time step index at which the model is applied.
+     * @param dt     The time stepping interval.
+     * @param store  Specifies whether the trajectory of the model should be stored. 
+     * 
+     */
+    virtual void operator()(Ref<Array2d> x, int k, double dt, bool store) const = 0;
+
+private:
+    std::function<void(Ref<Array2d> x, int k, double dt)> mFn;
+};
+
 
 
 /**
@@ -38,25 +75,11 @@ typedef std::function<void(Ref<Array2d> x, int k, double dt)> GenericEvolutionMo
  * in form of the tangent-linear and adjoint at time `k`.
  * 
  */ 
-class LinearizedEvolutionModel
+class ENDAS_DLL LinearizedEvolutionModel : public EvolutionModel
 {
 public:
 
-    virtual ~LinearizedEvolutionModel() { }
-
-    /**
-     * Propagates state vector from time `t` to `t+dt`.
-     * The state vector `x` is modified in-place.
-     * 
-     * @param x     The state vector or ensemble of state vectors.
-     * @param k     The time step index at which the model is applied.
-     * @param dt    The time stepping interval.
-     * @param store Specifies whether data needed for tl() and adj() should be stored.
-     *              Can be set to `false` if neither tl() nor adj() is used.
-     */
-    virtual void apply(Ref<Array2d> x, int k, double dt, bool store = true) const = 0;
-
-
+   
     /**
      * Applies tangent-linear of the model at step `k` to `x`.
      * 
@@ -85,15 +108,6 @@ public:
     virtual void stepFinished(int k) const
     { }
 
-    // Implicit conversion to GenericEvolutionModel. 
-    operator GenericEvolutionModel() const
-    {
-        return std::bind(&LinearizedEvolutionModel::apply, this, 
-                         std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, 
-                         false);
-    }
-
-
 };
 
 
@@ -108,23 +122,23 @@ public:
     /** 
      * MatrixModel constructor.
      * 
-     * @param M     Model matrix. The referenced matrix instance is copied.
-     */
-    MatrixModel(const Ref<const Matrix> M);
-
-    /**
-     * MatrixModel constructor.
+     * Use ``std::move()`` to contructs MatrixModel without copying the passed in matrix as follows:
      * 
-     * @param n     State size.
-     * @param M     Any callable with signature `void(Ref<Matrix>)` that populates the model
-     *              matrix coefficients.
+     *     Matrix M = ...;
+     *     MatrixModel model(M);               // M is copied
+     *     MatrixModel model(std::move(M));    // M is moved
+     * 
+     * Please note that ``M`` can not used from the calling scope after ``std::move()``. Use 
+     * MatrixModel::get() to obtain reference to it.
+     * 
+     * @param M     Model matrix.
      */
-    MatrixModel(int n, const std::function<void(Ref<Matrix>)> M);
+    MatrixModel(Matrix M);
 
     /** Returns reference to the internal model matrix. */
     const Matrix& get() const;
     
-    virtual void apply(Ref<Array2d> x, int k, double dt, bool store = true) const override;
+    virtual void operator()(Ref<Array2d> x, int k, double dt, bool store = true) const override;
     virtual void tl(Ref<Array2d> x, int k) const override;
     virtual void adj(Ref<Array2d> x, int k) const override;
 

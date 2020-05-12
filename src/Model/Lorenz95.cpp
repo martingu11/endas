@@ -99,7 +99,7 @@ Lorenz95Model::Lorenz95Model(int n, int F)
 Lorenz95Model::~Lorenz95Model() { }
 
 
-void Lorenz95Model::apply(Ref<Array2d> x, int k, double dt, bool store) const
+void Lorenz95Model::operator()(Ref<Array2d> x, int k, double dt, bool store) const
 {
     int n = x.rows();
     int N = x.cols();

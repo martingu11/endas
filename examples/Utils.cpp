@@ -10,7 +10,7 @@ using namespace endas;
 
 tuple<Array2d, Array2d, vector<int>> 
 endas::generateTestData(int nsteps, const Ref<const Array> x0, 
-                        const GenericEvolutionModel& model, double dt,
+                        const EvolutionModel& model, double dt,
                         const ObservationOperator& H, const CovarianceOperator& Q, 
                         const CovarianceOperator& R,
                         int obsInterval)
@@ -38,7 +38,7 @@ endas::generateTestData(int nsteps, const Ref<const Array> x0,
 
     for (int k = 1; k != nsteps; k++)
     {
-        model(x, k, dt);
+        model(x, k, dt, false);
         
         Q.randomMultivariateNormal(xnoise);
         x+= xnoise;
@@ -120,7 +120,7 @@ endas::runKF(KalmanSmoother& kf, int nsteps, double dt, const Ref<const Array> x
 
 
 std::tuple<Array2d, Array2d> 
-endas::runEnKF(EnsembleKalmanSmoother& kf, const GenericEvolutionModel& model,
+endas::runEnKF(EnsembleKalmanSmoother& kf, const EvolutionModel& model,
                int nsteps, double dt, const Ref<const Array2d> E0, 
                const Ref<const Array2d> obs, const Ref<const Array2d> obsCoords, 
                const std::vector<int>& obsTimeSteps,

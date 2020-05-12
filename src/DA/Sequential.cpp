@@ -38,11 +38,11 @@ void SequentialEnsembleFilter::onResult(OnResultFn fn)
 }*/
 
 
-void endas::ensembleForecast(Ref<Array2d> E, const GenericEvolutionModel& model,
+void endas::ensembleForecast(Ref<Array2d> E, const EvolutionModel& model,
                              const CovarianceOperator& Q, int k, double dt)
 {
     ENDAS_PERF_SCOPE(EnsembleForecast);
-    model(E, k, dt);
+    model(E, k, dt, false);
 
     {
         ENDAS_PERF_SCOPE(ModelEnsemblePerturbation);

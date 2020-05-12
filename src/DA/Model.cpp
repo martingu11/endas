@@ -5,22 +5,32 @@ using namespace endas;
 
 
 
-MatrixModel::MatrixModel(const Ref<const Matrix> M)
-: mModel(M)
+EvolutionModel::EvolutionModel()
 { }
 
-MatrixModel::MatrixModel(int n, const std::function<void(Ref<Matrix>)> M)
-: mModel(n, n)
+EvolutionModel::EvolutionModel(std::function<void(Ref<Array2d> x, int k, double dt)> fn)
+: mFn(fn)
+{ }
+
+EvolutionModel::~EvolutionModel()
+{ }
+
+void EvolutionModel::operator()(Ref<Array2d> x, int k, double dt, bool store) const
 {
-    M(this->mModel);
+    mFn(x, k, dt);
 }
+
+
+MatrixModel::MatrixModel(Matrix M)
+: mModel(std::move(M))
+{ }
 
 const Matrix& MatrixModel::get() const
 {
     return mModel;
 }
 
-void MatrixModel::apply(Ref<Array2d> x, int k, double dt, bool store) const
+void MatrixModel::operator()(Ref<Array2d> x, int k, double dt, bool store) const
 {
     x.matrix() = this->mModel * x.matrix();
 

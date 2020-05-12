@@ -101,7 +101,7 @@ void KalmanSmoother::forecast(Ref<Array> x, Ref<Matrix> P, const Ref<const Matri
     // Propagate model 
     {
         ENDAS_PERF_SCOPE(Model);
-        mData->model.apply(x, k, dt, true);
+        mData->model(x, k, dt, true);
     }
 
     // Propagate error covariance Pk+1 = M Pk M' + Q

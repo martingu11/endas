@@ -27,7 +27,7 @@ public:
     Lorenz95Model(int n = 40, int F = 8);
     virtual ~Lorenz95Model();
 
-    virtual void apply(Ref<Array2d> x, int k, double dt, bool store = true) const override;
+    virtual void operator()(Ref<Array2d> x, int k, double dt, bool store = true) const override;
     virtual void tl(Ref<Array2d> x, int k) const override;
     virtual void adj(Ref<Array2d> x, int k) const override;
     virtual void stepFinished(int k) const override;

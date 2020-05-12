@@ -213,7 +213,7 @@ public:
 
 
 
-ENDAS_DLL void ensembleForecast(Ref<Array2d> E, const GenericEvolutionModel& model,
+ENDAS_DLL void ensembleForecast(Ref<Array2d> E, const EvolutionModel& model,
                                 const CovarianceOperator& Q, int k, double dt);
 
 
