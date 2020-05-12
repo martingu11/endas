@@ -1,7 +1,18 @@
-/**
+/**********************************************************************
+ * EnDAS - Ensemble Data ASsimilation library
+ * http://geos.osgeo.org
+ *
+ * Copyright (c) 2020 EnDAS developers
+ * 
+ * EnDAS is released under the MIT license, see LICENSE.txt.
+ **********************************************************************
+ * 
  * @file LinAlg.hpp
  * @author Martin Gunia
- */
+ * 
+ * Basic linear algebra types and operations not offered by Eigen.
+ * 
+ **********************************************************************/
 
 #ifndef __ENDAS_LINALG_HPP__
 #define __ENDAS_LINALG_HPP__
@@ -121,8 +132,6 @@ ENDAS_DLL const Array2d& emptyArray2d();
  */
 ENDAS_DLL const Matrix& emptyMatrix();
 
-
-
 /** 
  * Returns new Array instance populated with sequence given by start and end.
  * 
@@ -132,18 +141,12 @@ ENDAS_DLL const Matrix& emptyMatrix();
  */
 ENDAS_DLL Array makeSequence(real_t start, real_t end, real_t step = 1.0);
 
-
-
 /** 
  * Returns new Array instance populated with values from the initializer list.
  * 
  *     Array a = makeArray({1, 2, 3});
  */
 ENDAS_DLL Array makeArray(std::initializer_list<real_t> values);
-
-
-
-
 
 /** 
  * Returns new Matrix instance populated with values from the initializer list.
@@ -158,23 +161,70 @@ ENDAS_DLL Array makeArray(std::initializer_list<real_t> values);
 ENDAS_DLL Matrix makeMatrix(int rows, int cols, std::initializer_list<real_t> values);
 
 
+/**
+ * Selects array elements `A[i]` for all `i` in `indices`.
+ * The selected subset is written into the `out` array which should be pre-allocated to the 
+ * correct size (`indices.size()`). 
+ * 
+ * @param A         The input array to select elements from
+ * @param indices   Array of element indices 
+ * @param out       Array where the selected elements are copied
+ */ 
 ENDAS_DLL void select(const Ref<const Array> A, const IndexArray& indices, Ref<Array> out);
 
+/**
+ * Selects rows `A[i,:]` for all `i` in `rows`.
+ * The selected subset is written into the `out` array which should be pre-allocated to the 
+ * correct size (`rows.size()` x `A.cols()`). 
+ * 
+ * @param A     The input array to select rows from
+ * @param rows  Array of row indices 
+ * @param out   Array where the selected rows are copied
+ */ 
 ENDAS_DLL void selectRows(const Ref<const Array2d> A, const IndexArray& rows, Ref<Array2d> out);
 
+
+/**
+ * Selects columns `A[:,j]` for all `j` in `cols`.
+ * The selected subset is written into the `out` array which should be pre-allocated to the 
+ * correct size (`A.rows()` x `cols.size()`). 
+ *  
+ * @param A     The input array to select columns from
+ * @param cols  Array of column indices 
+ * @param out   Array where the selected columns are copied
+ */ 
 ENDAS_DLL void selectCols(const Ref<const Array2d> A, const IndexArray& cols, Ref<Array2d> out);
 
+
+/**
+ * Selects rows and columns `A[i,j]` for all `i` in `rows` and `j` in `cols`.
+ * The selected subset is written into the `out` array which should be pre-allocated to the 
+ * correct size (`rows.size()` x `cols.size()`).
+ * 
+ * @param A     The input array to select rows and columns from
+ * @param rows  Array of row indices 
+ * @param cols  Array of column indices 
+ * @param out   Array where the selected rows and columns are copied  
+ */ 
 ENDAS_DLL void selectRowsCols(const Ref<const Array2d> A, const IndexArray& rows, 
                               const IndexArray& cols, Ref<Array2d> out);
 
 /** 
+ * Copies rows of the array `A` to corresponding rows in `out`.
+ * This is the opposite operation to selectRows().
  * 
+ * @param A     The input array to select rows and columns from
+ * @param rows  Array of row indices 
+ * @param cols  Array of column indices 
+ * @param out   Array where the selected rows and columns are copied  
  */ 
 ENDAS_DLL void distributeRows(const Ref<const Array2d> A, const IndexArray& rows, Ref<Array2d> out);
 
+/** 
+ * Copies columns of the array `A` to corresponding columns in `out`.
+ * This is the opposite operation to selectRows().
+ */ 
 ENDAS_DLL void distributeCols(const Ref<const Array2d> A, const IndexArray& cols, Ref<Array2d> out);
-
-
 
 
 /*inline Eigen::Map<Array> reshaped(const ArrayBase<Array2d> A)
@@ -188,7 +238,9 @@ ENDAS_DLL void distributeCols(const Ref<const Array2d> A, const IndexArray& cols
 
 
 
-
+/**
+ * Calls `fn(x)` for each element `x` in `A`. 
+ */
 template <class Fn>
 inline void foreachCoeff(const Ref<const Array> A, Fn fn)
 {
@@ -201,6 +253,9 @@ inline void foreachCoeff(const Ref<const Array> A, Fn fn)
 }
 
 
+/**
+ * Calls `fn(x)` for each element `x` in `A`. 
+ */
 template <class Fn>
 inline void foreachCoeff(Ref<Array> A, Fn fn)
 {
@@ -211,6 +266,22 @@ inline void foreachCoeff(Ref<Array> A, Fn fn)
     for (int i = 0; i != A.size(); i++) fn(i, A(i));
 #endif
 }
+
+
+
+/**
+ * Reads array data from file stored in NumPy binary format (`.npy`).
+ * 
+ * Please note that the functionality is currently rather limited. Only 1 and 2-dimensional 
+ * double-precision real arrays are supported. If the NumPy array is in row-major (C) order, 
+ * it is transposed automatically.
+ */
+ENDAS_DLL Array2d loadFromNpy(std::string path);
+
+/**
+ * Saves the contents of the array to disk in NumPy binary format (`.npy`).
+ */
+ENDAS_DLL void saveAsNpy(const Ref<const Array2d> A, std::string path);
 
 
 

@@ -717,7 +717,7 @@ namespace detail {
 
 inline void imshow(void *ptr, const NPY_TYPES type, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords, PyObject** out)
 {
-    assert(type == NPY_UINT8 || type == NPY_FLOAT);
+    assert(type == NPY_UINT8 || type == NPY_FLOAT || type == NPY_DOUBLE);
     assert(colors == 1 || colors == 3 || colors == 4);
 
     detail::_interpreter::get();    //interpreter needs to be initialized for the numpy commands to work
@@ -756,6 +756,13 @@ inline void imshow(const float *ptr, const int rows, const int columns, const in
 {
     detail::imshow((void *) ptr, NPY_FLOAT, rows, columns, colors, keywords, out);
 }
+
+inline void imshow(const double *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {}, PyObject** out = nullptr)
+{
+    detail::imshow((void *) ptr, NPY_DOUBLE, rows, columns, colors, keywords, out);
+}
+
+
 
 #ifdef WITH_OPENCV
 void imshow(const cv::Mat &image, const std::map<std::string, std::string> &keywords = {})

@@ -57,6 +57,12 @@ if (CMAKE_Fortran_COMPILER)
 endif()
 
 
+# EnDAS source files coming from thirdparty libs
+target_sources(endas PRIVATE
+    ${THIRDPARTY_DIR}/cnpy/cnpy.cpp
+)
+
+
 
 target_include_directories(endas PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
@@ -64,6 +70,7 @@ target_include_directories(endas PUBLIC
 )
 
 target_include_directories(endas PRIVATE ${THIRDPARTY_DIR}/simplefft/include)
+target_include_directories(endas PRIVATE ${THIRDPARTY_DIR}/cnpy)
 
 
 target_link_libraries(endas PUBLIC Eigen3::Eigen)
