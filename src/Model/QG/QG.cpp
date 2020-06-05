@@ -2,6 +2,8 @@
 #include <Endas/Endas.hpp>
 #include "../../Compatibility.hpp"
 
+#include <iostream>
+
 using namespace std;
 using namespace endas;
 
@@ -22,8 +24,10 @@ struct QGModel::Data
     double r;
 
     double t;
+    double internalDt;
 
-    Array2d Q;
+
+    //Array2d Q;
 
     Data(int ensSize) 
     : rkb(0), 
@@ -33,15 +37,16 @@ struct QGModel::Data
       r(1e-5),
       t(0)
     { 
-        
+        init();
     }
 
-    void init(const Ref<const Array2d> x0);
+    void init();
 };
 
-QGModel::QGModel(int N)
+QGModel::QGModel(int N, double internalStep)
 : mData(make_unique<Data>(N))
 { 
+    mData->internalDt = internalStep;
 }
 
 
@@ -73,57 +78,64 @@ void qg_calc_psi(const double* psiguess, const double* Q, double* psi, double F)
 
 }
 
-
-void QGModel::Data::init(const Ref<const Array2d> x0) 
+void QGModel::Data::init() 
 { 
     if (!globFmodInitialized)
     {
         qg_params_init();
         globFmodInitialized = true;
     }
-
-    Q = Array2d(QG_SIZE, x0.cols());
-
-
-    double dx = 1.0 / double(QG_N - 1);
-    double dy = 1.0 / double(QG_M - 1);
-
-    for (int j = 0; j != x0.cols(); j++)
-    {
-        qg_laplacian(x0.col(j).data(), dx, dy, Q.col(j).data());
-        Q.col(j) -= F * x0.col(j);
-    }
-
-
 }
 
 
-void QGModel::init(const Ref<const Array2d> x0)
+int QGModel::sizex() const
 {
-    mData->init(x0);
+    return QG_M;
 }
 
+int QGModel::sizey() const
+{
+    return QG_N;
+}
 
 
 void QGModel::operator()(Ref<Array2d> x, int k, double dt, bool store) const
 {
+    Array2d Q(QG_SIZE, x.cols());
+
+    double dx = 1.0 / double(QG_N - 1);
+    double dy = 1.0 / double(QG_M - 1);
+
     for (int j = 0; j != x.cols(); j++)
     {
-        qg_step_rk4(
-            mData->t, dt, mData->rkb, mData->rkh, mData->rkh2, mData->F, mData->r, 
-            x.col(j).data(), mData->Q.col(j).data());
+        qg_laplacian(x.col(j).data(), dx, dy, Q.col(j).data());
+        Q.col(j) -= mData->F * x.col(j);
+    }
+
+    double t = mData->t;
+    double tend = t + dt;
+
+    while (t < tend)
+    {
+        double thisdt = std::min(mData->internalDt, tend - t);
+
+        for (int j = 0; j != x.cols(); j++)
+        {
+            qg_step_rk4(
+                t, thisdt, mData->rkb, mData->rkh, mData->rkh2, mData->F, mData->r, 
+                x.col(j).data(), Q.col(j).data());
+        };
+
+        t+= thisdt;
+    }
+
+    for (int j = 0; j != x.cols(); j++)
+    {
+        Array2d xguess = x.col(j);
+        qg_calc_psi(xguess.data(), Q.col(j).data(), x.col(j).data(), mData->F);
     };
 
-    mData->t += dt;
-}
-
-
-void QGModel::calc_psi(const Ref<const Array2d> E, Ref<Array2d> Eout)
-{
-    for (int j = 0; j != E.cols(); j++)
-    {
-        qg_calc_psi(E.col(j).data(), mData->Q.col(j).data(), Eout.col(j).data(), mData->F);
-    }
+    mData->t = tend;
 }
 
 

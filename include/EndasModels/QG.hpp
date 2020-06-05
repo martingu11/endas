@@ -14,20 +14,33 @@ namespace endas
 {
 
 /**
- * 1.5 -layer Quasi-Geosptrophic ocean circulation model.
+ * 1.5 -layer Quasi-Geosptrophic (QG) ocean circulation model.
  * 
+ * For more details see 
+ * 
+ * SAKOV, P. and OKE, P.R. (2008), A deterministic formulation of the ensemble Kalman filter: 
+ * an alternative to ensemble square root filters. Tellus A, 60: 361-371. 
+ * doi:10.1111/j.1600-0870.2007.00299.x
  */ 
 class ENDAS_DLL QGModel : public EvolutionModel
 {
 public:
 
-    QGModel(int N);
+    /**
+     * Creates new QG model instance. 
+     * 
+     * @param N             Ensemble size 
+     * @param inernalStep   Maximum model integration time step used internally by the RK4 scheme
+     */
+    QGModel(int N, double internalStep = 1e30);
+
     ~QGModel();
 
-    void init(const Ref<const Array2d> x0); 
+    /** Returns size of the model discretization grid on the x axis. */
+    int sizex() const;
 
-
-    void calc_psi(const Ref<const Array2d> E, Ref<Array2d> Eout);
+    /** Returns size of the model discretization grid on the y axis. */
+    int sizey() const;
 
     virtual void operator()(Ref<Array2d> x, int k, double dt, bool store = true) const override;
 

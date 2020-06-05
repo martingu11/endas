@@ -1,18 +1,30 @@
+/**
+ * @file QGExample.cpp
+ * 
+ * Data assimilation example using the 1.5 -layer Quasi-Geostrophic model.
+ * For more information about the model and the data assimilation set up, see 
+ * 
+ * SAKOV, P. and OKE, P.R. (2008), A deterministic formulation of the ensemble Kalman filter: 
+ * an alternative to ensemble square root filters. Tellus A, 60: 361-371. 
+ * doi:10.1111/j.1600-0870.2007.00299.x
+ */
+
 #include <iostream>
 #include <string>
 #include <cmath>
 #include <chrono>
+#include <sys/stat.h>
 
 #include <Endas/Endas.hpp>
 #include <Endas/Core/Profiling.hpp>
+#include <Endas/Core/Ensemble.hpp>
 #include <Endas/Random/Random.hpp>
-#include <Endas/DA/Ensemble.hpp>
-#include <Endas/DA/Grid/GridStateSpace.hpp>
 #include <Endas/DA/CovarianceOperator.hpp>
 #include <Endas/DA/Taper.hpp>
-
 #include <Endas/DA/Algorithm/KalmanSmoother.hpp>
 #include <Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp>
+#include <Endas/Domain/GridStateSpace.hpp>
+
 #include <EndasModels/QG.hpp>
 
 
@@ -23,12 +35,16 @@
 
 #include "Utils.hpp"
 
-
 using namespace std;
 using namespace endas;
 
 
-constexpr double PI = 3.141592653589793238462643383279502884;
+// Checks whether file exists
+inline bool exists(const std::string& name) 
+{
+    struct stat buffer;   
+    return (stat (name.c_str(), &buffer) == 0); 
+}
 
 
 int main(int argc, char *argv[])
@@ -42,57 +58,31 @@ int main(int argc, char *argv[])
     // Experiment setup
     //-----------------------------------------------------------------------------------
 
-    // State size
-    int nx = 129;
-    int ny = 129;
-    int n = ny*nx;
-
     // Ensemble size
-    int N = 20;
+    int N = 25;
+
+    // Internal QG model integration time step
+    double modeldt = 1.25;
+
+    // Data assimilation is performed every 4th time step
+    double assimInterval = 4;
+
+    // Number of model integration steps for generating the initial system state
+    int numInitSteps = 10000;
 
     // Number of data assimilation steps
-    int nsteps = 10000;
+    int numAssimSteps = 300;
 
-    // Model integration time step.
-    // Note: Too long integration step may cause difficulties with convergence, especially
-    // for KalmanSmoother that relies on the linearization of the model. If this happens, 
-    // decrease the integration step.
-    double dt = 1.25;
-
-    // Observation error standard deviation
-    double obsSigma = 0.4;
+    // Observation error variance
+    double obsVariance = 4.0;
 
     // If greater than 1, observations will be assimilated on every n-th time step only
     // Note: If this is set too high, filters will diverge. This is especially true of 
     // the KalmanSmoother. If this happens, lower this or decrease `dt`.
-    int obsInterval = 6;
+    //int obsInterval = 6;
 
-
-    double sigClim = 3.6414723;
-
-    // Model error covariance matrix
-    DiagonalCovariance Q(Array::Constant(n, 0.05 * sigClim).pow(2));
-
-    // Initial (background) error covariance matrix
-    DiagonalCovariance P0(Array::Constant(n, 0.5 * sigClim).pow(2));
-
-    // Observation error covariance matrix
-    DiagonalCovariance R(Array::Constant(n, 0.15 * sigClim).pow(2));
-
-    // Observation operator. All state variables are observed
-    int nobs = n;
-    MatrixObservationOperator H(Matrix::Identity(n, n));
-
-    // Observation 'coordinates' for use in localization. The index of the observed state variable
-    // will serve as the coordinate. We need 1 x nobs array
-    Array2d obsCoords = makeSequence(0, nobs).transpose();
-
-
-    // Initial system state 
-    Array x0 = Array::Constant(n, 0.0);
-    
-    // 1.5 -layer quasi-geostrophic model.
-    QGModel model(N);
+    // 1.5 -layer quasi-geostrophic model with internal time-stepping `dt`.
+    QGModel model(N, modeldt);
 
     // Smoother lag. Zero disables smoothing (only filter solution is computed)
     int lag = 10;
@@ -102,6 +92,10 @@ int main(int argc, char *argv[])
     // coordinate. Each state variable will be updated independently, i.e. in its own local domain.
     GridStateSpace stateSpace();
     NoTaper taperFn(0);
+
+    int nx = model.sizex();
+    int ny = model.sizey();
+    int n = ny*nx;
 
     // Ensemble Kalman Filters we will be using
     endas::EnsembleKalmanSmoother enks(EnKS(), n, N, lag);
@@ -113,31 +107,72 @@ int main(int argc, char *argv[])
     etks.setCovInflationFactor(1.05);   // These are rough guesses, not tuned values.
     //etks.localize(shared_ptr_wrap(stateSpace), shared_ptr_wrap(taperFn));
 
+    // File storing the initial system state in NumPy array format
+    string initialStateFile = "./qgexample_x0.npy";
+
+
     //-----------------------------------------------------------------------------------
     // End of setup
     //-----------------------------------------------------------------------------------
 
     try
     {
+        // Generate the initial state of the system using a long model run. Because this does
+        // take time, we will store the state to disk for reuse
+        Array x0;
+        if (!exists(initialStateFile))
+        {
+            cout << "Generating initial system state. This may take a while..." << endl;
+            x0 = Array::Zero(n);
+
+            QGModel model(N, modeldt);
+            model(x0, 0, modeldt * numInitSteps);
+            saveAsNpy(x0, initialStateFile);       
+            cout << "Initial system state saved to " << initialStateFile << endl;
+        }
+        else 
+        {
+            cout << "Using initial state data from " << initialStateFile << endl;
+            x0 = loadFromNpy(initialStateFile);
+            ENDAS_ASSERT(x0.size() == n);
+        }
+
+
+        // Model error covariance matrix of a perfect model
+        auto Q = ZeroCovariance(n);
+
+
+
         // Before we start, generate synthetic data that will serve as the "true" state and 
         // draw observations by applying the observation operator H and adding noise with
         // covariance R.
-        cout << "Generating test data..." << endl;
+        //cout << "Generating test data for " << numDAsteps << " steps..." << endl;
 
-        Array2d xtAll, obs;
-        vector<int> obsTimes;
-
-        model.init(x0);
-
-        tie(xtAll, obs, obsTimes) = generateTestData(nsteps, x0, model, dt, H, Q, R, obsInterval);
-
-        // Use somewhat bad guess for x0 for data assimilation
-        //x0*= 1.5;
+        //Array2d xtAll, obs;
+        //vector<int> obsTimes;
 
 
+        // Observation error covariance matrix
+        //DiagonalCovariance R(Array::Constant(n, 4.0));
 
 
-#if ENDAS_PLOTTING_ENABLED
+        
+
+        // Observation operator. All state variables are observed
+        //int nobs = n;
+        //CustomObservationOperator H(n, n, true, [](const Ref<const Array2d> x, int k, Ref<Array2d> out)
+        //{
+        //    out = x; 
+        //});
+
+        // Observation 'coordinates' for use in localization. The index of the observed state variable
+        // will serve as the coordinate. We need 1 x nobs array
+        //Array2d obsCoords = makeSequence(0, nobs).transpose();
+
+        
+
+#if 0
+//#if ENDAS_PLOTTING_ENABLED
 
         // The plotted variable
         int X = 20;
@@ -154,6 +189,8 @@ int main(int argc, char *argv[])
         Array psi(n);
         //model.calc_psi(xtAll.col(nsteps-1), psi); 
         //plt::imshow(psi.data(), ny, nx, 1);
+        cout << xtAll.col(nsteps-1).mean() << endl;
+
         plt::imshow(xtAll.col(nsteps-1).data(), ny, nx, 1);
 
 

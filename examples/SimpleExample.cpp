@@ -25,8 +25,6 @@ using namespace endas;
 constexpr double PI = 3.141592653589793238462643383279502884;
 
 
-
-
 int main(int argc, char *argv[])
 {
     // Use pre-seeded RNG for deterministic output.
@@ -90,7 +88,8 @@ int main(int argc, char *argv[])
 
         Array2d xtAll, zAll;
         vector<int> obsTimes;
-        tie(xtAll, zAll, obsTimes) = generateTestData(nsteps, x0, model, 1.0, H, Q, R, obsInterval);
+        tie(xtAll, zAll, obsTimes) = generateTestData(nsteps, x0, model, 1.0, H, Q, R, 
+                                                      obsInterval);
 
         // Bad guess for the initial state
         Array x = makeArray({0.5, 0.5, 0.5});  

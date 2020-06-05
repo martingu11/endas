@@ -5,14 +5,14 @@
 
 #include <Endas/Endas.hpp>
 #include <Endas/Core/Profiling.hpp>
+#include <Endas/Core/Ensemble.hpp>
 #include <Endas/Random/Random.hpp>
-#include <Endas/DA/Ensemble.hpp>
-#include <Endas/DA/GenericStateSpace.hpp>
 #include <Endas/DA/CovarianceOperator.hpp>
 #include <Endas/DA/Taper.hpp>
-
 #include <Endas/DA/Algorithm/KalmanSmoother.hpp>
 #include <Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp>
+#include <Endas/Domain/GenericStateSpace.hpp>
+
 #include <EndasModels/Lorenz95.hpp>
 
 
@@ -85,8 +85,8 @@ int main(int argc, char *argv[])
     int nobs = n;
     MatrixObservationOperator H(Matrix::Identity(n, n));
 
-    // Observation 'coordinates' for use in localization. The index of the observed state variable
-    // will serve as the coordinate. We need 1 x nobs array
+    // Observation 'coordinates' for use in localization. The index of the observed state 
+    // variable will serve as the coordinate. We need 1 x nobs array
     Array2d obsCoords = makeSequence(0, nobs).transpose();
 
 
@@ -106,8 +106,9 @@ int main(int argc, char *argv[])
 
 
     // Localization strategy for the ensemble smoothers:
-    // Using generic one-dimensional state space where the index of each state variable is also its 
-    // coordinate. Each state variable will be updated independently, i.e. in its own local domain.
+    // Using generic one-dimensional state space where the index of each state variable is 
+    // also its coordinate. Each state variable will be updated independently, i.e. in its 
+    // own local domain.
     GenericStateSpace stateSpace(n);
     NoTaper taperFn(0);
 
@@ -136,7 +137,8 @@ int main(int argc, char *argv[])
         Array2d xtAll, obs;
         vector<int> obsTimes;
 
-        tie(xtAll, obs, obsTimes) = generateTestData(nsteps, x0, model, dt, H, Q, R, obsInterval);
+        tie(xtAll, obs, obsTimes) = generateTestData(nsteps, x0, model, dt, H, Q, R, 
+                                                     obsInterval);
 
         // Use somewhat bad guess for x0 for data assimilation
         x0*= 1.5;
@@ -159,14 +161,16 @@ int main(int argc, char *argv[])
         Array2d enksX, enksErr;
         {
             ENDAS_PERF_SCOPE(ENKS);
-            tie(enksX, enksErr) = runEnKF(enks, model, nsteps, dt, E0, obs, obsCoords, obsTimes, H, Q, R);
+            tie(enksX, enksErr) = runEnKF(enks, model, nsteps, dt, E0, obs, 
+                                          obsCoords, obsTimes, H, Q, R);
         }
 
         cout << "Running ETKS..." << endl;
         Array2d etksX, etksErr;
         {
             ENDAS_PERF_SCOPE(ETKS);
-            tie(etksX, etksErr) = runEnKF(etks, model, nsteps, dt, E0, obs, obsCoords, obsTimes, H, Q, R);
+            tie(etksX, etksErr) = runEnKF(etks, model, nsteps, dt, E0, obs, 
+                                          obsCoords, obsTimes, H, Q, R);
         }
 
 

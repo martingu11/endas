@@ -1,8 +1,8 @@
 #include "Utils.hpp"
-#include <Endas/DA/Ensemble.hpp>
+#include <Endas/Core/Ensemble.hpp>
 #include <Endas/DA/ObservationOperator.hpp>
 #include <Endas/DA/CovarianceOperator.hpp>
-#include <Endas/DA/SimpleObservationManager.hpp>
+#include <Endas/Domain/SimpleObservationManager.hpp>
 
 using namespace std;
 using namespace endas;
@@ -39,7 +39,7 @@ endas::generateTestData(int nsteps, const Ref<const Array> x0,
     for (int k = 1; k != nsteps; k++)
     {
         model(x, k, dt, false);
-        
+
         Q.randomMultivariateNormal(xnoise);
         x+= xnoise;
         xtAll.col(k) = x;

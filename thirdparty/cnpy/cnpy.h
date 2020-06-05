@@ -95,13 +95,11 @@ namespace cnpy {
 
     template<typename T> void npy_save(std::string fname, const T* data, const std::vector<size_t> shape, 
                                        bool fortran_order) {
-        FILE* fp = NULL;
-        std::vector<size_t> true_data_shape; //if appending, the shape of existing + new data
-
-        fp = fopen(fname.c_str(),"wb");
-        true_data_shape = shape;
+        FILE* fp = fopen(fname.c_str(),"wb");
+        if (!fp) 
+            throw std::runtime_error("Failed to create npy file");
         
-        std::vector<char> header = create_npy_header<T>(true_data_shape, fortran_order);
+        std::vector<char> header = create_npy_header<T>(shape, fortran_order);
         size_t nels = std::accumulate(shape.begin(),shape.end(),1,std::multiplies<size_t>());
 
         fseek(fp,0,SEEK_SET);
