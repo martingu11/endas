@@ -62,5 +62,5 @@ Indices and tables
    self
    installation
    getstarted/index
+   examples/index
    cppapi/cppapi_root
-

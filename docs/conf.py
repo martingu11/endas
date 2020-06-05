@@ -59,17 +59,45 @@ breathe_projects = {
 
 breathe_default_project = "EnDAS"
 
+
+def specificationsForKind(kind):
+    '''
+    For a given input ``kind``, return the list of reStructuredText specifications
+    for the associated Breathe directive.
+    '''
+    # Change the defaults for .. doxygenclass:: and .. doxygenstruct::
+    if kind == "class" or kind == "struct":
+        return [
+          ":members:",
+          ":protected-members:"
+          #":private-members:",
+          #":undoc-members:"
+        ]
+    # Change the defaults for .. doxygenenum::
+    elif kind == "enum":
+        return [":no-link:"]
+    # An empty list signals to Exhale to use the defaults
+    else:
+        return []
+
+
 doxygen_input = '''
 INPUT = ../include
+FILE_PATTERNS = *.hpp *.h
 JAVADOC_AUTOBRIEF = YES
 STRIP_FROM_INC_PATH = ../include
+EXTRACT_ALL = NO
 EXTRACT_LOCAL_CLASSES = NO
 HIDE_UNDOC_MEMBERS = YES
 HIDE_UNDOC_CLASSES = YES
 HIDE_FRIEND_COMPOUNDS = YES
+HIDE_IN_BODY_DOCS = YES
 SHOW_USED_FILES = NO
+PREDEFINED += ENDAS_DLL=""
 '''
 
+
+from exhale import utils
 # Setup the exhale extension
 exhale_args = {
     # These arguments are required
@@ -79,11 +107,15 @@ exhale_args = {
     "doxygenStripFromPath":  "..",
     # Suggested optional arguments
     "createTreeView":        True,
+    "fullToctreeMaxDepth" : 1,
+    "customSpecificationsMapping": utils.makeCustomSpecificationsMapping(specificationsForKind),
     # TIP: if using the sphinx-bootstrap-theme, you need
     # "treeViewIsBootstrap": True,
     "exhaleExecutesDoxygen": True,
     "exhaleDoxygenStdin": doxygen_input
 }
+
+breathe_default_members = ('members',)
 
 
 # Tell sphinx what the primary language being documented is.
