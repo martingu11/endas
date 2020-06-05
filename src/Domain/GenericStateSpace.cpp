@@ -1,10 +1,9 @@
-#include <Endas/DA/GenericStateSpace.hpp>
+#include <Endas/Domain/GenericStateSpace.hpp>
 #include "../Compatibility.hpp"
 
 
 using namespace std;
 using namespace endas;
-
 
 
 // PartitionPointQuery that works with GenericStateSpace.

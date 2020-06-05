@@ -1,5 +1,5 @@
-#include <Endas/DA/Grid/GridStateSpace.hpp>
-#include "../../Compatibility.hpp"
+#include <Endas/Domain/GridStateSpace.hpp>
+#include "../Compatibility.hpp"
 
 
 using namespace std;

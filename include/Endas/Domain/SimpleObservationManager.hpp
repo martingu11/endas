@@ -5,16 +5,20 @@
 #ifndef __ENDAS_DA_SIMPLE_OBSERVATION_MANAGER_HPP__
 #define __ENDAS_DA_SIMPLE_OBSERVATION_MANAGER_HPP__
 
-#include "ObservationManager.hpp"
+#include <Endas/DA/ObservationManager.hpp>
 #include <memory>
 
 namespace endas
 {
 
+/** 
+ * @addtogroup domain
+ * @{ 
+ */
 
 
 /**
- * Basic observation manager.
+ * Simple observation manager.
  */
 class ENDAS_DLL SimpleObservationManager  : public ObservationManager
 {
@@ -29,7 +33,7 @@ public:
     virtual void beginFetch(int k, const StateSpacePartitioning* partitioner, 
                             const TaperFn* taperFn) const override;
 
-    virtual Data fetchObservations() const override;
+    virtual ObservationData fetchObservations() const override;
 
 private:
     struct Data;
@@ -38,7 +42,7 @@ private:
 
 
 
-
+/** @} */
 
 }
 

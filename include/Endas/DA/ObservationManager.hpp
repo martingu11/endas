@@ -14,8 +14,15 @@
 #include <memory>
 #include <utility>
 
+
 namespace endas
 {
+
+/** 
+ * @addtogroup da
+ * @{ 
+ */
+
 
 /** 
  * Special purpose local domain index specifying the global domain.
@@ -24,6 +31,43 @@ namespace endas
  * when analysis localization is not in use.
  */
 static constexpr int GlobalAnalysisDomainId = -1;
+
+
+/**
+ * Observation data returned by ObservationManager.
+ * The data includes the observed values and the corresponding observation operator and 
+ * observation error covariance operator.
+ */
+struct ObservationData
+{
+    /** Local domain index of the data or GlobalAnalysisDomainId. */
+    int domain; 
+    
+    /** Array of observed values. */
+    Array obs; 
+    
+    /** Observation operator corresponding to `obs`. */
+    std::shared_ptr<const ObservationOperator> H;   
+    
+    /** Error covariance operator corresponding to `obs`. */
+    std::shared_ptr<const CovarianceOperator> R;
+
+    /** Constructs empty data entry. */
+    ObservationData()
+    : obs(emptyArray()), H(nullptr), R(nullptr)
+    { }
+
+    /** Constructs data entry. */
+    ObservationData(int _domain, Array _obs, std::shared_ptr<const ObservationOperator> _H,
+                    std::shared_ptr<const CovarianceOperator> _R)
+    : domain(_domain), obs(std::move(_obs)), H(_H), R(_R)
+    { }
+
+    /** Returns `true` if the entry is empty. */
+    bool empty() const { return obs.size() == 0; }
+};
+
+
 
 
 /**
@@ -36,43 +80,7 @@ class ENDAS_DLL ObservationManager
 {
 public:
 
-    /**
-     * Observation data returned by ObservationManager.
-     * The data includes the observed values and the corresponding observation operator and 
-     * observation error covariance operator.
-     */
-    struct Data
-    {
-        /** Local domain index of the data or GlobalAnalysisDomainId. */
-        int domain; 
-        
-        /** Array of observed values. */
-        Array obs; 
-        
-        /** Observation operator corresponding to `obs`. */
-        std::shared_ptr<const ObservationOperator> H;   
-        
-        /** Error covariance operator corresponding to `obs`. */
-        std::shared_ptr<const CovarianceOperator> R;
-
-        /** Constructs empty data entry. */
-        Data()
-        : obs(emptyArray()), H(nullptr), R(nullptr)
-        { }
-
-        /** Constructs data entry. */
-        Data(int _domain, Array _obs, std::shared_ptr<const ObservationOperator> _H,
-             std::shared_ptr<const CovarianceOperator> _R)
-        : domain(_domain), obs(std::move(_obs)), H(_H), R(_R)
-        { }
-
-        /** Returns `true` if the entry is empty. */
-        bool empty() const { return obs.size() == 0; }
-    };
-
     virtual ~ObservationManager() { }
-
-
 
     /**
      * Called before assimilation of observations to notify ObservationManager that observations
@@ -100,11 +108,12 @@ public:
      * 
      * If there are no more observations, returns `Data()`.
      */
-    virtual Data fetchObservations() const = 0;
+    virtual ObservationData fetchObservations() const = 0;
 
 };
 
 
+/** @} */
 
 }
 

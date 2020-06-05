@@ -6,15 +6,13 @@ target_sources(endas PRIVATE
     Core/LinAlg.cpp
     Core/Exception.cpp
     Core/Profiling.cpp
+    Core/Ensemble.cpp
 
-    DA/Ensemble.cpp
     DA/Model.cpp
     DA/Sequential.cpp
     DA/ObservationOperator.cpp
-    DA/SimpleObservationManager.cpp
     DA/CovarianceOperator.cpp
     DA/StateSpace.cpp
-    DA/GenericStateSpace.cpp
     DA/Taper.cpp
 
     DA/Algorithm/KalmanSmoother.cpp
@@ -22,9 +20,6 @@ target_sources(endas PRIVATE
     DA/Algorithm/EnKSVariantEnKS.cpp
     DA/Algorithm/EnKSVariantESTKS.cpp
 
-    DA/Grid/GridStateSpace.cpp
-    DA/Grid/GridStateSpacePartitioning.cpp
-    
     Caching/ArrayCache.cpp
     Caching/MemoryArrayCache.cpp
     
@@ -34,6 +29,11 @@ target_sources(endas PRIVATE
 
     Spatial/CoordinateSystem.cpp
     Spatial/Variogram.cpp
+
+    Domain/GenericStateSpace.cpp
+    Domain/SimpleObservationManager.cpp
+    Domain/GridStateSpace.cpp
+    Domain/GridStateSpacePartitioning.cpp
 
     Model/Lorenz95.cpp
     Model/QG/QG.cpp

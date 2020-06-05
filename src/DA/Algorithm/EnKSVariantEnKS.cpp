@@ -1,5 +1,5 @@
 #include <Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp>
-#include <Endas/DA/Ensemble.hpp>
+#include <Endas/Core/Ensemble.hpp>
 #include <Endas/Endas.hpp>
 
 #include "../../Compatibility.hpp"

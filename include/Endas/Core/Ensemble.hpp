@@ -15,6 +15,7 @@ namespace endas
 {
 
 
+
 /** 
  * Generates new ensemble with given mean and covariance.
  * 
@@ -23,15 +24,18 @@ namespace endas
  * @param out  Array where to store the result. Must be of size `u.size() x N, where N is 
  *             the desired number of ensemble members to generate.
  */
-ENDAS_DLL void generateEnsemble(const Ref<const Array> u, const CovarianceOperator& cov,
+void generateEnsemble(const Ref<const Array> u, const CovarianceOperator& cov,
                                 Ref<Array2d> out);
 
 
+/**
+ * Returns ensemble mean as an Eigen expression. 
+ */ 
 template <class DerivedIn>
 inline auto ensembleMean(const Eigen::ArrayBase<DerivedIn>& E) -> decltype ( E.rowwise().mean() )
 {
     return E.rowwise().mean();
-}    
+} 
 
 
 
@@ -65,6 +69,8 @@ ENDAS_DLL void inflateInPlace(Ref<Array2d> E, double k);
 ENDAS_DLL void inflateInPlace(Ref<Array2d> E, double factor, Ref<Array> Eu);
 
 
+
+/** @} */
 
 }
 

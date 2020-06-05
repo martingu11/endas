@@ -1,6 +1,6 @@
-#include <Endas/DA/Grid/GridStateSpacePartitioning.hpp>
+#include <Endas/Domain/GridStateSpacePartitioning.hpp>
 #include <Endas/Endas.hpp>
-#include "../../Compatibility.hpp"
+#include "../Compatibility.hpp"
 
 
 #include <Eigen/Geometry>

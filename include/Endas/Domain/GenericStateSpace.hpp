@@ -3,15 +3,21 @@
  * @author Martin Gunia
  */
 
-#ifndef __ENDAS_DA_GENERIC_STATESPACE_HPP__
-#define __ENDAS_DA_GENERIC_STATESPACE_HPP__
+#ifndef __ENDAS_DOMAIN_GENERIC_STATESPACE_HPP__
+#define __ENDAS_DOMAIN_GENERIC_STATESPACE_HPP__
 
-#include "StateSpace.hpp"
-#include "StateSpacePartitioning.hpp"
+#include <Endas/DA/StateSpace.hpp>
+#include <Endas/DA/StateSpacePartitioning.hpp>
 #include <Endas/Spatial/CoordinateSystem.hpp>
 
 namespace endas
 {
+
+/** 
+ * @addtogroup domain
+ * @{ 
+ */
+
 
 /**
  * Trivial state space without assumptions on the structure of the state space.
@@ -48,6 +54,7 @@ private:
 
 
 
+/** @} */
 
 }
 

@@ -10,6 +10,11 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup random
+ * @{ 
+ */
+
 
 /**
  * Random number generator sampling from a multivariate Normal distribution.
@@ -46,6 +51,10 @@ private:
     Array mMean;
     Matrix mTransform;
 };
+
+
+
+/** @} */
 
 }
 

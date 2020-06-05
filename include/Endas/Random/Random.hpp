@@ -12,6 +12,11 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup random
+ * @{ 
+ */
+
 
 /**
  * Random number generator (RNG) interface used by EnDAS.
@@ -140,6 +145,7 @@ typedef StandardRNG<std::mt19937> MT19937;
 
 
 
+/** @} */
 
 }
 

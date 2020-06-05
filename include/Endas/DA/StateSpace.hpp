@@ -7,14 +7,17 @@
 #define __ENDAS_DA_STATESPACE_HPP__
 
 #include <Endas/Core/Core.hpp>
-#include <Endas/Spatial/Spatial.hpp>
+#include <Endas/Core/AABox.hpp>
 #include <Endas/Spatial/CoordinateSystem.hpp>
-
-#include <Eigen/Geometry>
-
 
 namespace endas
 {
+
+/** 
+ * @addtogroup da
+ * @{ 
+ */
+
 
 
 /**
@@ -147,8 +150,9 @@ public:
 };
 
 
-
+/** @} */
 
 }
+
 
 #endif

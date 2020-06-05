@@ -15,8 +15,15 @@
 #include <limits>
 
 
+
 namespace endas
 {
+
+/** 
+ * @addtogroup da
+ * @{ 
+ */
+
 
 /**
  * Special lag value indicating that a fixed-interval Kalman Smoother should be used, if available.
@@ -218,7 +225,9 @@ ENDAS_DLL void ensembleForecast(Ref<Array2d> E, const EvolutionModel& model,
 
 
 
+/** @} */
 
 }
+
 
 #endif

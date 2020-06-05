@@ -14,6 +14,12 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup domain
+ * @{ 
+ */
+
+
 /**
  * State space partitioning scheme that operates on gridded state spaces.
  * 
@@ -47,10 +53,7 @@ private:
 
 
 
-
-
-
-
+/** @} */
 
 }
 

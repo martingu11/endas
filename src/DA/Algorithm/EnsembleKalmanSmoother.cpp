@@ -1,5 +1,5 @@
 #include <Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp>
-#include <Endas/DA/Ensemble.hpp>
+#include <Endas/Core/Ensemble.hpp>
 #include <Endas/Caching/MemoryArrayCache.hpp>
 #include <Endas/Endas.hpp>
 
@@ -12,6 +12,7 @@
 
 using namespace std;
 using namespace endas;
+
 
 using handle_t = ArrayCache::handle_t;
 
@@ -93,7 +94,7 @@ struct EnsembleKalmanSmoother::Data
     Eigen::Array<index_t, 2, Eigen::Dynamic> locStateLimits; 
 
     // Array containing the starting index of X matrices in locX of ALL domains
-    Eigen::Array<index_t, Eigen::Dynamic, 1> locXLimits; 
+    Eigen::Array<index_t, 1, Eigen::Dynamic> locXLimits; 
 
 
     bool isLocalized() { return locNumDomains > 1; }
@@ -124,7 +125,7 @@ struct EnsembleKalmanSmoother::Data
         }
     }
 
-    void assimilateOne(const ObservationManager::Data& odata, 
+    void assimilateOne(const ObservationData& odata, 
                        const Ref<const Array2d> Eg, Ref<Array2d> E, Ref<Matrix> X, bool& haveX);
 
     void laggedSmoother(OnResultFn& onresult, bool finishing);
@@ -342,7 +343,7 @@ void EnsembleKalmanSmoother::assimilate(const ObservationManager& omgr)
     // Global analysis
     if (!mData->isLocalized())
     {
-        ObservationManager::Data odata = omgr.fetchObservations();
+        ObservationData odata = omgr.fetchObservations();
         if (!odata.empty())
         {
             ENDAS_ASSERT(odata.domain == GlobalAnalysisDomainId);
@@ -362,7 +363,7 @@ void EnsembleKalmanSmoother::assimilate(const ObservationManager& omgr)
         //cout << "Local assim " << mData->locNumDomains << endl;
 
         // Fetch observations from the manager and assimilate...
-        ObservationManager::Data odata;
+        ObservationData odata;
         while ((odata = omgr.fetchObservations()).empty() == false)
         {
             int d = odata.domain;
@@ -390,7 +391,7 @@ void EnsembleKalmanSmoother::assimilate(const ObservationManager& omgr)
 }
 
 
-void EnsembleKalmanSmoother::Data::assimilateOne(const ObservationManager::Data& odata, 
+void EnsembleKalmanSmoother::Data::assimilateOne(const ObservationData& odata, 
                                                  const Ref<const Array2d> Eg, Ref<Array2d> E, 
                                                  Ref<Matrix> X, bool& haveX)
 {

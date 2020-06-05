@@ -15,6 +15,11 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup domain
+ * @{ 
+ */    
+
 
 /**
  * Generic implementation of a state space with elements organized on a multi-dimensional grid.
@@ -143,10 +148,7 @@ private:
 };
 
 
-
-
-
-
+/** @} */
 
 }
 

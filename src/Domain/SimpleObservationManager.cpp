@@ -1,4 +1,4 @@
-#include <Endas/DA/SimpleObservationManager.hpp>
+#include <Endas/Domain/SimpleObservationManager.hpp>
 #include <Endas/Endas.hpp>
 #include "../Compatibility.hpp"
 
@@ -64,14 +64,14 @@ void SimpleObservationManager::beginFetch(int k, const StateSpacePartitioning* p
 }
 
 
-ObservationManager::Data SimpleObservationManager::fetchObservations() const
+ObservationData SimpleObservationManager::fetchObservations() const
 {
 
     // Global analysis
     if (mData->numDomains == 1)
     {
         /// @todo This implies a copy of obs!!!
-        return ObservationManager::Data(GlobalAnalysisDomainId, mData->obs, mData->H, mData->R); 
+        return ObservationData(GlobalAnalysisDomainId, mData->obs, mData->H, mData->R); 
     }
     // Local analysis
     else
@@ -98,11 +98,11 @@ ObservationManager::Data SimpleObservationManager::fetchObservations() const
                 ENDAS_ASSERT(Hlocal);
                 ENDAS_ASSERT(Rlocal);
 
-                return ObservationManager::Data(d, move(obsLocal), Hlocal, Rlocal);    
+                return ObservationData(d, move(obsLocal), Hlocal, Rlocal);    
             }
         }
 
-        return ObservationManager::Data();
+        return ObservationData();
     }
 
 }

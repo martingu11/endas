@@ -10,6 +10,11 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup daalg
+ * @{ 
+ */
+
 
 /**
  * Base class for various Ensemble Kalman Filter/Smoother variants.
@@ -149,6 +154,7 @@ private:
 
 
 
+/** @} */
 
 }
 

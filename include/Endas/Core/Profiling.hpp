@@ -44,6 +44,12 @@ struct ENDAS_DLL NewPerfScope
 }
 
 
+/** 
+ * @addtogroup core
+ * @{ 
+ */
+
+
 #define ENDAS_TIMER_BEGIN(timer) endas::perfclock_t::time_point timer_##timer##_begin = endas::perfclock_t::now()
 #define ENDAS_TIMER_END(timer) endas::perfclock_t::time_point timer_##timer##_end = endas::perfclock_t::now()
 
@@ -107,6 +113,7 @@ ENDAS_DLL void profilingSummary(std::ostream& os, int maxNesting = 5);
 
 
 
+/** @} */
 
 }
 

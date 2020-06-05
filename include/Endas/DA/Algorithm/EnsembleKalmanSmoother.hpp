@@ -16,6 +16,11 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup daalg
+ * @{ 
+ */
+
 
 /**
  * Ensemble Kalman Filter and Smoother.
@@ -98,6 +103,8 @@ private:
 };
 
 
+
+/** @} */
 
 }
 

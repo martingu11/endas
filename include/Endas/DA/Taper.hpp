@@ -14,6 +14,12 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup da
+ * @{ 
+ */
+
+
 
 /**
  * Covariance tapering function with local support.
@@ -169,8 +175,9 @@ public:
 };
 
 
-
+/** @} */
 
 }
+
 
 #endif

@@ -15,6 +15,10 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup spatial
+ * @{ 
+ */
 
 
 /**
@@ -166,9 +170,7 @@ private:
 
 
 
-
-
-
+/** @} */
 
 }
 

@@ -11,6 +11,11 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup da
+ * @{ 
+ */
+
 
 /**
  * Abstract base class for observation operators.
@@ -152,6 +157,7 @@ private:
 
 
 
+/** @} */
 
 }
 

@@ -14,6 +14,11 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup random
+ * @{ 
+ */
+
 
 /**
  * Stationary Gaussian Random Field (GRF) generator in two dimensions.
@@ -71,6 +76,9 @@ private:
     struct Data;
     std::unique_ptr<Data> mData;
 };
+
+
+/** @} */
 
 }
 

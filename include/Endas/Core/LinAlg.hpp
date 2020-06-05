@@ -1,7 +1,5 @@
 /**********************************************************************
  * EnDAS - Ensemble Data ASsimilation library
- * http://geos.osgeo.org
- *
  * Copyright (c) 2020 EnDAS developers
  * 
  * EnDAS is released under the MIT license, see LICENSE.txt.
@@ -25,6 +23,11 @@
 
 namespace endas
 {
+
+/** 
+ * @addtogroup core
+ * @{ 
+ */
 
 
 /**
@@ -292,6 +295,8 @@ ENDAS_DLL void inverseSymmetricSqrt(const Ref<const Matrix> A, Ref<Matrix> out, 
 
 
 
+
+/** @} */
 
 }
 

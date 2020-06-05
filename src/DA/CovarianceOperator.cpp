@@ -240,3 +240,42 @@ const Matrix& DenseCovariance::asMatrix() const
 
 
 
+
+//-----------------------------------------------------------------------------
+// ZeroCovariance
+//-----------------------------------------------------------------------------
+
+ZeroCovariance::ZeroCovariance(index_t size)
+: mSize(size)
+{ }
+
+
+int ZeroCovariance::size() const { return mSize; }
+bool ZeroCovariance::isDiagonal() const { return true; }
+bool ZeroCovariance::mcOnly() const { return false; }
+
+void ZeroCovariance::randomMultivariateNormal(Ref<Array2d> out) const
+{
+    out.fill(0);
+}
+
+void ZeroCovariance::solve(const Ref<const Matrix> b, Ref<Matrix> out) const
+{
+    ENDAS_NOT_SUPPORTED("solve() not supported for ZeroCovariance");
+}
+
+void ZeroCovariance::fmadd(Ref<Array2d> A, double c) const
+{
+    // Nothing to do
+}
+
+const Matrix& ZeroCovariance::asMatrix() const
+{
+    if (mM.size() == 0) mM = Matrix::Zero(mSize, mSize);
+    return mM;
+}
+
+
+
+
+

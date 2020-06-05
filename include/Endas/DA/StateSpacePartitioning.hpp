@@ -12,6 +12,10 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup da
+ * @{ 
+ */
 
 
 /**
@@ -129,6 +133,7 @@ public:
 };
 
 
+/** @} */
 
 }
 

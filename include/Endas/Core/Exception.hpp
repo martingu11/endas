@@ -15,6 +15,12 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup core
+ * @{ 
+ */
+
+
 /**
  * Exception signalling that the requested functionality is not supported.
  */
@@ -69,6 +75,7 @@ public:
 
 
 
+/** @} */
 
 }
 

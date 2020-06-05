@@ -13,6 +13,11 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup spatial
+ * @{ 
+ */
+
 
 /**
  * Coordinate system abstraction.
@@ -115,6 +120,8 @@ private:
     int mR;
 };
 
+
+/** @} */
 
 }
 

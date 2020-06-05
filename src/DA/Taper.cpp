@@ -4,7 +4,6 @@ using namespace std;
 using namespace endas;
 
 
-
 TaperFn::TaperFn(double L)
 : mL(L)
 { }

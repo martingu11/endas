@@ -7,13 +7,18 @@
 #define __ENDAS_DA_COVARIANCE_OPERATOR_HPP__
 
 #include <Endas/Core/LinAlg.hpp>
-
 #include <memory>
-
 
 
 namespace endas
 {
+
+/** 
+ * @addtogroup da
+ * @{ 
+ */
+
+
 
 /**
  * Abstract representation of a covariance matrix.
@@ -214,7 +219,41 @@ private:
 
 
 
+/**
+ * Special-purpose covariance operator that implements zero covariance.
+ * 
+ * This is mostly intended to specify perfect model via zero covariance matrix Q.
+ */
+class ENDAS_DLL ZeroCovariance : public CovarianceOperator
+{
+public:
 
+    /**
+     * Constructs ZeroCovariance instance of given size. 
+     * 
+     * @param size   Covariance matrix size (the number of rows and/or columns)
+     */
+    ZeroCovariance(index_t size);
+
+    virtual int size() const override;
+    virtual bool isDiagonal() const override;
+    virtual bool mcOnly() const override;
+    virtual void randomMultivariateNormal(Ref<Array2d> out) const override;
+    virtual void solve(const Ref<const Matrix> b, Ref<Matrix> out) const override;
+
+    virtual void fmadd(Ref<Array2d> A, double c = 1.0) const override;
+    virtual const Matrix& asMatrix() const override;
+
+private:
+    index_t mSize;
+    mutable Matrix mM; // Created on demand by the asMatrix() call
+};
+
+
+
+
+
+/** @} */
 
 }
 

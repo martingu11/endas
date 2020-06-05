@@ -16,6 +16,12 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup da
+ * @{ 
+ */
+
+
 
 /**
  * Base class for state evolution models.
@@ -155,7 +161,7 @@ private:
 };
 
 
-
+/** @} */
 
 }
 
