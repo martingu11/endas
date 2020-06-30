@@ -7,6 +7,10 @@
 #define __ENDAS_DA_COVARIANCE_OPERATOR_HPP__
 
 #include <Endas/Core/LinAlg.hpp>
+#include <Endas/DA/StateSpace.hpp>
+#include <Endas/Spatial/Variogram.hpp>
+
+
 #include <memory>
 
 
@@ -89,14 +93,14 @@ public:
      * 
      * @note: This method can write the covariance matrix to any matrix or array expression that is 
      * of the correct size (size() x size()). Passing wrongly-sized matrix expression as `out` will 
-     * trigger runtime assertion. Use toMatrix() to have the matrix resized automatically.
+     * trigger runtime assertion. Use toDenseMatrix() to have the matrix resized automatically.
      */
     //virtual void toMatrixView(Ref<Matrix> out) const;
 
     /**
      * Returns dense matrix representation of the covariance operator. 
      */ 
-    virtual const Matrix& asMatrix() const;
+    virtual Matrix toDenseMatrix() const;
 
 
     /**
@@ -166,7 +170,7 @@ public:
     virtual void randomMultivariateNormal(Ref<Array2d> out) const override;
     virtual void solve(const Ref<const Matrix> b, Ref<Matrix> out) const override;
     virtual void fmadd(Ref<Array2d> A, double c = 1.0) const override;
-    virtual const Matrix& asMatrix() const override;
+    virtual Matrix toDenseMatrix() const override;
 
     virtual std::shared_ptr<const CovarianceOperator> subset(const IndexArray& indices) const override;
 
@@ -177,7 +181,6 @@ private:
     mutable Array mDiag;
     mutable Array mInvDiag;
     mutable Array mDiagSD;
-    mutable Matrix mDense; // Constructed when needed
 };
 
 
@@ -185,19 +188,32 @@ private:
 /**
  * Implements dense covariance matrix.
  *
- * Use only on small covariances!
+ * @rst
+ * .. attention::
+ *    Use only on small state or observation spaces!
+ * @endrst
  */
 class ENDAS_DLL DenseCovariance : public CovarianceOperator
 {
 public:
 
     /**
-     * Constructs diagonal covariance with given diagonal or its inverse.
-     * The passed array is copied.
+     * Constructs dense covariance operator from given matrix.
+     * The passed matrix is copied or moved.
      * 
      * @param P       Covariance matrix. The matrix is copied or moved.
      */
     DenseCovariance(Matrix P);
+
+    /*
+     * Constructs dense covariance operator by evaluating covariance function over a 
+     * spatial domain.
+     * 
+     * @param space  Information about the space the covariance represents.
+     * @param covFn  Covariance function to evaluate.
+     */
+    DenseCovariance(const SpatialStateSpace& space, const CovarianceFn& covFn,
+                    double epsilon = 1e-5);
 
     ~DenseCovariance();
 
@@ -208,7 +224,7 @@ public:
     virtual void solve(const Ref<const Matrix> b, Ref<Matrix> out) const override;
 
     virtual void fmadd(Ref<Array2d> A, double c = 1.0) const override;
-    virtual const Matrix& asMatrix() const override;
+    virtual Matrix toDenseMatrix() const override;
 
 private:
     struct Data;
@@ -242,11 +258,10 @@ public:
     virtual void solve(const Ref<const Matrix> b, Ref<Matrix> out) const override;
 
     virtual void fmadd(Ref<Array2d> A, double c = 1.0) const override;
-    virtual const Matrix& asMatrix() const override;
+    virtual Matrix toDenseMatrix() const override;
 
 private:
     index_t mSize;
-    mutable Matrix mM; // Created on demand by the asMatrix() call
 };
 
 

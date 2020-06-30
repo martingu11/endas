@@ -1,36 +1,60 @@
 
 #include <Endas/Random/Random.hpp>
 #include <Endas/Random/MultivariateRandomNormal.hpp>
+#include "../Compatibility.hpp"
+
+#include <iostream>
 
 using namespace std;
 using namespace endas;
 
 
-MultivariateRandomNormal::MultivariateRandomNormal(const Ref<const Matrix> cov)
-: mX(cov.rows())
+struct MultivariateRandomNormal::Data
+{
+    Matrix cov;
+    Array mean;
+
+    // Declare after `cov` as it uses Ref to it!
+    Eigen::LLT<Ref<Matrix>> llt;
+
+    Data(Matrix _cov)
+    : cov(move(_cov)),
+      llt(this->cov)
+    { }
+};
+
+
+MultivariateRandomNormal::MultivariateRandomNormal(Matrix cov)
+: mData(make_unique<Data>(move(cov)))
 { 
-    Eigen::SelfAdjointEigenSolver<Matrix> eigenSolver(cov);
-    mTransform = eigenSolver.eigenvectors() * eigenSolver.eigenvalues().cwiseSqrt().asDiagonal();
+    //mData->cov = move(cov);
+    //mData->llt.compute(mData->cov);
+    //mL = llt.matrixL();
+    //Eigen::SelfAdjointEigenSolver<Matrix> eigenSolver(cov);
+    //mTransform = eigenSolver.eigenvectors() * eigenSolver.eigenvalues().cwiseSqrt().asDiagonal();
 }
 
-MultivariateRandomNormal::MultivariateRandomNormal(const Ref<const Array> mean, 
-                                                   const Ref<const Matrix> cov)
-: MultivariateRandomNormal(cov)
+MultivariateRandomNormal::MultivariateRandomNormal(Array mean, Matrix cov)
+: MultivariateRandomNormal(move(cov))
 { 
-    mMean = mean;
+    mData->mean = move(mean);
 }
 
-void MultivariateRandomNormal::operator()(Ref<Array2d> out) const
+MultivariateRandomNormal::~MultivariateRandomNormal()
+{ }
+
+
+void MultivariateRandomNormal::sample(Ref<Array2d> out) const
 {
     RandomNumberGenerator& gen = getRandomNumberGenerator();
 
+    Matrix X(mData->cov.rows(), 1);
     for (int i = 0; i != out.cols(); i++)
     {
-        auto col = out.col(i);
-
-        gen.standardNormal(col);
-        col.matrix().noalias() = mTransform * mX.matrix();
-        if (mMean.size() > 0) col+= mMean;
+        gen.standardNormal(X);
+        out.col(i).matrix().noalias() = mData->llt.matrixL() * X;
+        //col.matrix().noalias() = mTransform * mX.matrix();
+        if (mData->mean.size() > 0) out.col(i)+= mData->mean;
     }
 }
 

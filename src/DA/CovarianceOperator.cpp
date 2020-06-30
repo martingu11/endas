@@ -7,6 +7,7 @@
 #include "../Compatibility.hpp"
 
 
+
 using namespace std;
 using namespace endas;
 
@@ -30,9 +31,9 @@ bool CovarianceOperator::mcOnly() const
 }
 
 
-const Matrix& CovarianceOperator::asMatrix() const
+Matrix CovarianceOperator::toDenseMatrix() const
 {
-    ENDAS_NOT_SUPPORTED("Covariance operator does not support asMatrix()");
+    ENDAS_NOT_SUPPORTED("Covariance operator does not support toDenseMatrix()");
 }
 
 
@@ -53,7 +54,7 @@ shared_ptr<const CovarianceOperator> CovarianceOperator::subset(const IndexArray
     // Fallback method using dense matrix
     if (!mcOnly())
     {
-        const Matrix& P = this->asMatrix();
+        const Matrix& P = this->toDenseMatrix();
         
         Matrix Psub(indices.size(), indices.size());
         selectRowsCols(P, indices, indices, Psub);
@@ -148,14 +149,11 @@ void DiagonalCovariance::fmadd(Ref<Array2d> A, double c) const
     }
 }
 
-const Matrix& DiagonalCovariance::asMatrix() const
+Matrix DiagonalCovariance::toDenseMatrix() const
 {
-    if (mDense.size() == 0)
-    {
-        mDense = Matrix::Zero(this->size(), this->size());
-        mDense.diagonal() = this->diagonal();
-    }
-    return mDense;
+    Matrix dense = Matrix::Zero(this->size(), this->size());
+    dense.diagonal() = this->diagonal();
+    return dense;
 }
 
 shared_ptr<const CovarianceOperator> DiagonalCovariance::subset(const IndexArray& indices) const
@@ -175,11 +173,10 @@ struct DenseCovariance::Data
 {
     Matrix P; 
 
-    bool haveCholP;
-    Eigen::LLT<Matrix> cholP;
-    std::unique_ptr<MultivariateRandomNormal> mrn;
+    bool haveLLT;
+    Eigen::LLT<Matrix> LLT;
 
-    Data(Matrix _P) : P(move(_P)), haveCholP(false) { }
+    Data(Matrix _P) : P(move(_P)), haveLLT(false) { }
 };
 
 
@@ -187,6 +184,51 @@ DenseCovariance::DenseCovariance(Matrix P)
 : mData(make_unique<Data>(move(P)))
 { 
     ENDAS_ASSERT(mData->P.cols() == mData->P.rows());
+}
+
+
+DenseCovariance::DenseCovariance(const SpatialStateSpace& space, const CovarianceFn& covFn,
+                                 double epsilon)
+: mData(make_unique<Data>(Matrix::Zero(space.size(), space.size())))
+{
+    Matrix& P = mData->P;
+    int dim = space.dim();
+    index_t n = space.size();
+    const CoordinateSystem& crs = space.crs();
+
+    // Get the coordinates of the state vector elements
+    Array2d coords(dim, n);
+    space.getCoords(coords);
+
+    // Evaluate covFn(). We only need to initialize the lower triangular part of the matrix,
+    // upper triangular is not used
+
+    const IsotropicCovarianceFn* isoCovFn = dynamic_cast<const IsotropicCovarianceFn*>(&covFn);
+
+    // If covFn() is IsotropicCovarianceFn
+    if (isoCovFn)
+    {
+        Array dist(n);
+        for (index_t i = 0; i != n; i++)
+        {
+            auto d = dist.head(n-i);
+            crs.distance(coords.block(0, i, dim, n-i), coords.col(i), dist.head(n-i));
+            isoCovFn->values(d, d);
+            P.block(i, i, n-i, 1) = d;
+        }
+    }
+    else
+    {
+        ENDAS_NOT_IMPLEMENTED;
+    }
+
+    // Add a small amount to the diagonal to increase chances the covariance is positive
+    // definite
+    if (epsilon > 0)
+    {
+        P.diagonal() = P.diagonal().array() += epsilon;
+    }
+
 }
 
 
@@ -199,24 +241,35 @@ bool DenseCovariance::mcOnly() const { return false; }
 
 void DenseCovariance::randomMultivariateNormal(Ref<Array2d> out) const
 {
-    if (!mData->mrn)
+    int n = mData->P.rows();
+    ENDAS_ASSERT(out.rows() == n);
+
+    if (!mData->haveLLT)
     {
-        mData->mrn = make_unique<MultivariateRandomNormal>(mData->P);
+        mData->LLT.compute(mData->P);
+        mData->haveLLT = true;
     }
-    mData->mrn->operator()(out);
+
+    RandomNumberGenerator& gen = getRandomNumberGenerator();
+    Matrix X(n, 1);
+    
+    for (int i = 0; i != out.cols(); i++)
+    {
+        gen.standardNormal(X);
+        out.col(i).matrix().noalias() = mData->LLT.matrixL() * X;
+    }
 }
 
 void DenseCovariance::solve(const Ref<const Matrix> b, Ref<Matrix> out) const
 {
-    if (!mData->haveCholP)
+    if (!mData->haveLLT)
     {
-        /// @todo  We could do decomposition in place and reconstruct matrix in asMatrix()?
-        mData->cholP.compute(mData->P);
-        mData->haveCholP = true;
+        mData->LLT.compute(mData->P);
+        mData->haveLLT = true;
     }
 
     /// @todo solveInPlace() if b==out?
-    out = mData->cholP.solve(b);
+    out = mData->LLT.solve(b);
 }
 
 void DenseCovariance::fmadd(Ref<Array2d> A, double c) const
@@ -233,9 +286,14 @@ void DenseCovariance::fmadd(Ref<Array2d> A, double c) const
     }
 }
 
-const Matrix& DenseCovariance::asMatrix() const
+Matrix DenseCovariance::toDenseMatrix() const
 {
-    return mData->P;
+    // P might only have valid values in the lower triangular. Reconstruct full matrix 
+    // from that.
+    Matrix dense = mData->P.triangularView<Eigen::Lower>().selfadjointView();
+    return move(dense);
+
+    //return mData->P;
 }
 
 
@@ -269,10 +327,9 @@ void ZeroCovariance::fmadd(Ref<Array2d> A, double c) const
     // Nothing to do
 }
 
-const Matrix& ZeroCovariance::asMatrix() const
+Matrix ZeroCovariance::toDenseMatrix() const
 {
-    if (mM.size() == 0) mM = Matrix::Zero(mSize, mSize);
-    return mM;
+    return Matrix::Zero(mSize, mSize);
 }
 
 
