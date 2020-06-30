@@ -38,6 +38,7 @@ target_sources(endas PRIVATE
     ${CMAKE_SOURCE_DIR}/include/Endas/Domain/GridStateSpace.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Domain/GridStateSpacePartitioning.hpp
     
+    ${CMAKE_SOURCE_DIR}/include/Endas/IO/ArrayIO.hpp
 )
 
 

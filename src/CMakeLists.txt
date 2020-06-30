@@ -35,6 +35,8 @@ target_sources(endas PRIVATE
     Domain/GridStateSpace.cpp
     Domain/GridStateSpacePartitioning.cpp
 
+    IO/ArrayIO_NumPy.cpp
+
     Model/Lorenz95.cpp
     Model/QG/QG.cpp
     Model/QG/calc.f90
