@@ -24,7 +24,7 @@ namespace endas
  *
  * GenericStateSpace is likely only useful for low-dimensional toy problems where each state variable
  * can be updated independently. Both StateSpace and StateSpacePartitioning interfaces are 
- * implemented as there is very little benefit in separating the two.
+ * implemented by this class as there is very little benefit in separating the two.
  * 
  * Under the implemented partitioning scheme, the index of each state variable is also its coordinate
  * and coordDim() is therefore 1. One-dimensional Euclidean distance is used by default to evaluate 

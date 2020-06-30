@@ -1,4 +1,15 @@
-Basic setup
-===========
+Basics
+======
 
-Under construction.
+
+Commonly used notation and symbols
+----------------------------------
+
+*n*
+    Size of the state space 
+
+*N*
+    Ensemble size    
+
+
+

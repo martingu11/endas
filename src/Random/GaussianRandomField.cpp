@@ -124,13 +124,13 @@ GaussianRandomField::GaussianRandomField(int nx, int ny, const IsotropicCovarian
 GaussianRandomField::~GaussianRandomField()
 { }
 
-void GaussianRandomField::operator()(Ref<Array2d> out) const
+void GaussianRandomField::sample(Ref<Array2d> out) const
 {
     Array2d dummy;
-    return this->operator()(out, dummy);
+    return this->sample(out, dummy);
 }
 
-void GaussianRandomField::operator()(Ref<Array2d> out, Ref<Array2d> out2) const
+void GaussianRandomField::sample(Ref<Array2d> out, Ref<Array2d> out2) const
 {
     int nx = mData->nx;
     int ny = mData->ny;

@@ -1,5 +1,7 @@
-Getting started
-===============
+.. _da-with-endas:
+
+Data assimilation with EnDAS
+============================
 
 
 
@@ -8,6 +10,10 @@ Getting started
 
    basics
    filter_smoother_api
+   state_space
+   observations
+   observation_manager
+   sampling_perturbations
    localization
    multivariate
 

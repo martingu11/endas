@@ -24,8 +24,7 @@ namespace endas
  * @param out  Array where to store the result. Must be of size `u.size() x N, where N is 
  *             the desired number of ensemble members to generate.
  */
-void generateEnsemble(const Ref<const Array> u, const CovarianceOperator& cov,
-                                Ref<Array2d> out);
+ENDAS_DLL void generateEnsemble(const Ref<const Array> u, const CovarianceOperator& cov, Ref<Array2d> out);
 
 
 /**

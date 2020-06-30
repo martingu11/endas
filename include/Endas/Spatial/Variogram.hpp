@@ -113,7 +113,7 @@ private:
 
 
 /** 
- * Shorthand for ExponentialFamilyCovFn(1, sigma).
+ * Shorthand for ExponentialFamilyCovFn (1, L, sigma).
  * 
  * @param L      Correlation length.
  * @param sigma  Standard deviation at r=0.
@@ -125,7 +125,7 @@ inline ExponentialFamilyCovFn ExponentialCovFn(double L, double sigma)
 
 
 /** 
- * Shorthand for ExponentialFamilyCovFn(2, sigma).
+ * Shorthand for ExponentialFamilyCovFn (2, L, sigma).
  * 
  * @param L      Correlation length.
  * @param sigma  Standard deviation at r=0.

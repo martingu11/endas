@@ -73,6 +73,8 @@ public:
 
 #define ENDAS_REQUIRE(expr, extype, msg) { if (!(expr)) throw extype(msg); }
 
+#define ENDAS_CHECK_ARGUMENT(expr, msg) { if (!(expr)) throw std::invalid_argument(msg); }
+
 
 
 /** @} */

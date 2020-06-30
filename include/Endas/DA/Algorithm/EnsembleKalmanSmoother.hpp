@@ -85,7 +85,7 @@ public:
                           std::shared_ptr<const TaperFn> taperFn = nullptr);
 
     /**
-     * Resets the smoother to global analysis scheme.
+     * Resets the smoother to a global analysis scheme.
      */
     virtual void globalize();
 

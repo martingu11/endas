@@ -57,8 +57,13 @@ public:
 
     /** 
      * Fills the given array with samples from the distribution.
+     * 
+     * The ``out`` array must be of the same size as indicated in the constructor, i.e. 
+     * ``ny`` x ``nx``. 
+     * 
+     * @param  out  The array where the generated random field is stored
      */
-    void operator()(Ref<Array2d> out) const;
+    void sample(Ref<Array2d> out) const;
 
 
     /** 
@@ -67,9 +72,28 @@ public:
      * This overload generates two realizations of the random field at once. Because two fields 
      * are always generated simultaneuosly, this is more efficient when more than one realization
      * is needed.
+     * 
+     * The ``out`` and ``out2`` arrays must be of the same size as indicated in the constructor, 
+     * i.e. ``ny`` x ``nx``. 
+     * 
+     * @param  out   The array where the first generated random field is stored
+     * @param  out2  The array where the second generated random field is stored
+     * 
      */
-    void operator()(Ref<Array2d> out, Ref<Array2d> out2) const;
+    void sample(Ref<Array2d> out, Ref<Array2d> out2) const;
 
+
+    /**
+     * Draws many realizations of the random field.
+     * 
+     * This is a convenience function for populating an ensemble with realizations of the random
+     * fields. The array ``out`` should be of size ``nx*ny`` x ``N`` where ``N`` is the number of 
+     * desired realizations (the ensemble size).
+     * 
+     * @param  out  The array where the generated random field is stored
+     */
+
+    void sampleEnsemble(Ref<Array2d> out) const;
 
 
 private:

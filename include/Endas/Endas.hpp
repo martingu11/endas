@@ -15,6 +15,10 @@
  * @defgroup random Random number generation
  * 
  * @defgroup spatial Modelling of (geo)spatial processes
+ *
+ * @defgroup utils Utility functions and classes
+ *
+ * @defgroup io Input/output functions
  */
 
 

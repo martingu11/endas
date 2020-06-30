@@ -39,12 +39,9 @@ See the :doc:`Installation instructions page <installation>`.
 Where to start?
 ---------------
 
-
-
-Code examples can be found in the **examples** directory of the
+To get started with EnDAS, check out the :ref:`da-with-endas` page. Code examples can be found 
+on the :ref:`examples` page and in the ``examples`` directory of the 
 `EnDAS repository on GitHub <https://github.com/martingu11/endas>`_.
-
-
 
 
 Indices and tables

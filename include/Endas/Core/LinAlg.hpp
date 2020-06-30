@@ -105,18 +105,17 @@ template <class Derived> using SoftRef = Eigen::Ref<Derived, 0, Eigen::Stride<Ei
 /**
  * Shape of a multi-dimensional array.
  */
-typedef Eigen::Array<int, Eigen::Dynamic, 1> ArrayShape;
+typedef Eigen::Array<index_t, Eigen::Dynamic, 1> ArrayShape;
 
 /**
  * Shape of a two-dimensional array.
  */
-typedef Eigen::Array<int, 2, 1> ArrayShape2d;
+typedef Eigen::Array<index_t, 2, 1> ArrayShape2d;
 
 /**
  * Shape of a three-dimensional array.
  */
-typedef Eigen::Array<int, 3, 1> ArrayShape3d;
-
+typedef Eigen::Array<index_t, 3, 1> ArrayShape3d;
 
 
 /** 
@@ -162,6 +161,17 @@ ENDAS_DLL Array makeArray(std::initializer_list<real_t> values);
  *     });  
  */
 ENDAS_DLL Matrix makeMatrix(int rows, int cols, std::initializer_list<real_t> values);
+
+
+
+ENDAS_DLL ArrayShape makeShape(index_t a);
+ENDAS_DLL ArrayShape makeShape(index_t a, index_t b);
+ENDAS_DLL ArrayShape makeShape(index_t a, index_t b, index_t c);
+ENDAS_DLL ArrayShape makeShape(index_t a, index_t b, index_t c, index_t d);
+ENDAS_DLL ArrayShape2d makeShape2d(index_t a, index_t b);
+ENDAS_DLL ArrayShape3d makeShape3d(index_t a, index_t b, index_t c);
+
+
 
 
 /**
