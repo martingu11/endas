@@ -28,11 +28,11 @@ void EnKS::processGlobalEnsemble(const Ref<const Array2d> Eg, const ObservationO
     // H(Eg - xg) -> dataOut[0]
     dataOut.emplace_back(nobs, N);
 
-    H.apply(Eg.colwise() - xg, k, dataOut[0]);
+    H.apply(Eg.colwise() - xg, dataOut[0]);
     
     // H(Eg) -> dataOut[1]
     dataOut.emplace_back(nobs, N);
-    H.apply(Eg, k, dataOut[1]);
+    H.apply(Eg, dataOut[1]);
     
 }
 

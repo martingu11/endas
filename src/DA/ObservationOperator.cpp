@@ -13,9 +13,9 @@ ObservationOperator::~ObservationOperator()
 bool ObservationOperator::isLinear() const { return false; }
 bool ObservationOperator::isMatrix() const { return false; } 
 
-const Matrix& ObservationOperator::asMatrix() const
+Matrix ObservationOperator::toDenseMatrix() const
 {
-    ENDAS_NOT_SUPPORTED("Observation operator does not implement asMatrix()");
+    ENDAS_NOT_SUPPORTED("Observation operator does not implement toDenseMatrix()");
 }
 
 
@@ -25,7 +25,7 @@ shared_ptr<const ObservationOperator> ObservationOperator::subset(const IndexArr
     // Fallback method using dense matrix
     if (isMatrix())
     {
-        const Matrix& H = this->asMatrix();
+        const Matrix& H = this->toDenseMatrix();
 
         Matrix Hsub(indices.size(), H.cols());
         selectRows(H, indices, Hsub);
@@ -54,12 +54,12 @@ index_t MatrixObservationOperator::nstate() const { return mH.cols(); }
 bool MatrixObservationOperator::isLinear() const { return true; }
 bool MatrixObservationOperator::isMatrix() const { return true; }
 
-void MatrixObservationOperator::apply(const Ref<const Array2d> x, int k, Ref<Array2d> out) const
+void MatrixObservationOperator::apply(const Ref<const Array2d> x, Ref<Array2d> out) const
 {
     out.matrix().noalias() = this->mH * x.matrix();
 }
 
-const Matrix& MatrixObservationOperator::asMatrix() const
+Matrix MatrixObservationOperator::toDenseMatrix() const
 {
     return this->mH;
 }
@@ -83,9 +83,9 @@ index_t CustomObservationOperator::nstate() const { return mNState; }
 bool CustomObservationOperator::isLinear() const { return mIsLinear; }
 bool CustomObservationOperator::isMatrix() const { return false; }
 
-void CustomObservationOperator::apply(const Ref<const Array2d> x, int k, Ref<Array2d> out) const
+void CustomObservationOperator::apply(const Ref<const Array2d> x, Ref<Array2d> out) const
 {
-    mApplyFn(x, k, out);
+    mApplyFn(x, out);
 }
 
 

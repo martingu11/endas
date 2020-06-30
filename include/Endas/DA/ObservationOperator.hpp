@@ -30,10 +30,14 @@ public:
 
     virtual ~ObservationOperator();
 
-    /** Returns the size of the observation space spanned by this operator. */
+    /** 
+     * Returns the size of the observation space spanned by this operator. 
+     */
     virtual index_t nobs() const = 0;
 
-    /** Returns the size of the state space spanned by this operator. */
+    /** 
+     * Returns the size of the state space spanned by this operator. 
+     */
     virtual index_t nstate() const = 0;
 
     /** 
@@ -53,22 +57,21 @@ public:
      * The array or matrix `x` is updated in-place, i.e. this computes `x = H(x)`. 
      * 
      * @param x     The array or matrix to apply the operator to.
-     * @param k     Current time step index.
      * @param out   Pre-alloccated array of size nobs() x `x.cols()` where the result is to be stored.
      */
-    virtual void apply(const Ref<const Array2d> x, int k, Ref<Array2d> out) const = 0;
+    virtual void apply(const Ref<const Array2d> x, Ref<Array2d> out) const = 0;
 
 
     /**
      * Returns dense matrix representation of the operator. 
      * 
      * Please note that not all observation operator implementations support this. Use isMatrix() 
-     * to check if asMatrix() is allowed.
+     * to check if toDenseMatrix() is allowed.
      * 
      * @return  Reference to a matrix
      * @throw   NotSupportedError if the operation is not supported.
      */
-    virtual const Matrix& asMatrix() const;
+    virtual Matrix toDenseMatrix() const;
 
 
     /**
@@ -113,8 +116,8 @@ public:
     virtual bool isLinear() const override; 
     virtual bool isMatrix() const override;   
 
-    virtual void apply(const Ref<const Array2d> x, int k, Ref<Array2d> out) const override;
-    virtual const Matrix& asMatrix() const override;
+    virtual void apply(const Ref<const Array2d> x, Ref<Array2d> out) const override;
+    virtual Matrix toDenseMatrix() const override;
 
 private:
     Matrix mH;
@@ -130,12 +133,28 @@ class ENDAS_DLL CustomObservationOperator : public ObservationOperator
 {
 public:
 
-    typedef std::function<void(const Ref<const Array2d> x, int k, Ref<Array2d> out)> ApplyFn;
+    /**
+     * Defines the signature of a callable object responsible for applying the observation
+     * operator to a state vector or ensemble of state vectors.
+     * 
+     * The ``out`` and ``x`` arrays may be one and the same instance.
+     * 
+     * @param x    Column state vector or an ensemble array with ensemble members stored 
+     *             in columns. 
+     * @param out  Array of identical dimensions as ``x`` where the output shall be stored.
+     *             
+     */
+    typedef std::function<void(const Ref<const Array2d> x, Ref<Array2d> out)> ApplyFn;
 
     /** 
-     * MatrixObservationOperator constructor.
+     * CustomObservationOperator constructor.
      * 
-     * @param H     Operator matrix. The referenced matrix instance is copied.
+     * @param nobs      Size of the observation space (the number of observations generated
+     *                  by the operator).
+     * @param nstate    Size of the state space.
+     * @param isLinear  Indicates whether the operator is linear
+     * @param fn        Callable with signature defined by CustomObservationOperator::ApplyFn 
+     *                  that applies the operator to a state (or ensemble) array
      */
     CustomObservationOperator(int nobs, int nstate, bool isLinear, const ApplyFn& fn);
 
@@ -146,7 +165,7 @@ public:
     virtual bool isLinear() const override; 
     virtual bool isMatrix() const override;   
 
-    virtual void apply(const Ref<const Array2d> x, int k, Ref<Array2d> out) const override;
+    virtual void apply(const Ref<const Array2d> x, Ref<Array2d> out) const override;
 
 private:
     index_t mNObs, mNState;
