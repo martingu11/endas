@@ -29,14 +29,16 @@ bool EuclideanCS::isCartesian() const
     return true;
 }
 
-void EuclideanCS::distance(const Ref<const Array2d> A, const Ref<const Array2d> B,
-                           Ref<Array> out) const
+void EuclideanCS::distance(const Ref<const Array2d> A, const Ref<const Array2d> B, Ref<Array> out) const
 {
-    ENDAS_ASSERT(A.cols() == B.cols());
     ENDAS_ASSERT(A.rows() == B.rows());
+    ENDAS_ASSERT(A.cols() == B.cols() || B.cols() == 1);
     ENDAS_ASSERT(A.cols() == out.size());
 
-    out = (A - B).square().colwise().sum().sqrt();
+    if (B.cols() == 1)
+        out = (A.colwise() - B.col(0)).square().colwise().sum().sqrt();
+    else 
+        out = (A - B).square().colwise().sum().sqrt();
 }
 
 
@@ -74,15 +76,27 @@ inline double haversine(double Alat, double Alon, double Blat, double Blon, doub
 
 void LatLonCS::distance(const Ref<const Array2d> A, const Ref<const Array2d> B, Ref<Array> out) const
 {
-    ENDAS_ASSERT(A.cols() == B.cols());
+    ENDAS_ASSERT(A.cols() == B.cols() || B.cols() == 1);
     ENDAS_ASSERT(A.rows() == 2 && B.rows() == 2);
     ENDAS_ASSERT(A.cols() == out.size());
 
-    for (int j = 0; j != A.cols(); j++)
+    if (B.cols() == 1)
     {
-        auto Aj = A.col(j);
-        auto Bj = B.col(j);
-        out(j) = haversine(Aj(LAT), Aj(LON), Bj(LAT), Bj(LON), mR);
+        for (int j = 0; j != A.cols(); j++)
+        {
+            auto Aj = A.col(j);
+            auto Bj = B.col(0);
+            out(j) = haversine(Aj(LAT), Aj(LON), Bj(LAT), Bj(LON), mR);
+        }
+    }
+    else
+    {
+        for (int j = 0; j != A.cols(); j++)
+        {
+            auto Aj = A.col(j);
+            auto Bj = B.col(j);
+            out(j) = haversine(Aj(LAT), Aj(LON), Bj(LAT), Bj(LON), mR);
+        }
     }
 }
 

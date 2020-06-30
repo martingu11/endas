@@ -130,6 +130,8 @@ public:
 
     virtual index_t size(const GriddedStateSpace::Block& block) const override;
 
+    virtual void getCoords(Ref<Array2d> out) const override;
+
     virtual void getIndices(const Block& block, IndexArray& out) const override;
     virtual bool hasEfficientSubset() const override;
     virtual void getSubset(const Block& block, const Ref<const Array2d> X, Ref<Array2d> out) const override;
@@ -141,10 +143,16 @@ private:
     index_t mSize;
     ArrayShape mShape;
     AABox mExtent;
+    Array mCellSize;
+
     std::shared_ptr<const CoordinateSystem> mCRS;
 
     int mNumVarsPerCell;      // For dense grids
     IndexArray mCellMap;      // For arbitrary grids
+
+
+    void cellCoord(index_t cellIndex, Ref<Array> out) const;
+
 };
 
 

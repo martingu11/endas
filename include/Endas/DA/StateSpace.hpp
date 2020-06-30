@@ -44,23 +44,50 @@ public:
 };
 
 
+/**
+ * Abstract representation of a state space whose elements can be identified by a spatial 
+ * coordinate.
+ * 
+ */ 
+class SpatialStateSpace : public StateSpace
+{
+public:
+
+    /**
+     * Returns the number of spatial coordinates used to represent the location of each state
+     * vector element. This is a convenient alias for `crs().dim()`.
+     */
+    int dim() const;
+
+    /**
+     * Returns the coordinate system of the state space.
+     */
+    virtual const CoordinateSystem& crs() const = 0;
+
+
+    /**
+     * Returns spatial coordinates of the elements of the state space. 
+     * 
+     * The coordinates are stored in the ``out`` array which must be pre-allocated to size 
+     * *m* x *n*, where *m* is the number of spatial dimensions as returned by ``dim()`` and *n*
+     * is the state vector size.
+     */
+    virtual void getCoords(Ref<Array2d> out) const = 0;
+
+};
+
+
+
 
 /**
  * Base class for state spaces with elements organized on a regular (multi-dimensional) grid.
  */
-class GriddedStateSpace : public StateSpace
+class GriddedStateSpace : public SpatialStateSpace
 {
 public:
 
-    /** Rectangular region within the state space grid. */
-    typedef Eigen::AlignedBox<index_t, Eigen::Dynamic> Block;
-
-
-    /**
-     * Returns the grid dimension (1 for discrete line, 2 for rectangular grid etc...).
-     * This is a convenient alias for `crs().dim()`.
-     */
-    int dim() const;
+    /* Rectangular region within the state space grid. */
+    typedef IntBox Block;
 
     /**
      * Returns the spatial extent of the grid.
@@ -71,11 +98,6 @@ public:
      * Returns the shape of the grid (the number of cells in each dimension).
      */
     virtual const ArrayShape& shape() const = 0;
-
-    /**
-     * Returns the coordinate system of the state space.
-     */
-    virtual const CoordinateSystem& crs() const = 0;
 
 
     /** 

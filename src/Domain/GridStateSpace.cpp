@@ -1,6 +1,7 @@
 #include <Endas/Domain/GridStateSpace.hpp>
 #include "../Compatibility.hpp"
 
+#include <iostream>
 
 using namespace std;
 using namespace endas;
@@ -14,6 +15,11 @@ GridStateSpace::GridStateSpace(const ArrayShape& shape, std::shared_ptr<const Co
     ENDAS_ASSERT(numVarsPerCell > 0);
 
     mSize = shape.prod() * numVarsPerCell;
+
+    cout << "ext " << endl << extent.min() << endl << extent.max() << endl;
+
+    mCellSize = (extent.max() - extent.min()).array() / shape.cast<AABox::Scalar>();
+    cout << "cellsize " << mCellSize << endl;
 }
 
 
@@ -25,6 +31,9 @@ GridStateSpace::GridStateSpace(const ArrayShape& shape, std::shared_ptr<const Co
     ENDAS_ASSERT(mCellMap.size() > 0);
 
     mSize = mCellMap.size();
+
+    mCellSize = (extent.max() - extent.min()).array() / shape.cast<AABox::Scalar>();
+    cout << "cellsize " << mCellSize << endl;
 }
 
 
@@ -63,7 +72,7 @@ const IndexArray& GridStateSpace::cellMap() const
 index_t GridStateSpace::size(const GriddedStateSpace::Block& block) const
 {
     ENDAS_ASSERT(block.min().minCoeff() > 0);
-    ENDAS_ASSERT((block.max().array().cast<int>() <= mShape).all());
+    ENDAS_ASSERT((block.max().array() <= mShape).all());
 
     // Dense grid
     if (mCellMap.size() == 0)
@@ -110,7 +119,7 @@ forEachBlockStateRange(const GriddedStateSpace::Block& block, int numVarsPerCell
 
 void GridStateSpace::getIndices(const Block& block, IndexArray& out) const
 {
-    // Not using cellmap
+    // Dense grid
     if (mCellMap.size() == 0) 
     {
         forEachBlockStateRange(block, mNumVarsPerCell, mShape, [&](index_t i, index_t iend)
@@ -123,6 +132,59 @@ void GridStateSpace::getIndices(const Block& block, IndexArray& out) const
         ENDAS_NOT_IMPLEMENTED;
     }
 }
+
+
+
+void GridStateSpace::getCoords(Ref<Array2d> out) const
+{
+    int n = this->size();
+    int dim = this->dim();
+    ENDAS_ASSERT(out.rows() >= dim); 
+    ENDAS_ASSERT(out.cols() >= n); 
+
+    // Dense grid
+    if (mCellMap.size() == 0)
+    {
+        Block block(Block::VectorType::Zero(dim), mShape);
+        forEachBlockStateRange(block, mNumVarsPerCell, mShape, [&](index_t i, index_t iend)
+        {
+            while (i != iend) 
+            {
+                cellCoord(i / mNumVarsPerCell, out.col(i));
+                i++;
+            }
+        });
+    }
+    else
+    {
+        ENDAS_NOT_IMPLEMENTED;
+    }
+}
+
+
+void GridStateSpace::cellCoord(index_t cellIndex, Ref<Array> out) const
+{
+    auto dim = this->dim();
+    
+    if (dim == 1)
+    {
+        out(0) = mExtent.min()(0) + mCellSize(0) * cellIndex;
+    }
+    else if (dim == 2)
+    {
+        index_t xi = (index_t)(cellIndex / mShape(0));
+        index_t yi = (index_t)(cellIndex % mShape(0));
+        out(0) = mExtent.min()(0) + mCellSize(0)*xi;        
+        out(1) = mExtent.min()(1) + mCellSize(1)*yi;
+    }
+    else 
+    {
+        ENDAS_NOT_IMPLEMENTED;
+    }
+
+}
+
+
 
 
 bool GridStateSpace::hasEfficientSubset() const

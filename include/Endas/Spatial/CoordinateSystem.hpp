@@ -46,8 +46,9 @@ public:
      * Returns the distance between pairs of points.
      * 
      * The method computes distance between pairs of points in the sets `A` and `B`. The points are stored 
-     * column-wise and tjeir dimension must equal `ndim()` (therefore both `A` and `B` must be `ndim()` x `n` 
-     * arrays where `n` is the number of points to process).
+     * column-wise and their dimension must equal `ndim()` (therefore both `A` and `B` must be `ndim()` x `n` 
+     * arrays where `n` is the number of points to process). Alternatively, the `B` array can contain a single
+     * column, in this case the distances are calculated between all points in `A` and the single point in `B`.
      *
      * @param A     First set of points.
      * @param B     Second set of points.

@@ -7,7 +7,7 @@ using namespace endas;
 StateSpace::~StateSpace()
 { }
 
-int GriddedStateSpace::dim() const
+int SpatialStateSpace::dim() const
 {
     return this->crs().dim();
 }
