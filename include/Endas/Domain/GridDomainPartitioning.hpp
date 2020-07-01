@@ -1,13 +1,13 @@
 /**
- * @file StateSpaceGrid.hpp
+ * @file GridDomainPartitioning.hpp
  * @author Martin Gunia
  */
 
-#ifndef __ENDAS_DA_GRID_STATE_SPACE_PARTITIONING_HPP__
-#define __ENDAS_DA_GRID_STATE_SPACE_PARTITIONING_HPP__
+#ifndef __ENDAS_DA_GRID_DOMAIN_PARTITIONING_HPP__
+#define __ENDAS_DA_GRID_DOMAIN_PARTITIONING_HPP__
 
-#include <Endas/DA/StateSpace.hpp>
-#include <Endas/DA/StateSpacePartitioning.hpp>
+#include <Endas/DA/Domain.hpp>
+#include <Endas/DA/DomainPartitioning.hpp>
 
 #include <memory>
 
@@ -29,19 +29,19 @@ namespace endas
  * state after observations have been assimilated.
  * 
  */ 
-class GridStateSpacePartitioning : public StateSpacePartitioning
+class GridDomainPartitioning : public DomainPartitioning
 {
 public:
 
-    GridStateSpacePartitioning(std::shared_ptr<const GriddedStateSpace> stateSpace, 
-                               int blockSize, int padding = 0); 
+    GridDomainPartitioning(std::shared_ptr<const GriddedDomain> stateSpace, 
+                           int blockSize, int padding = 0); 
                             
-    virtual ~GridStateSpacePartitioning();
+    virtual ~GridDomainPartitioning();
 
-    virtual int numDomains() const override;
-    virtual index_t getLocalStateSize(int d) const override;
-    virtual void getLocalState(int d, const Ref<const Array2d> Xg, Ref<Array2d> outXl) const override;
-    virtual void putLocalState(int d, const Ref<const Array2d> Xl, Ref<Array2d> Xg) const override;
+    virtual int numLocalDomains() const override;
+    virtual index_t getLocalSize(int d) const override;
+    virtual void getLocal(int d, const Ref<const Array2d> Xg, Ref<Array2d> outXl) const override;
+    virtual void putLocal(int d, const Ref<const Array2d> Xl, Ref<Array2d> Xg) const override;
 
     virtual std::shared_ptr<const PartitionPointQuery> 
     indexPoints(const Ref<const Array2d> coords) const override;

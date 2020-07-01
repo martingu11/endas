@@ -1,4 +1,4 @@
-#include <Endas/Domain/GridStateSpace.hpp>
+#include <Endas/Domain/GridDomain.hpp>
 #include "../Compatibility.hpp"
 
 #include <iostream>
@@ -7,7 +7,7 @@ using namespace std;
 using namespace endas;
 
 
-GridStateSpace::GridStateSpace(const ArrayShape& shape, std::shared_ptr<const CoordinateSystem> crs, 
+GridDomain::GridDomain(const ArrayShape& shape, std::shared_ptr<const CoordinateSystem> crs, 
                                const AABox& extent, int numVarsPerCell)
 : mShape(shape), mCRS(crs), mExtent(extent), mNumVarsPerCell(numVarsPerCell)
 { 
@@ -23,7 +23,7 @@ GridStateSpace::GridStateSpace(const ArrayShape& shape, std::shared_ptr<const Co
 }
 
 
-GridStateSpace::GridStateSpace(const ArrayShape& shape, std::shared_ptr<const CoordinateSystem> crs, 
+GridDomain::GridDomain(const ArrayShape& shape, std::shared_ptr<const CoordinateSystem> crs, 
                                const AABox& extent, IndexArray cellMap)
 : mShape(shape), mCRS(crs), mExtent(extent), mNumVarsPerCell(0), mCellMap(move(cellMap))
 {
@@ -37,39 +37,39 @@ GridStateSpace::GridStateSpace(const ArrayShape& shape, std::shared_ptr<const Co
 }
 
 
-GridStateSpace::~GridStateSpace()
+GridDomain::~GridDomain()
 { }
 
-index_t GridStateSpace::size() const
+index_t GridDomain::size() const
 {
     return mSize;
 }
 
-const ArrayShape& GridStateSpace::shape() const
+const ArrayShape& GridDomain::shape() const
 {
     return mShape;
 }
 
 
-const CoordinateSystem& GridStateSpace::crs() const
+const CoordinateSystem& GridDomain::crs() const
 {
     ENDAS_ASSERT(mCRS);
     return *mCRS;
 }
 
-const AABox& GridStateSpace::extent() const
+const AABox& GridDomain::extent() const
 {
     return mExtent;
 }
 
 
-const IndexArray& GridStateSpace::cellMap() const
+const IndexArray& GridDomain::cellMap() const
 {
     return mCellMap;
 }
 
 
-index_t GridStateSpace::size(const GriddedStateSpace::Block& block) const
+index_t GridDomain::size(const GriddedDomain::Block& block) const
 {
     ENDAS_ASSERT(block.min().minCoeff() > 0);
     ENDAS_ASSERT((block.max().array() <= mShape).all());
@@ -89,7 +89,7 @@ index_t GridStateSpace::size(const GriddedStateSpace::Block& block) const
 // Calls fn(i, iend) for each continuous range of state variables within a block, where `i` and 
 // `iend` denote the continuous range of state variables that are indide the block.
 template <class Fn> inline void 
-forEachBlockStateRange(const GriddedStateSpace::Block& block, int numVarsPerCell, 
+forEachBlockStateRange(const GriddedDomain::Block& block, int numVarsPerCell, 
                        const ArrayShape& gridShape, Fn fn)
 {
     int dim = gridShape.size();
@@ -117,7 +117,7 @@ forEachBlockStateRange(const GriddedStateSpace::Block& block, int numVarsPerCell
     }
 }
 
-void GridStateSpace::getIndices(const Block& block, IndexArray& out) const
+void GridDomain::getIndices(const Block& block, IndexArray& out) const
 {
     // Dense grid
     if (mCellMap.size() == 0) 
@@ -135,7 +135,7 @@ void GridStateSpace::getIndices(const Block& block, IndexArray& out) const
 
 
 
-void GridStateSpace::getCoords(Ref<Array2d> out) const
+void GridDomain::getCoords(Ref<Array2d> out) const
 {
     int n = this->size();
     int dim = this->dim();
@@ -162,7 +162,7 @@ void GridStateSpace::getCoords(Ref<Array2d> out) const
 }
 
 
-void GridStateSpace::cellCoord(index_t cellIndex, Ref<Array> out) const
+void GridDomain::cellCoord(index_t cellIndex, Ref<Array> out) const
 {
     auto dim = this->dim();
     
@@ -187,13 +187,13 @@ void GridStateSpace::cellCoord(index_t cellIndex, Ref<Array> out) const
 
 
 
-bool GridStateSpace::hasEfficientSubset() const
+bool GridDomain::hasEfficientSubset() const
 {
     return mCellMap.size() == 0; // Not using cellmap
 }
 
 
-void GridStateSpace::getSubset(const Block& block, const Ref<const Array2d> X, Ref<Array2d> out) const
+void GridDomain::getSubset(const Block& block, const Ref<const Array2d> X, Ref<Array2d> out) const
 {
     ENDAS_ASSERT(X.cols() == out.cols());
 
@@ -206,12 +206,12 @@ void GridStateSpace::getSubset(const Block& block, const Ref<const Array2d> X, R
     }
     else
     {
-        GriddedStateSpace::getSubset(block, X, out);
+        GriddedDomain::getSubset(block, X, out);
     }
 }
 
 
-void GridStateSpace::putSubset(const Block& block, const Ref<const Array2d> X, Ref<Array2d> out) const
+void GridDomain::putSubset(const Block& block, const Ref<const Array2d> X, Ref<Array2d> out) const
 {
     ENDAS_ASSERT(X.cols() == out.cols());
 
@@ -224,7 +224,7 @@ void GridStateSpace::putSubset(const Block& block, const Ref<const Array2d> X, R
     }
     else
     {
-        GriddedStateSpace::putSubset(block, X, out);
+        GriddedDomain::putSubset(block, X, out);
     }
 }
 

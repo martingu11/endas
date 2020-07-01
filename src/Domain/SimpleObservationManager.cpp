@@ -14,7 +14,7 @@ struct SimpleObservationManager::Data
     shared_ptr<const ObservationOperator> H;
     shared_ptr<const CovarianceOperator> R;
 
-    const StateSpacePartitioning* partitioner;
+    const DomainPartitioning* partitioner;
     const TaperFn* taperFn;
 
     shared_ptr<const PartitionPointQuery> obsQuery;
@@ -46,13 +46,13 @@ SimpleObservationManager::~SimpleObservationManager()
 { }
 
 
-void SimpleObservationManager::beginFetch(int k, const StateSpacePartitioning* partitioner, 
+void SimpleObservationManager::beginFetch(int k, const DomainPartitioning* partitioner, 
                                           const TaperFn* taperFn) const
 {
     mData->partitioner = partitioner;
     mData->taperFn = taperFn;
     mData->currentDomain = 0;
-    mData->numDomains = (partitioner)? partitioner->numDomains() : 1;
+    mData->numDomains = (partitioner)? partitioner->numLocalDomains() : 1;
     ENDAS_ASSERT(mData->numDomains >= 1);
 
     if (mData->numDomains > 1)

@@ -30,7 +30,7 @@ public:
 
     virtual ~SimpleObservationManager();
 
-    virtual void beginFetch(int k, const StateSpacePartitioning* partitioner, 
+    virtual void beginFetch(int k, const DomainPartitioning* partitioner, 
                             const TaperFn* taperFn) const override;
 
     virtual ObservationData fetchObservations() const override;

@@ -1,4 +1,4 @@
-#include <Endas/Domain/GenericStateSpace.hpp>
+#include <Endas/Domain/GenericDomain.hpp>
 #include "../Compatibility.hpp"
 
 
@@ -6,7 +6,7 @@ using namespace std;
 using namespace endas;
 
 
-// PartitionPointQuery that works with GenericStateSpace.
+// PartitionPointQuery that works with GenericDomain.
 class GenericSSPointQuery : public PartitionPointQuery
 {
 public:
@@ -40,41 +40,41 @@ private:
 
 
 
-GenericStateSpace::GenericStateSpace(index_t size)
+GenericDomain::GenericDomain(index_t size)
 : mSize(size)
 { }
 
-index_t GenericStateSpace::size() const { return mSize; }
-int GenericStateSpace::coordDim() const { return 1; }
+index_t GenericDomain::size() const { return mSize; }
+int GenericDomain::coordDim() const { return 1; }
 
-const StateSpace& GenericStateSpace::stateSpace() const 
+const DiscreteDomain& GenericDomain::domain() const 
 { 
     return *this; 
 }
 
-int GenericStateSpace::numDomains() const 
+int GenericDomain::numLocalDomains() const 
 { 
     return mSize; 
 };
 
-index_t GenericStateSpace::getLocalStateSize(int d) const
+index_t GenericDomain::getLocalSize(int d) const
 {
     return 1;
 }
 
-void GenericStateSpace::getLocalState(int d, const Ref<const Array2d> Xg, Ref<Array2d> outXl) const
+void GenericDomain::getLocal(int d, const Ref<const Array2d> Xg, Ref<Array2d> outXl) const
 {
     outXl = Xg.row(d);
 }
 
-void GenericStateSpace::putLocalState(int d, const Ref<const Array2d> Xl, Ref<Array2d> Xg) const
+void GenericDomain::putLocal(int d, const Ref<const Array2d> Xl, Ref<Array2d> Xg) const
 {
     Xg.row(d) = Xl;
 }
 
 
 shared_ptr<const PartitionPointQuery> 
-GenericStateSpace::indexPoints(const Ref<const Array2d> coords) const
+GenericDomain::indexPoints(const Ref<const Array2d> coords) const
 {
     return make_shared<GenericSSPointQuery>((int)mSize, coords);
 }

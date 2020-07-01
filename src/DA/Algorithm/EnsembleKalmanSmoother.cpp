@@ -73,7 +73,7 @@ struct EnsembleKalmanSmoother::Data
     deque<ENKSData> ksSteps; // Data for all smoother steps
 
     // Data for localization
-    shared_ptr<const StateSpacePartitioning> locSSP;
+    shared_ptr<const DomainPartitioning> locSSP;
     shared_ptr<const TaperFn> locTaperFn;
 
     int locNumDomains;
@@ -177,14 +177,14 @@ void EnsembleKalmanSmoother::setSmootherForgettingFactor(double factor)
 }
 
 
-void EnsembleKalmanSmoother::localize(shared_ptr<const StateSpacePartitioning> partitioner, 
+void EnsembleKalmanSmoother::localize(shared_ptr<const DomainPartitioning> partitioner, 
                                       shared_ptr<const TaperFn> taperFn)
 {
     ENDAS_ASSERT(partitioner);
     mData->locSSP = partitioner;
     mData->locTaperFn = taperFn;
 
-    mData->locNumDomains = mData->locSSP->numDomains();
+    mData->locNumDomains = mData->locSSP->numLocalDomains();
     ENDAS_ASSERT(mData->locNumDomains > 0);
 
     // Effectively global analysis
@@ -205,7 +205,7 @@ void EnsembleKalmanSmoother::localize(shared_ptr<const StateSpacePartitioning> p
 
     for (int d = 0; d != mData->locNumDomains; d++)
     {
-        index_t nloc = mData->locSSP->getLocalStateSize(d);
+        index_t nloc = mData->locSSP->getLocalSize(d);
         ENDAS_ASSERT(nloc >= 0); // 0 is allowed (empty domain) as it simplifies SSP implementations
 
         mData->locStateLimits.col(d)(0) = mData->locTotalStateSize;
@@ -242,7 +242,7 @@ void EnsembleKalmanSmoother::Data::unpackEnsemble(const Ref<const Array2d> E, Re
 {
     foreachNonemptyDomain([&](int d, int i, index_t start, index_t nloc)
     {
-        locSSP->getLocalState(d, E, Eaug.block(start, 0, nloc, N));
+        locSSP->getLocal(d, E, Eaug.block(start, 0, nloc, N));
     });
     /*for (int d = 0; d != locNumDomains; d++)
     {
@@ -257,7 +257,7 @@ void EnsembleKalmanSmoother::Data::packEnsemble(const Ref<const Array2d> Eaug, R
 {
     foreachNonemptyDomain([&](int d, int i, index_t start, index_t nloc)
     {
-        locSSP->putLocalState(d, Eaug.block(start, 0, nloc, N), E);
+        locSSP->putLocal(d, Eaug.block(start, 0, nloc, N), E);
     });
 
     /*for (int d = 0; d != locNumDomains; d++)

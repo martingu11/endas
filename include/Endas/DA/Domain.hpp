@@ -1,10 +1,12 @@
 /**
- * @file StateSpace.hpp
+ * @file Domain.hpp
  * @author Martin Gunia
+ * 
+ * Abstract space representations.
  */
 
-#ifndef __ENDAS_DA_STATESPACE_HPP__
-#define __ENDAS_DA_STATESPACE_HPP__
+#ifndef __ENDAS_DA_DOMAIN_HPP__
+#define __ENDAS_DA_DOMAIN_HPP__
 
 #include <Endas/Core/Core.hpp>
 #include <Endas/Core/AABox.hpp>
@@ -21,35 +23,29 @@ namespace endas
 
 
 /**
- * Base class for state space implementations.
+ * Base class for abstract discrete domains.
  * 
- * This is a generic state space abstraction that only provides information about the size of the
- * state space.
- * 
- * Please note that StateSpace or derived classes are only needed whe using analysis localization 
- * or with observation managers that spatially map observations to state variables. In other cases 
- * no information needs to be known about the state space.
+ * DiscreteDomain is a base class for representing abstract discretized domains such as 
+ * the state or observation space. The only information provided is the size of the space.
  */ 
-class StateSpace
+class DiscreteDomain
 {
 public:
 
-    virtual ~StateSpace();
+    virtual ~DiscreteDomain();
 
     /**
-     * Returns the size of the state space. 
+     * Returns the size of the space, i.e. the number of discrete elements making up the space. 
      */
     virtual index_t size() const = 0;
-
 };
 
 
 /**
- * Abstract representation of a state space whose elements can be identified by a spatial 
+ * Abstract representation of discrete domains whose elements can be identified by a spatial 
  * coordinate.
- * 
  */ 
-class SpatialStateSpace : public StateSpace
+class DiscreteSpatialDomain : public DiscreteDomain
 {
 public:
 
@@ -80,9 +76,9 @@ public:
 
 
 /**
- * Base class for state spaces with elements organized on a regular (multi-dimensional) grid.
+ * Base class for domains with elements organized on a regular (multi-dimensional) grid.
  */
-class GriddedStateSpace : public SpatialStateSpace
+class GriddedDomain : public DiscreteSpatialDomain
 {
 public:
 

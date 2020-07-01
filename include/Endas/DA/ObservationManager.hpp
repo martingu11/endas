@@ -7,8 +7,8 @@
 
 #include "ObservationOperator.hpp"
 #include "CovarianceOperator.hpp"
-#include "StateSpace.hpp"
-#include "StateSpacePartitioning.hpp"
+#include "Domain.hpp"
+#include "DomainPartitioning.hpp"
 #include "Taper.hpp"
 
 #include <memory>
@@ -92,7 +92,7 @@ public:
      *                      `nullptr`
      * @param taperFn       Observation covariance tapering function if used or `nullptr`
      */
-    virtual void beginFetch(int k, const StateSpacePartitioning* partitioner, 
+    virtual void beginFetch(int k, const DomainPartitioning* partitioner, 
                             const TaperFn* taperFn) const = 0;
 
 

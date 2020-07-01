@@ -1,4 +1,4 @@
-#include <Endas/Domain/GridStateSpacePartitioning.hpp>
+#include <Endas/Domain/GridDomainPartitioning.hpp>
 #include <Endas/Endas.hpp>
 #include "../Compatibility.hpp"
 
@@ -11,16 +11,16 @@ using namespace endas;
 
 struct Domain
 {
-    GriddedStateSpace::Block block;
+    GriddedDomain::Block block;
     IndexArray indices;
     index_t size;
 
     Domain(index_t dim): block(dim) { }
 };
 
-struct GridStateSpacePartitioning::Data
+struct GridDomainPartitioning::Data
 {
-    shared_ptr<const GriddedStateSpace> ss;
+    shared_ptr<const GriddedDomain> ss;
     int blockSize;
     int padding;
 
@@ -33,7 +33,7 @@ struct GridStateSpacePartitioning::Data
 };
 
 
-GridStateSpacePartitioning::GridStateSpacePartitioning(shared_ptr<const GriddedStateSpace> stateSpace, 
+GridDomainPartitioning::GridDomainPartitioning(shared_ptr<const GriddedDomain> stateSpace, 
                                                        int blockSize, int padding) 
 : mData(make_unique<Data>())
 { 
@@ -47,11 +47,11 @@ GridStateSpacePartitioning::GridStateSpacePartitioning(shared_ptr<const GriddedS
     mData->generateDomains();
 }
 
-GridStateSpacePartitioning::~GridStateSpacePartitioning()
+GridDomainPartitioning::~GridDomainPartitioning()
 { }
 
 
-void GridStateSpacePartitioning::Data::generateDomains()
+void GridDomainPartitioning::Data::generateDomains()
 {
     int dim = ss->dim();
     int useIndices = !ss->hasEfficientSubset();
@@ -108,19 +108,18 @@ void GridStateSpacePartitioning::Data::generateDomains()
 }
 
 
-int GridStateSpacePartitioning::numDomains() const
+int GridDomainPartitioning::numLocalDomains() const
 {
     return (int)mData->domains.size();
 }
 
-index_t GridStateSpacePartitioning::getLocalStateSize(int d) const
+index_t GridDomainPartitioning::getLocalSize(int d) const
 {
     ENDAS_ASSERT(d >= 0 && d < mData->domains.size());
     return mData->domains[d].size;
 }
 
-void GridStateSpacePartitioning::getLocalState(int d, const Ref<const Array2d> Xg, 
-                                               Ref<Array2d> out) const
+void GridDomainPartitioning::getLocal(int d, const Ref<const Array2d> Xg, Ref<Array2d> out) const
 {
     ENDAS_ASSERT(d >= 0 && d < mData->domains.size());
     const auto& domain = mData->domains[d];
@@ -140,8 +139,7 @@ void GridStateSpacePartitioning::getLocalState(int d, const Ref<const Array2d> X
     }
 }
 
-void GridStateSpacePartitioning::putLocalState(int d, const Ref<const Array2d> Xl, 
-                                               Ref<Array2d> Xg) const
+void GridDomainPartitioning::putLocal(int d, const Ref<const Array2d> Xl, Ref<Array2d> Xg) const
 {
     ENDAS_ASSERT(d >= 0 && d < mData->domains.size());
     const auto& domain = mData->domains[d];
@@ -165,7 +163,7 @@ void GridStateSpacePartitioning::putLocalState(int d, const Ref<const Array2d> X
 
 
 shared_ptr<const PartitionPointQuery> 
-GridStateSpacePartitioning::indexPoints(const Ref<const Array2d> coords) const
+GridDomainPartitioning::indexPoints(const Ref<const Array2d> coords) const
 {
     ENDAS_NOT_IMPLEMENTED;
 }

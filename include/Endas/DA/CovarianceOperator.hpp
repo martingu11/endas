@@ -7,7 +7,7 @@
 #define __ENDAS_DA_COVARIANCE_OPERATOR_HPP__
 
 #include <Endas/Core/LinAlg.hpp>
-#include <Endas/DA/StateSpace.hpp>
+#include <Endas/DA/Domain.hpp>
 #include <Endas/Spatial/Variogram.hpp>
 
 
@@ -64,14 +64,22 @@ public:
     virtual void randomMultivariateNormal(Ref<Array2d> out) const = 0;
 
 
+    /** 
+     * Solves linear equation Cx = b for the unknown x, where C is the (covariance) matrix represented 
+     * by this instance.
+     * 
+     * @param b    The right hand side of the linear equation.
+     * @param out  Pre-allocated matrix where `x` is stored. The matrix must be of the same
+     *             dimensions as `b`,
+     */
     virtual void solve(const Ref<const Matrix> b, Ref<Matrix> out) const;
 
 
     /**
-     * Computes fused multiply-add (`A = A + B * c)`, where `B` is the covariance matrix 
+     * Computes fused multiply-add (A = A + B * c), where B is the covariance matrix 
      * represented by this operator.
      * 
-     * Please note that not all covariance operator implementations support this. Use `mcOnly()` to 
+     * Please note that not all covariance operator implementations support this. Use mcOnly() to 
      * check if the matrix form is available. 
      * 
      * @param A     Reference to the array to add to.
@@ -80,27 +88,6 @@ public:
      * @throw NotSupportedError if the operation is not supported.
      */
     virtual void fmadd(Ref<Array2d> A, double c = 1.0) const;
-
-
-    /**
-     * Returns dense matrix representation of the covariance. 
-     * 
-     * Please note that not all covariance operator implementations support this. Use `mcOnly()` to 
-     * check if the matrix form is available. 
-     * 
-     * @param out   Reference to a matrix expression where the data is to be written  
-     * @throw NotSupportedError if the operation is not supported.
-     * 
-     * @note: This method can write the covariance matrix to any matrix or array expression that is 
-     * of the correct size (size() x size()). Passing wrongly-sized matrix expression as `out` will 
-     * trigger runtime assertion. Use toDenseMatrix() to have the matrix resized automatically.
-     */
-    //virtual void toMatrixView(Ref<Matrix> out) const;
-
-    /**
-     * Returns dense matrix representation of the covariance operator. 
-     */ 
-    virtual Matrix toDenseMatrix() const;
 
 
     /**
@@ -119,6 +106,18 @@ public:
      * covariance and should generally be preferred for more complex cases.
      */
     virtual std::shared_ptr<const CovarianceOperator> subset(const IndexArray& indices) const;
+
+
+    /**
+     * Returns dense matrix representation of the covariance operator. 
+     * 
+     * Please note that this is not supported by all implementations or may require a lot of memory
+     * to construct the matrix. The matrix representation is generally available if mcOnly() 
+     * returns `false`, otherwise an exception is thrown.
+     * 
+     * @throw NotSupportedError if the operation is not supported.
+     */ 
+    virtual Matrix toDenseMatrix() const;
 
 };
 
@@ -187,6 +186,9 @@ private:
 
 /**
  * Implements dense covariance matrix.
+ * The covariance operator can be initialized from a dense matrix or from a covariance 
+ * function. In the latter case, the covariance function is evaluated for all elements
+ * of the space for which the covariance is defined.
  *
  * @rst
  * .. attention::
@@ -209,10 +211,10 @@ public:
      * Constructs dense covariance operator by evaluating covariance function over a 
      * spatial domain.
      * 
-     * @param space  Information about the space the covariance represents.
-     * @param covFn  Covariance function to evaluate.
+     * @param domain  Information about the spatial domain the covariance represents.
+     * @param covFn   Covariance function to evaluate.
      */
-    DenseCovariance(const SpatialStateSpace& space, const CovarianceFn& covFn,
+    DenseCovariance(const DiscreteSpatialDomain& domain, const CovarianceFn& covFn,
                     double epsilon = 1e-5);
 
     ~DenseCovariance();

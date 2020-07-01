@@ -3,8 +3,8 @@
 
 
 #include <Endas/DA/Sequential.hpp>
-#include <Endas/DA/StateSpace.hpp>
-#include <Endas/DA/StateSpacePartitioning.hpp>
+#include <Endas/DA/Domain.hpp>
+#include <Endas/DA/DomainPartitioning.hpp>
 #include <Endas/DA/Taper.hpp>
 #include <Endas/Caching/ArrayCache.hpp>
 #include "EnsembleKalmanSmootherVariant.hpp"
@@ -81,7 +81,7 @@ public:
      * @param partitioner   State space partitioning implementation to use.
      * @param taperFn       Optional covariance tapering function.
      */
-    virtual void localize(std::shared_ptr<const StateSpacePartitioning> partitioner, 
+    virtual void localize(std::shared_ptr<const DomainPartitioning> partitioner, 
                           std::shared_ptr<const TaperFn> taperFn = nullptr);
 
     /**

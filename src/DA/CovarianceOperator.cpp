@@ -187,18 +187,18 @@ DenseCovariance::DenseCovariance(Matrix P)
 }
 
 
-DenseCovariance::DenseCovariance(const SpatialStateSpace& space, const CovarianceFn& covFn,
+DenseCovariance::DenseCovariance(const DiscreteSpatialDomain& domain, const CovarianceFn& covFn,
                                  double epsilon)
-: mData(make_unique<Data>(Matrix::Zero(space.size(), space.size())))
+: mData(make_unique<Data>(Matrix::Zero(domain.size(), domain.size())))
 {
     Matrix& P = mData->P;
-    int dim = space.dim();
-    index_t n = space.size();
-    const CoordinateSystem& crs = space.crs();
+    int dim = domain.dim();
+    index_t n = domain.size();
+    const CoordinateSystem& crs = domain.crs();
 
     // Get the coordinates of the state vector elements
     Array2d coords(dim, n);
-    space.getCoords(coords);
+    domain.getCoords(coords);
 
     // Evaluate covFn(). We only need to initialize the lower triangular part of the matrix,
     // upper triangular is not used

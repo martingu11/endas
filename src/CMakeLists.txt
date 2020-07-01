@@ -12,7 +12,7 @@ target_sources(endas PRIVATE
     DA/Sequential.cpp
     DA/ObservationOperator.cpp
     DA/CovarianceOperator.cpp
-    DA/StateSpace.cpp
+    DA/Domain.cpp
     DA/Taper.cpp
 
     DA/Algorithm/KalmanSmoother.cpp
@@ -30,10 +30,10 @@ target_sources(endas PRIVATE
     Spatial/CoordinateSystem.cpp
     Spatial/Variogram.cpp
 
-    Domain/GenericStateSpace.cpp
+    Domain/GenericDomain.cpp
+    Domain/GridDomain.cpp
+    Domain/GridDomainPartitioning.cpp
     Domain/SimpleObservationManager.cpp
-    Domain/GridStateSpace.cpp
-    Domain/GridStateSpacePartitioning.cpp
 
     IO/ArrayIO_NumPy.cpp
 

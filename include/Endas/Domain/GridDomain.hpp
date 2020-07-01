@@ -1,13 +1,13 @@
 /**
- * @file GridStateSpace.hpp
+ * @file GridDomain.hpp
  * @author Martin Gunia
  */
 
-#ifndef __ENDAS_DA_GRID_STATE_SPACE_HPP__
-#define __ENDAS_DA_GRID_STATE_SPACE_HPP__
+#ifndef __ENDAS_DA_GRID_DOMAIN_HPP__
+#define __ENDAS_DA_GRID_DOMAIN_HPP__
 
-#include <Endas/DA/StateSpace.hpp>
-#include <Endas/DA/StateSpacePartitioning.hpp>
+#include <Endas/DA/Domain.hpp>
+#include <Endas/DA/DomainPartitioning.hpp>
 
 #include <memory>
 
@@ -43,7 +43,7 @@ namespace endas
  *    This limitation does not exist for mapped grids.
  * @endrst
  */ 
-class GridStateSpace : public GriddedStateSpace
+class GridDomain : public GriddedDomain
 {
 public:
 
@@ -60,7 +60,7 @@ public:
      * @param extent         Physical extent (bounding box) of the grid.
      * @param numVarsPerCell The number of state variables in each grid cell.
      */
-    GridStateSpace(const ArrayShape& shape, std::shared_ptr<const CoordinateSystem> crs, 
+    GridDomain(const ArrayShape& shape, std::shared_ptr<const CoordinateSystem> crs, 
                    const AABox& extent, int numVarsPerCell = 1);
 
    /**
@@ -68,12 +68,12 @@ public:
      * 
      * This is a convenience overload that copies the CRS. 
      * 
-     * See ``GridStateSpace::GridStateSpace(shape, crs, extent, numVarsPerCell)`` for explanation
+     * See ``GridDomain::GridDomain(shape, crs, extent, numVarsPerCell)`` for explanation
      * of the parameters.
      */
     template <class CRS, require_is_convertible<CRS, const CoordinateSystem> = true>
-    GridStateSpace(const ArrayShape& shape, const CRS& crs, const AABox& extent, int numVarsPerCell = 1)
-    : GridStateSpace(shape, std::make_shared<CRS>(crs), extent, numVarsPerCell)
+    GridDomain(const ArrayShape& shape, const CRS& crs, const AABox& extent, int numVarsPerCell = 1)
+    : GridDomain(shape, std::make_shared<CRS>(crs), extent, numVarsPerCell)
     { }
 
 
@@ -90,7 +90,7 @@ public:
      *    You can use ``std::move`` to avoid copying the cell map::
      * 
      *        IndexArray cellMap = { ... };  
-     *        GridStateSpace gss(shape, crs, extent, std::move(cellMap));
+     *        GridDomain gss(shape, crs, extent, std::move(cellMap));
      *        // At this point cellMap is invalid, use gss.cellMap() instead
      * @endrst
      * 
@@ -100,7 +100,7 @@ public:
      * @param extent     Physical extent (bounding box) of the grid.
      * @param cellMap    Index array mapping each state variable to a grid cell.
      */
-    GridStateSpace(const ArrayShape& shape, std::shared_ptr<const CoordinateSystem> crs, 
+    GridDomain(const ArrayShape& shape, std::shared_ptr<const CoordinateSystem> crs, 
                    const AABox& extent, IndexArray cellMap);
 
 
@@ -109,16 +109,16 @@ public:
      * 
      * This is a convenience overload that copies the CRS. 
      * 
-     * See ``GridStateSpace::GridStateSpace(shape, crs, extent, cellMap)`` for explanation of the 
+     * See ``GridDomain::GridDomain(shape, crs, extent, cellMap)`` for explanation of the 
      * parameters.
      */
     template <class CRS, require_is_convertible<CRS, const CoordinateSystem> = true>
-    GridStateSpace(const ArrayShape& shape, const CRS& crs, const AABox& extent, IndexArray cellMap)
-    : GridStateSpace(shape, std::make_shared<CRS>(crs), extent, cellMap)
+    GridDomain(const ArrayShape& shape, const CRS& crs, const AABox& extent, IndexArray cellMap)
+    : GridDomain(shape, std::make_shared<CRS>(crs), extent, cellMap)
     { }
 
 
-    virtual ~GridStateSpace();
+    virtual ~GridDomain();
 
     virtual index_t size() const override;
     virtual const CoordinateSystem& crs() const override;
@@ -128,7 +128,7 @@ public:
     /** Returns the cell map or empty array if not used. */
     const IndexArray& cellMap() const;
 
-    virtual index_t size(const GriddedStateSpace::Block& block) const override;
+    virtual index_t size(const GriddedDomain::Block& block) const override;
 
     virtual void getCoords(Ref<Array2d> out) const override;
 
