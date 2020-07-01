@@ -21,9 +21,9 @@ namespace endas
 
 
 /**
- * State space partitioning scheme that operates on gridded state spaces.
+ * Domain partitioning scheme that operates on gridded domains.
  * 
- * The partitioning scheme divides the state space into rectangular local domains of fixed size.
+ * The partitioning scheme divides the domain into rectangular local domains of fixed size.
  * Domains may be fully disjoint or partly overlap. In the latter case, the overlapping regions of
  * adjacent local domains are blended together to remove any visible boundaries in the global
  * state after observations have been assimilated.

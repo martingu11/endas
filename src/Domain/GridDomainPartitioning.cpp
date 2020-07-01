@@ -24,7 +24,7 @@ struct GridDomainPartitioning::Data
     int blockSize;
     int padding;
 
-    // State space partitions/domains.
+    // Local domains.
     vector<Domain> domains;
 
     void generateDomains();

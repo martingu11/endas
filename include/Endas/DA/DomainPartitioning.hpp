@@ -22,13 +22,13 @@ namespace endas
  * Efficient querying of observations for localized analysis.
  * 
  * PartitionPointQuery is an abstract query mechanism for retrieving observations for local analysis
- * domains of a partitioned state space. PartitionPointQuery instances are usually not created 
- * directly but are obtained from the state space partitioner. Their intended use is in observation
+ * domains of a partitioned domain. PartitionPointQuery instances are usually not created 
+ * directly but are obtained from the domain partitioner. Their intended use is in observation
  * manager implementations where they can help with locating observations needed for a local domain.
  *  
  * @rst
  * .. tip::
- *    If the default querying capabilities provided by the state space partitioner do not fit your 
+ *    If the default querying capabilities provided by the domain partitioner do not fit your 
  *    needs, you can roll out your completely own and new observation manager. This gives you the 
  *    freedom to follow any approach to locate and fetch observations.
  * @endrst
@@ -54,9 +54,9 @@ public:
 
 
 /**
- * Abstract base class for state space partitioning schemes.
+ * Abstract base class for domain partitioning schemes.
  * 
- * Implementations of this abstract base define how to partition the state space into local domains 
+ * Implementations of this abstract base define how to partition a domain into local domains 
  * for localized analysis.
  */ 
 class DomainPartitioning
@@ -75,12 +75,12 @@ public:
      * Returns the number of *partition* coordinate dimensions.
      * 
      * The partition dimension refers to how many coordinates are necessary to describe any location 
-     * in the subspace of the state space in which the partitioning occurs. As an example, for a state 
+     * in the subspace of the domain in which the partitioning occurs. As an example, for a state 
      * space organized on two-dimensional grid and partitioned along the two spatial dimensions, we 
      * would most likely use two coordinates to represent any location within the partitioning subspace.
      * One could however choose more esoteric coordinate representation as well.
      * 
-     * See the documentation of individual state space partitioning schemes for more information.
+     * See the documentation of individual domain partitioning schemes for more information.
      */
     virtual int coordDim() const = 0;
 

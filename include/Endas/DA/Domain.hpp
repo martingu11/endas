@@ -56,17 +56,17 @@ public:
     int dim() const;
 
     /**
-     * Returns the coordinate system of the state space.
+     * Returns the coordinate system of the domain.
      */
     virtual const CoordinateSystem& crs() const = 0;
 
 
     /**
-     * Returns spatial coordinates of the elements of the state space. 
+     * Returns spatial coordinates of the elements of the domain. 
      * 
      * The coordinates are stored in the ``out`` array which must be pre-allocated to size 
      * *m* x *n*, where *m* is the number of spatial dimensions as returned by ``dim()`` and *n*
-     * is the state vector size.
+     * is the domain size.
      */
     virtual void getCoords(Ref<Array2d> out) const = 0;
 
@@ -82,7 +82,7 @@ class GriddedDomain : public DiscreteSpatialDomain
 {
 public:
 
-    /* Rectangular region within the state space grid. */
+    /* Rectangular region within the grid. */
     typedef IntBox Block;
 
     /**

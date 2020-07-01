@@ -22,7 +22,7 @@ namespace endas
 
 
 /**
- * Generic implementation of a state space with elements organized on a multi-dimensional grid.
+ * Generic implementation of a discrete domain with elements organized on a multi-dimensional grid.
  * 
  * The grid can be either dense with fixed number of variables per cell, or state variables can
  * be assigned to grid cells arbitrarily via a provided mapping. For dense grids, the state vector 

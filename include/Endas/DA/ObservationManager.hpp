@@ -88,7 +88,7 @@ public:
      * can be fetched using fetchObservations().
      * 
      * @param k             Analysis time step index.
-     * @param partitioner   State space partitioner if used (i.e. analysis is localized) or 
+     * @param partitioner   Domain partitioner if used (i.e. analysis is localized) or 
      *                      `nullptr`
      * @param taperFn       Observation covariance tapering function if used or `nullptr`
      */

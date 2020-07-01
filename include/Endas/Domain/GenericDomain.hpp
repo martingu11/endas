@@ -20,13 +20,13 @@ namespace endas
 
 
 /**
- * Trivial state space without assumptions on the structure of the state space.
+ * Trivial domain without assumptions on the structure.
  *
  * GenericDomain is likely only useful for low-dimensional toy problems where each state variable
- * can be updated independently. Both StateSpace and DomainPartitioning interfaces are 
+ * can be updated independently. Both the DiscreteDomain and DomainPartitioning interfaces are 
  * implemented by this class as there is very little benefit in separating the two.
  * 
- * Under the implemented partitioning scheme, the index of each state variable is also its coordinate
+ * Under the implemented partitioning scheme, the index of each domain element is also its coordinate
  * and coordDim() is therefore 1. One-dimensional Euclidean distance is used by default to evaluate 
  * proximity although this can be replaced by user-defined function.
  */ 
