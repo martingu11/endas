@@ -1,4 +1,4 @@
-#include <Endas/Domain/SimpleObservationManager.hpp>
+#include <Endas/DA/SimpleObservationManager.hpp>
 #include <Endas/Endas.hpp>
 #include "../Compatibility.hpp"
 

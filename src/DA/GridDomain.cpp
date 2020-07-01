@@ -1,4 +1,4 @@
-#include <Endas/Domain/GridDomain.hpp>
+#include <Endas/DA/GridDomain.hpp>
 #include "../Compatibility.hpp"
 
 #include <iostream>

@@ -82,7 +82,7 @@ class GriddedDomain : public DiscreteSpatialDomain
 {
 public:
 
-    /* Rectangular region within the grid. */
+    /** Rectangular region within the grid. */
     typedef IntBox Block;
 
     /**

@@ -15,11 +15,16 @@ target_sources(endas PRIVATE
     DA/Domain.cpp
     DA/Taper.cpp
 
+    DA/GenericDomain.cpp
+    DA/GridDomain.cpp
+    DA/GridDomainPartitioning.cpp
+    DA/SimpleObservationManager.cpp
+
     DA/Algorithm/KalmanSmoother.cpp
     DA/Algorithm/EnsembleKalmanSmoother.cpp
     DA/Algorithm/EnKSVariantEnKS.cpp
     DA/Algorithm/EnKSVariantESTKS.cpp
-
+    
     Caching/ArrayCache.cpp
     Caching/MemoryArrayCache.cpp
     
@@ -30,12 +35,13 @@ target_sources(endas PRIVATE
     Spatial/CoordinateSystem.cpp
     Spatial/Variogram.cpp
 
+    IO/ArrayIO_NumPy.cpp
+
     Domain/GenericDomain.cpp
     Domain/GridDomain.cpp
     Domain/GridDomainPartitioning.cpp
     Domain/SimpleObservationManager.cpp
 
-    IO/ArrayIO_NumPy.cpp
 
     Model/Lorenz95.cpp
     Model/QG/QG.cpp

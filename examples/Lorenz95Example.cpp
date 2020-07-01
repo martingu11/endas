@@ -11,8 +11,8 @@
 #include <Endas/DA/Taper.hpp>
 #include <Endas/DA/Algorithm/KalmanSmoother.hpp>
 #include <Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp>
-#include <Endas/Domain/GenericDomain.hpp>
-#include <Endas/Domain/SimpleObservationManager.hpp>
+#include <Endas/DA/GenericDomain.hpp>
+#include <Endas/DA/SimpleObservationManager.hpp>
 
 #include <EndasModels/Lorenz95.hpp>
 

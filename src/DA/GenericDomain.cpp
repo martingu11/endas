@@ -1,4 +1,4 @@
-#include <Endas/Domain/GenericDomain.hpp>
+#include <Endas/DA/GenericDomain.hpp>
 #include "../Compatibility.hpp"
 
 

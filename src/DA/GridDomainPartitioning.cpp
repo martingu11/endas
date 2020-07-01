@@ -1,4 +1,4 @@
-#include <Endas/Domain/GridDomainPartitioning.hpp>
+#include <Endas/DA/GridDomainPartitioning.hpp>
 #include <Endas/Endas.hpp>
 #include "../Compatibility.hpp"
 

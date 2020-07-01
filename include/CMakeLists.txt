@@ -17,7 +17,12 @@ target_sources(endas PRIVATE
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/Domain.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/DomainPartitioning.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/Taper.hpp
-    
+
+    ${CMAKE_SOURCE_DIR}/include/Endas/DA/GenericDomain.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/DA/SimpleObservationManager.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/DA/GridDomain.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/DA/GridDomainPartitioning.hpp
+
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/Algorithm/KalmanSmoother.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/DA/Algorithm/EnsembleKalmanSmootherVariant.hpp
@@ -33,11 +38,8 @@ target_sources(endas PRIVATE
     ${CMAKE_SOURCE_DIR}/include/Endas/Spatial/Variogram.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Spatial/CoordinateSystem.hpp
 
-    ${CMAKE_SOURCE_DIR}/include/Endas/Domain/GenericDomain.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Domain/SimpleObservationManager.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Domain/GridDomain.hpp
-    ${CMAKE_SOURCE_DIR}/include/Endas/Domain/GridDomainPartitioning.hpp
-    
+    ${CMAKE_SOURCE_DIR}/include/Endas/IO/ArrayIO.hpp
+
     ${CMAKE_SOURCE_DIR}/include/Endas/IO/ArrayIO.hpp
 )
 
