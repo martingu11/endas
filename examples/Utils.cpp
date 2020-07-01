@@ -8,35 +8,40 @@ using namespace std;
 using namespace endas;
 
 
-tuple<Array2d, Array2d, vector<int>> 
-endas::generateTestData(int nsteps, const Ref<const Array> x0, 
-                        const EvolutionModel& model, double dt,
-                        const ObservationOperator& H, const CovarianceOperator& Q, 
-                        const CovarianceOperator& R,
-                        int obsInterval)
+tuple<Array2d, vector<Array>> 
+endas::generateExampleData(int numSteps, const Ref<const Array> x0, 
+                           const EvolutionModel& model, double dt,
+                           const ObservationOperator& H, const CovarianceOperator& Q, 
+                           const CovarianceOperator& R,
+                           int numSpinupSteps, int obsInterval)
 {
     int n = x0.size();
-    int nobsSteps = (int)ceil((nsteps-1) / obsInterval);
+    //int nobsSteps = (int)ceil((numSteps-1) / obsInterval);
 
     ENDAS_ASSERT(n > 0);
-    ENDAS_ASSERT(nsteps > 0);
+    ENDAS_ASSERT(numSteps > 0);
 
     // The 'true' system state evolution
-    Array2d xtAll = Array2d::Zero(n, nsteps);
+    Array2d xtAll = Array2d::Zero(n, numSteps);
     xtAll.col(0) = x0;
 
-    // Array of observations (we have nobs observations at each step 1..nsteps)
-    Array2d zAll = Array2d::Zero(H.nobs(), nobsSteps);  
-
-    // The observation times (steps)
-    vector<int> obsSteps;
+    // The observation vectors
+    vector<Array> zAll;
 
     Array x = x0;
     Array xnoise(n);
-    Array z(H.nobs());
-    Array znoise(H.nobs());
+    
+    // Model spin-up
+    for (int k = 0; k != numSpinupSteps; k++)
+    {
+        model(x, k, dt, false);
+    }
 
-    for (int k = 1; k != nsteps; k++)
+    // At k==0 we have no observations
+    zAll.push_back(Array());
+
+    // Generate true state and observations
+    for (int k = 1; k != numSteps; k++)
     {
         model(x, k, dt, false);
 
@@ -46,24 +51,27 @@ endas::generateTestData(int nsteps, const Ref<const Array> x0,
 
         // Note: Generate noise even if we don't use it for deterministic results regardless of 
         // obsInterval
+        Array znoise(H.nobs());
         R.randomMultivariateNormal(znoise);
 
         if (k % obsInterval == 0)
         {
-            H.apply(x, k, z);
+            Array z(H.nobs());
+            H.apply(x, z);
             z += znoise;
-            zAll.col(obsSteps.size()) = z;
-            obsSteps.push_back(k);
+            zAll.push_back(move(z));
         }
+        else 
+            zAll.push_back(Array());
     }
 
-    ENDAS_ASSERT(obsSteps.size() == zAll.cols());
-    return make_tuple(xtAll, zAll, obsSteps);
+    //ENDAS_ASSERT(obsSteps.size() == zAll.cols());
+    return make_tuple(xtAll, zAll);
 }
 
 
 
-std::tuple<Array2d, Array2d> 
+/*std::tuple<Array2d, Array2d> 
 endas::runKF(KalmanSmoother& kf, int nsteps, double dt, const Ref<const Array> x0, 
              const Ref<const Array2d> obs, const std::vector<int>& obsTimeSteps,
              const ObservationOperator& H, const CovarianceOperator& P0, 
@@ -73,10 +81,10 @@ endas::runKF(KalmanSmoother& kf, int nsteps, double dt, const Ref<const Array> x
     Array x = x0;
 
     // We will need P, Q and R as plain matrices for KalmanSmoother
-    Matrix Pmat = P0.asMatrix();
-    const Matrix& Qmat = Q.asMatrix();
-    const Matrix& Rmat = R.asMatrix();
-    const Matrix& Hmat = H.asMatrix();
+    Matrix Pmat = P0.toDenseMatrix();
+    const Matrix& Qmat = Q.toDenseMatrix();
+    const Matrix& Rmat = R.toDenseMatrix();
+    const Matrix& Hmat = H.toDenseMatrix();
 
     Array2d resultX(n, nsteps);
     Array2d resultSD(n, nsteps);
@@ -172,5 +180,5 @@ endas::runEnKF(EnsembleKalmanSmoother& kf, const EvolutionModel& model,
     kf.endSmoother();
     
     return make_tuple(move(resultX), move(resultXSD));
-}
+}*/
 
