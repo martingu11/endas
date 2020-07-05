@@ -27,7 +27,7 @@ namespace endas
  * implemented by this class as there is very little benefit in separating the two.
  * 
  * Under the implemented partitioning scheme, the index of each domain element is also its coordinate
- * and coordDim() is therefore 1. One-dimensional Euclidean distance is used by default to evaluate 
+ * and partitionCoordDim() is therefore 1. One-dimensional Euclidean distance is used by default to evaluate 
  * proximity although this can be replaced by user-defined function.
  */ 
 class GenericDomain : public DiscreteDomain, public DomainPartitioning
@@ -37,7 +37,7 @@ public:
     GenericDomain(index_t size);
 
     virtual index_t size() const override;
-    virtual int coordDim() const override;    
+    virtual int partitionCoordDim() const override;    
     virtual const DiscreteDomain& domain() const override;
 
     virtual int numLocalDomains() const override;
@@ -45,8 +45,7 @@ public:
     virtual void getLocal(int d, const Ref<const Array2d> Xg, Ref<Array2d> outXl) const override;
     virtual void putLocal(int d, const Ref<const Array2d> Xl, Ref<Array2d> Xg) const override;
 
-    virtual std::shared_ptr<const PartitionPointQuery> 
-    indexPoints(const Ref<const Array2d> coords) const override;
+    virtual std::shared_ptr<const PartitionPointQuery> indexPoints(Array2d coords) const override;
 
 private:
     index_t mSize;

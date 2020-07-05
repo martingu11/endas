@@ -7,15 +7,16 @@ using namespace endas;
 
 
 // PartitionPointQuery that works with GenericDomain.
+// GenericDomain is a one-dimensional space with each element's index being also its coordinate.
 class GenericSSPointQuery : public PartitionPointQuery
 {
 public:
 
-    GenericSSPointQuery(int stateSize, const Ref<const Array2d> coords) 
-    : mSize(stateSize), mIndexedCoords(coords)
+    GenericSSPointQuery(int stateSize, Array2d coords) 
+    : mSize(stateSize), mIndexedCoords(move(coords))
     { 
         ENDAS_ASSERT(coords.rows() == 1 && 
-                     "Observation coordinate array does not match the dimension of the state partitioner");
+            "Observation coordinate array does not match the dimension of the domain partitioner");
     }
 
     virtual void rangeQuery(int domain, double range, IndexArray& out) const
@@ -35,7 +36,7 @@ public:
 
 private:
     int mSize;
-    Array2d mIndexedCoords;  /// @todo Ref<>?
+    Array2d mIndexedCoords;  
 };
 
 
@@ -45,7 +46,7 @@ GenericDomain::GenericDomain(index_t size)
 { }
 
 index_t GenericDomain::size() const { return mSize; }
-int GenericDomain::coordDim() const { return 1; }
+int GenericDomain::partitionCoordDim() const { return 1; }
 
 const DiscreteDomain& GenericDomain::domain() const 
 { 
@@ -73,8 +74,7 @@ void GenericDomain::putLocal(int d, const Ref<const Array2d> Xl, Ref<Array2d> Xg
 }
 
 
-shared_ptr<const PartitionPointQuery> 
-GenericDomain::indexPoints(const Ref<const Array2d> coords) const
+shared_ptr<const PartitionPointQuery> GenericDomain::indexPoints(Array2d coords) const
 {
-    return make_shared<GenericSSPointQuery>((int)mSize, coords);
+    return make_shared<GenericSSPointQuery>((int)mSize, move(coords));
 }

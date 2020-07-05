@@ -74,13 +74,13 @@ int main(int argc, char *argv[])
     double sigClim = 3.6414723;
 
     // Model error covariance matrix
-    DiagonalCovariance Q(Array::Constant(n, 0.05 * sigClim).pow(2));
+    DiagonalCovariance Q(n, pow(0.05 * sigClim, 2));
 
     // Initial (background) error covariance matrix
-    DiagonalCovariance P0(Array::Constant(n, 0.5 * sigClim).pow(2));
+    DiagonalCovariance P0(n, pow(0.5 * sigClim, 2));
 
     // Observation error covariance matrix
-    DiagonalCovariance R(Array::Constant(n, 0.15 * sigClim).pow(2));
+    DiagonalCovariance R(n, pow(0.15 * sigClim, 2));
 
     // Observation operator. All state variables are observed
     int nobs = n;
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
         Array2d xtAll;
         vector<Array> obsAll;
 
-        tie(xtAll, obsAll) = generateExampleData(nsteps, x0, model, dt, H, Q, R, 0, obsInterval);
+        tie(xtAll, obsAll) = generateExampleData(nsteps, x0, model, dt, Q, H, R, 0, obsInterval);
 
         // Use somewhat bad guess for x0 for data assimilation
         x0*= 1.5;
@@ -215,7 +215,6 @@ int main(int argc, char *argv[])
         Array2d E = E0;
         enks.beginSmoother(E, 0);
 
-        int obsIndex = 0;
         for (int k = 1; k != nsteps; k++)
         {
             // The Ensemble Kalman Filter forecast step. 

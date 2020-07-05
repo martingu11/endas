@@ -1,7 +1,8 @@
 #include <Endas/DA/GridDomainPartitioning.hpp>
+#include <Endas/DA/IndexedPartitionPointQuery.hpp>
 #include <Endas/Endas.hpp>
-#include "../Compatibility.hpp"
 
+#include "../Compatibility.hpp"
 
 #include <Eigen/Geometry>
 
@@ -18,9 +19,15 @@ struct Domain
     Domain(index_t dim): block(dim) { }
 };
 
+
+
+
+
+
+
 struct GridDomainPartitioning::Data
 {
-    shared_ptr<const GriddedDomain> ss;
+    shared_ptr<const GriddedDomain> globalDomain;
     int blockSize;
     int padding;
 
@@ -28,19 +35,18 @@ struct GridDomainPartitioning::Data
     vector<Domain> domains;
 
     void generateDomains();
-
-
 };
 
 
-GridDomainPartitioning::GridDomainPartitioning(shared_ptr<const GriddedDomain> stateSpace, 
-                                                       int blockSize, int padding) 
+GridDomainPartitioning::GridDomainPartitioning(shared_ptr<const GriddedDomain> domain, 
+                                               int blockSize, int padding) 
 : mData(make_unique<Data>())
 { 
-    ENDAS_REQUIRE(stateSpace->dim() > 0 && stateSpace->dim() <= 2, 
-        std::invalid_argument, "Only one or two-dimensional grids can be partitioned");
+    ENDAS_ASSERT(domain);
+    ENDAS_REQUIRE(domain->coordDim() > 0 && domain->coordDim() <= 2, 
+        std::invalid_argument, "Only one or two-dimensional grids can currently be partitioned");
 
-    mData->ss = stateSpace;
+    mData->globalDomain = domain;
     mData->blockSize = blockSize;
     mData->padding = padding;
 
@@ -51,20 +57,35 @@ GridDomainPartitioning::~GridDomainPartitioning()
 { }
 
 
+const DiscreteDomain& GridDomainPartitioning::domain() const
+{
+    ENDAS_ASSERT(mData->globalDomain);
+    return *mData->globalDomain;
+}
+
+
+int GridDomainPartitioning::partitionCoordDim() const
+{
+    ENDAS_ASSERT(mData->globalDomain);
+    return mData->globalDomain->coordDim();
+}
+
+
 void GridDomainPartitioning::Data::generateDomains()
 {
-    int dim = ss->dim();
-    int useIndices = !ss->hasEfficientSubset();
+    ENDAS_ASSERT(globalDomain);
+    int dim = globalDomain->coordDim();
+    int useIndices = !globalDomain->hasEfficientSubset();
 
     auto addDomainFn = [&](Domain&& domain)
     {
         if (useIndices) 
         {
-            ss->getIndices(domain.block, domain.indices);
+            globalDomain->getIndices(domain.block, domain.indices);
             domain.size = domain.indices.size();
         }
         else
-            domain.size = ss->size(domain.block);
+            domain.size = globalDomain->blockSize(domain.block);
 
         if (domain.size > 0) domains.push_back(domain);
     };
@@ -73,8 +94,8 @@ void GridDomainPartitioning::Data::generateDomains()
     // One-dimensional case
     if (dim == 1)
     {
-        index_t N = ss->shape()(0);
-        for (index_t i = 0; i != N; i+= blockSize)
+        index_t N = globalDomain->shape()(0);
+        for (index_t i = 0; i < N; i+= blockSize)
         {
             Domain domain(1);
             domain.block.min()(0) = i;
@@ -84,13 +105,13 @@ void GridDomainPartitioning::Data::generateDomains()
     }
     else if (dim == 2)
     {
-        index_t NR = ss->shape()(0);
-        index_t NC = ss->shape()(1);
+        index_t NR = globalDomain->shape()(0);
+        index_t NC = globalDomain->shape()(1);
 
-        for (index_t i = 0; i != NR; i+= blockSize)
+        for (index_t i = 0; i < NR; i+= blockSize)
         {
             index_t iend = std::min(i+blockSize, NR);
-            for (index_t j = 0; j != NC; j+= blockSize)
+            for (index_t j = 0; j < NC; j+= blockSize)
             {
                 Domain domain(2);
                 domain.block.min()(0) = i;
@@ -119,6 +140,13 @@ index_t GridDomainPartitioning::getLocalSize(int d) const
     return mData->domains[d].size;
 }
 
+AABox GridDomainPartitioning::getLocalBox(int d) const
+{
+    ENDAS_ASSERT(d >= 0 && d < mData->domains.size());
+    return mData->globalDomain->getBlockExtent(mData->domains[d].block);
+}
+
+
 void GridDomainPartitioning::getLocal(int d, const Ref<const Array2d> Xg, Ref<Array2d> out) const
 {
     ENDAS_ASSERT(d >= 0 && d < mData->domains.size());
@@ -135,7 +163,7 @@ void GridDomainPartitioning::getLocal(int d, const Ref<const Array2d> Xg, Ref<Ar
     // Using getSubset()
     else
     {
-        mData->ss->getSubset(domain.block, Xg, out);
+        mData->globalDomain->getSubset(domain.block, Xg, out);
     }
 }
 
@@ -156,15 +184,14 @@ void GridDomainPartitioning::putLocal(int d, const Ref<const Array2d> Xl, Ref<Ar
     // Using getSubset()
     else
     {
-        mData->ss->putSubset(domain.block, Xl, Xg);
+        mData->globalDomain->putSubset(domain.block, Xl, Xg);
     }
 
 }
 
 
-shared_ptr<const PartitionPointQuery> 
-GridDomainPartitioning::indexPoints(const Ref<const Array2d> coords) const
+shared_ptr<const PartitionPointQuery> GridDomainPartitioning::indexPoints(Array2d coords) const
 {
-    ENDAS_NOT_IMPLEMENTED;
+    return make_shared<IndexedPartitionPointQuery>(shared_ptr_wrap(*this), move(coords));
 }
 

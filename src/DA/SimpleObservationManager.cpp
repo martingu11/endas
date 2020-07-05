@@ -8,8 +8,8 @@ using namespace endas;
 
 struct SimpleObservationManager::Data
 {
-    const Ref<const Array> obs; 
-    const Ref<const Array2d> obsCoords; 
+    Array obs; 
+    Array2d obsCoords; 
 
     shared_ptr<const ObservationOperator> H;
     shared_ptr<const CovarianceOperator> R;
@@ -22,9 +22,9 @@ struct SimpleObservationManager::Data
     int currentDomain;
     int numDomains;
 
-    Data(const Ref<const Array> o, const Ref<const Array2d> oc, 
+    Data(const Array o, Array2d oc, 
          shared_ptr<const ObservationOperator> h, shared_ptr<const CovarianceOperator> r)
-    : obs(o), obsCoords(oc), H(h), R(r)
+    : obs(move(o)), obsCoords(move(oc)), H(h), R(r)
     {
 
     }
@@ -32,11 +32,10 @@ struct SimpleObservationManager::Data
 
 
 
-SimpleObservationManager::SimpleObservationManager(const Ref<const Array> obs, 
-                                                   const Ref<const Array2d> obsCoords, 
+SimpleObservationManager::SimpleObservationManager(Array obs, Array2d obsCoords, 
                                                    shared_ptr<const ObservationOperator> H,
                                                    shared_ptr<const CovarianceOperator> R)
-: mData(make_unique<Data>(obs, obsCoords, H, R))
+: mData(make_unique<Data>(move(obs), move(obsCoords), H, R))
 {
 
 }
@@ -57,8 +56,10 @@ void SimpleObservationManager::beginFetch(int k, const DomainPartitioning* parti
 
     if (mData->numDomains > 1)
     {
+        ENDAS_ASSERT(mData->obsCoords.size() > 0 || mData->obs.size() == 0);
+
         ENDAS_ASSERT(mData->taperFn);
-        mData->obsQuery = partitioner->indexPoints(mData->obsCoords);
+        mData->obsQuery = partitioner->indexPoints(move(mData->obsCoords));
         ENDAS_ASSERT(mData->obsQuery);
     }
 }
@@ -66,12 +67,10 @@ void SimpleObservationManager::beginFetch(int k, const DomainPartitioning* parti
 
 ObservationData SimpleObservationManager::fetchObservations() const
 {
-
     // Global analysis
     if (mData->numDomains == 1)
     {
-        /// @todo This implies a copy of obs!!!
-        return ObservationData(GlobalAnalysisDomainId, mData->obs, mData->H, mData->R); 
+        return ObservationData(GlobalAnalysisDomainId, move(mData->obs), mData->H, mData->R); 
     }
     // Local analysis
     else

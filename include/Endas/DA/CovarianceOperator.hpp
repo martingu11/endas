@@ -123,29 +123,40 @@ public:
 
 
 /**
- * Implements diagonal covariance matrix.
+ * Implements diagonal or spherical covariance matrix.
  *
- * The covariance operator is internally represented by the diagonal array. Currently only the main 
- * diagonal is supported but other diagonals could be added, if needed. The operator supports all
+ * The covariance operator is internally represented by the diagonal array. The operator supports all
  * methods of CovarianceOperator. The covariance can be instantiated with either the array of diagonal
  * elements or the reciprocal (inverse) array. This can prevent numerical issues in situations where 
  * the inverse coefficients are near zero (thus leading to very large coefficients on the original 
  * diagonal) and if only the inverse coefficients are needed, such as when only 
  * CovarianceOperator::solve() is called.
-*/
+ */
 class ENDAS_DLL DiagonalCovariance : public CovarianceOperator
 {
 public:
 
+
+    /**
+     * Constructs diagonal (spherical) covariance with given constant value on the diagonal.
+     * 
+     * @param size       Size of the domain the covariance corresponds to
+     * @param value      Value assigned to all diagonal elements.
+     * @param isInverse  If `true`, `value` is assumed to hold the inverse diagonal element
+     *                   value, otherwise the actual value is assumed.
+     */
+    DiagonalCovariance(index_t size, double value, bool isInverse = false);
+
+
     /**
      * Constructs diagonal covariance with given diagonal or its inverse.
-     * The passed array is copied.
+     * 
      * 
      * @param diag       Array of diagonal elements.
      * @param isInverse  If `true`, the `diag` array is assumed to hold the inverse diagonal 
      *                   coefficients, otherwise the actual coefficients are assumed.
      */
-    DiagonalCovariance(const Ref<const Array> diag, bool isInverse = false);
+    DiagonalCovariance(Array diag, bool isInverse = false);
 
     /**
      * Returns reference to the matrix diagonal.

@@ -128,9 +128,11 @@ public:
     /** Returns the cell map or empty array if not used. */
     const IndexArray& cellMap() const;
 
-    virtual index_t size(const GriddedDomain::Block& block) const override;
+    virtual index_t blockSize(const GriddedDomain::Block& block) const override;
+    virtual AABox getBlockExtent(const Block& block) const override;
 
     virtual void getCoords(Ref<Array2d> out) const override;
+    virtual void getCoords(const IndexArray& selected, Ref<Array2d> out) const override;
 
     virtual void getIndices(const Block& block, IndexArray& out) const override;
     virtual bool hasEfficientSubset() const override;

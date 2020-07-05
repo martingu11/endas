@@ -1,10 +1,17 @@
+/**
+ * @file Utils.hpp
+ *
+ * Utility functions for simplifying the example code.
+ */
+
 #ifndef __ENDAS_EXAMPLES_UTILS_HPP__
 #define __ENDAS_EXAMPLES_UTILS_HPP__
 
 #include <Endas/Endas.hpp>
+#include <Endas/DA/Model.hpp>
 #include <Endas/DA/CovarianceOperator.hpp>
-#include <Endas/DA/Algorithm/KalmanSmoother.hpp>
-#include <Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp>
+#include <Endas/DA/ObservationManager.hpp>
+
 
 #include <vector>
 #include <chrono>
@@ -35,22 +42,18 @@ inline std::vector<double> rangeToVector(int start, int end, int step = 1)
 }
 
 
-/*void plot
-
-
-lineStyle["color"] = "green";
-        fillStyle["color"] = "green";
-        plt::plot(xValues, toVector(resultX.row(X)), lineStyle);
-        plt::fill_between(xValues, toVector(resultX.row(X) - resultSD.row(X)*1.96), 
-                                    toVector(resultX.row(X) + resultSD.row(X)*1.96), 
-                                    fillStyle);
-
-*/
-
-
 //---------------------------------------------------------------------------------------
 // Data assmilation
 //---------------------------------------------------------------------------------------
+
+/** 
+ * Observation operator and error covariance.  
+ */
+struct ObservationOpAndCov
+{
+    std::shared_ptr<const ObservationOperator> H;
+    std::shared_ptr<const CovarianceOperator> R;
+};
 
 
 /**
@@ -71,9 +74,9 @@ lineStyle["color"] = "green";
  * @param x0             The initial system state   
  * @param model          Dynamic/evolution model of the system
  * @param dt             Time-stepping interval in physical units
- * @param H              Observation operator
  * @param Q              Model error covariance (operator)
- * @param R              Observation error covariance (operator) 
+ * @param H              Observation operator
+ * @param R              Observation error covariance (operator)
  * @param numSpinupSteps The number of model spin-up steps before actual test data is generated
  * @param obsInterval    The interval (in time steps) between consecutive generated observation
  *                       vectors
@@ -81,10 +84,41 @@ lineStyle["color"] = "green";
 std::tuple<Array2d, std::vector<Array>> 
 generateExampleData(int numSteps, const Ref<const Array> x0,
                     const EvolutionModel& model, double dt,
-                    const ObservationOperator& H, const CovarianceOperator& Q, 
+                    const CovarianceOperator& Q, 
+                    const ObservationOperator& H, 
                     const CovarianceOperator& R, 
                     int numSpinupSteps = 0,
                     int obsInterval = 1);
+
+
+/** 
+ * Generates synthetic data for a "twin experiment". 
+ * 
+ * This function is similar to generateExampleData() but uses a callback to provide the 
+ * observation operator H and error covariance R.
+ * 
+ * @param numSteps       Number of steps for which the true state and observations are generated
+ * @param x0             The initial system state   
+ * @param model          Dynamic/evolution model of the system
+ * @param dt             Time-stepping interval in physical units
+ * @param Q              Model error covariance (operator)
+ * @param HRfun          Called at every time step for which observations are generated to provide 
+ *                       the observation operator and error covariance.   
+ * @param numSpinupSteps The number of model spin-up steps before actual test data is generated
+ * @param obsInterval    The interval (in time steps) between consecutive generated observation
+ *                       vectors
+ * 
+ * @see generateExampleData() for more information.
+ */
+std::tuple<Array2d, std::vector<Array>> 
+generateExampleData(int numSteps, const Ref<const Array> x0,
+                    const EvolutionModel& model, double dt,
+                    const CovarianceOperator& Q, 
+                    std::function<ObservationOpAndCov(int k)> HRfun,
+                    int numSpinupSteps = 0,
+                    int obsInterval = 1);
+
+
 
 
 /**
@@ -117,24 +151,6 @@ inline Array rmse(const SoftRef<const endas::Array2d> a, const SoftRef<const end
     ENDAS_ASSERT(a.rows() == b.rows());
     return ((a - b).square().colwise().mean()).sqrt(); 
 }
-
-
-
-/*std::tuple<Array2d, Array2d> 
-runKF(KalmanSmoother& ks, int nsteps, double dt, const Ref<const Array> x0, 
-      const Ref<const Array2d> obs, const std::vector<int>& obsTimeSteps,
-      const ObservationOperator& H, const CovarianceOperator& P0, 
-      const CovarianceOperator& Q, const CovarianceOperator& R);
-
-
-std::tuple<Array2d, Array2d> 
-runEnKF(EnsembleKalmanSmoother& ks, const EvolutionModel& model,
-        int nsteps, double dt, const Ref<const Array2d> E0, 
-        const Ref<const Array2d> obs, const Ref<const Array2d> obsCoords, 
-        const std::vector<int>& obsTimeSteps,
-        const ObservationOperator& H, const CovarianceOperator& Q, 
-        const CovarianceOperator& R);*/
-
 
 
 

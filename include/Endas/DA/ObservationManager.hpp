@@ -84,8 +84,8 @@ public:
 
     /**
      * Called before assimilation of observations to notify ObservationManager that observations
-     * will be requested. The manager should initialize its internal state so that observations 
-     * can be fetched using fetchObservations().
+     * will be requested for time step *k*. The manager should initialize its internal state so that 
+     * observations can be fetched using fetchObservations().
      * 
      * @param k             Analysis time step index.
      * @param partitioner   Domain partitioner if used (i.e. analysis is localized) or 
@@ -93,7 +93,7 @@ public:
      * @param taperFn       Observation covariance tapering function if used or `nullptr`
      */
     virtual void beginFetch(int k, const DomainPartitioning* partitioner, 
-                            const TaperFn* taperFn) const = 0;
+                               const TaperFn* taperFn) const = 0;
 
 
 

@@ -90,8 +90,8 @@ int main(int argc, char *argv[])
         vector<Array> obsAll;
         tie(xtAll, obsAll) = generateExampleData(
             nsteps, x0, model, 1.0, 
-            MatrixObservationOperator(H), 
             DiagonalCovariance(Q.diagonal()), 
+            MatrixObservationOperator(H), 
             DiagonalCovariance(R.diagonal()), 
             0, obsInterval);
 

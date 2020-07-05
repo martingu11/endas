@@ -71,13 +71,18 @@ shared_ptr<const CovarianceOperator> CovarianceOperator::subset(const IndexArray
 // DiagonalCovariance
 //-----------------------------------------------------------------------------
 
-DiagonalCovariance::DiagonalCovariance(const Ref<const Array> diag, bool isInverse)
+DiagonalCovariance::DiagonalCovariance(index_t size, double value, bool isInverse)
+: DiagonalCovariance(Array::Constant(size, value), isInverse)
+{ }
+
+
+DiagonalCovariance::DiagonalCovariance(Array diag, bool isInverse)
 {
     ENDAS_ASSERT(diag.size() > 0);
 
     mSize = diag.size();
-    if (isInverse) mInvDiag = mDiag;
-    else mDiag = diag;
+    if (isInverse) mInvDiag = move(diag);
+    else mDiag = move(diag);
 
     mInitWithInverse = isInverse;
 }
@@ -192,7 +197,7 @@ DenseCovariance::DenseCovariance(const DiscreteSpatialDomain& domain, const Cova
 : mData(make_unique<Data>(Matrix::Zero(domain.size(), domain.size())))
 {
     Matrix& P = mData->P;
-    int dim = domain.dim();
+    int dim = domain.coordDim();
     index_t n = domain.size();
     const CoordinateSystem& crs = domain.crs();
 

@@ -53,7 +53,7 @@ public:
      * Returns the number of spatial coordinates used to represent the location of each state
      * vector element. This is a convenient alias for `crs().dim()`.
      */
-    int dim() const;
+    int coordDim() const;
 
     /**
      * Returns the coordinate system of the domain.
@@ -62,13 +62,29 @@ public:
 
 
     /**
-     * Returns spatial coordinates of the elements of the domain. 
+     * Returns spatial coordinates of all elements of the domain. 
      * 
-     * The coordinates are stored in the ``out`` array which must be pre-allocated to size 
-     * *m* x *n*, where *m* is the number of spatial dimensions as returned by ``dim()`` and *n*
-     * is the domain size.
+     * This returns representative coordinate for each cell, typically the centre. The coordinates 
+     * are stored in the ``out`` array which must be pre-allocated to size *m* x *n*, where *n* is 
+     * the domain size and *m* is equal to the number of spatial dimensions as returned by 
+     * coordDim(). 
      */
     virtual void getCoords(Ref<Array2d> out) const = 0;
+
+
+    /**
+     * Returns spatial coordinates of all selected elements of the domain. 
+     * 
+     * This returns representative coordinate for selected cells, typically the centre. The 
+     * coordinates are stored in the ``out`` array which must be pre-allocated to size *m* x *n*,
+     * where `n == selected.size()` and *m* is equal to the number of spatial dimensions as
+     * returned by coordDim().
+     * 
+     * The default implementation reads coordinates of all elements via getCoords() and returns 
+     * the selected subset. It is recommended for subclasses to override this method as well and
+     * provide more efficient solution.
+     */
+    virtual void getCoords(const IndexArray& selected, Ref<Array2d> out) const;
 
 };
 
@@ -95,11 +111,24 @@ public:
      */
     virtual const ArrayShape& shape() const = 0;
 
+    /**
+     * Returns the grid cell size.
+     * 
+     * The default implementation computes cell size from extent() and shape().
+     */
+    virtual Array cellSize() const;
+
 
     /** 
      * Returns size of the subset of the state vector that is inside the given rectangular region.
      */
-    virtual index_t size(const Block& block) const = 0;
+    virtual index_t blockSize(const Block& block) const = 0;
+
+
+    /**
+     * Returns spatial extent of a block of cells.
+     */
+    virtual AABox getBlockExtent(const Block& block) const = 0;
 
 
     /**

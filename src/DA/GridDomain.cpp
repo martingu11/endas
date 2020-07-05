@@ -15,11 +15,7 @@ GridDomain::GridDomain(const ArrayShape& shape, std::shared_ptr<const Coordinate
     ENDAS_ASSERT(numVarsPerCell > 0);
 
     mSize = shape.prod() * numVarsPerCell;
-
-    cout << "ext " << endl << extent.min() << endl << extent.max() << endl;
-
     mCellSize = (extent.max() - extent.min()).array() / shape.cast<AABox::Scalar>();
-    cout << "cellsize " << mCellSize << endl;
 }
 
 
@@ -31,9 +27,7 @@ GridDomain::GridDomain(const ArrayShape& shape, std::shared_ptr<const Coordinate
     ENDAS_ASSERT(mCellMap.size() > 0);
 
     mSize = mCellMap.size();
-
     mCellSize = (extent.max() - extent.min()).array() / shape.cast<AABox::Scalar>();
-    cout << "cellsize " << mCellSize << endl;
 }
 
 
@@ -69,9 +63,9 @@ const IndexArray& GridDomain::cellMap() const
 }
 
 
-index_t GridDomain::size(const GriddedDomain::Block& block) const
+index_t GridDomain::blockSize(const GriddedDomain::Block& block) const
 {
-    ENDAS_ASSERT(block.min().minCoeff() > 0);
+    ENDAS_ASSERT(block.min().minCoeff() >= 0);
     ENDAS_ASSERT((block.max().array() <= mShape).all());
 
     // Dense grid
@@ -84,6 +78,14 @@ index_t GridDomain::size(const GriddedDomain::Block& block) const
         ENDAS_NOT_IMPLEMENTED;
     }
 }
+
+AABox GridDomain::getBlockExtent(const Block& block) const
+{
+    auto min = mExtent.min().array() + (mCellSize * block.min().array().cast<real_t>());
+    auto max = mExtent.min().array() + (mCellSize * block.max().array().cast<real_t>());
+    return AABox(min, max);
+}
+
 
 
 // Calls fn(i, iend) for each continuous range of state variables within a block, where `i` and 
@@ -138,7 +140,7 @@ void GridDomain::getIndices(const Block& block, IndexArray& out) const
 void GridDomain::getCoords(Ref<Array2d> out) const
 {
     int n = this->size();
-    int dim = this->dim();
+    int dim = this->coordDim();
     ENDAS_ASSERT(out.rows() >= dim); 
     ENDAS_ASSERT(out.cols() >= n); 
 
@@ -161,10 +163,31 @@ void GridDomain::getCoords(Ref<Array2d> out) const
     }
 }
 
+void GridDomain::getCoords(const IndexArray& selected, Ref<Array2d> out) const
+{
+    int n = selected.size();
+    int dim = this->coordDim();
+    ENDAS_ASSERT(out.rows() >= dim); 
+    ENDAS_ASSERT(out.cols() >= n); 
+
+    // Dense grid
+    if (mCellMap.size() == 0)
+    {
+        for (int i = 0; i != n; i++)
+        {
+            cellCoord(selected[i] / mNumVarsPerCell, out.col(i));
+        }
+    }
+    else
+    {
+        ENDAS_NOT_IMPLEMENTED;
+    }
+}
+
 
 void GridDomain::cellCoord(index_t cellIndex, Ref<Array> out) const
 {
-    auto dim = this->dim();
+    auto dim = this->coordDim();
     
     if (dim == 1)
     {
@@ -199,9 +222,18 @@ void GridDomain::getSubset(const Block& block, const Ref<const Array2d> X, Ref<A
 
     if (mCellMap.size() == 0)
     {
+        index_t ilocal = 0;
         forEachBlockStateRange(block, mNumVarsPerCell, mShape, [&](index_t i, index_t iend)
         {
-            out = X.block(i, 0, iend, X.cols());
+            index_t n = iend - i;
+            index_t N = X.cols();
+
+            /*cout << "    getsubset " 
+                << ilocal << " 0 " << n << " " << N << " <- " 
+                << i << " 0 " << n << " " << N << endl;*/
+
+            out.block(ilocal, 0, n, N) = X.block(i, 0, n, N);
+            ilocal += n;
         });
     }
     else
@@ -217,9 +249,18 @@ void GridDomain::putSubset(const Block& block, const Ref<const Array2d> X, Ref<A
 
     if (mCellMap.size() == 0)
     {
+        index_t ilocal = 0;
         forEachBlockStateRange(block, mNumVarsPerCell, mShape, [&](index_t i, index_t iend)
         {
-            out.block(i, 0, iend, X.cols()) = X;
+            index_t n = iend - i;
+            index_t N = X.cols();
+
+            /*cout << "    putsubset " 
+                << ilocal << " 0 " << n << " " << N << " -> " 
+                << i << " 0 " << n << " " << N << endl;*/
+
+            out.block(i, 0, n, N) = X.block(ilocal, 0, n, N);
+            ilocal+= n;
         });
     }
     else

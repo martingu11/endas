@@ -9,9 +9,27 @@ DiscreteDomain::~DiscreteDomain()
 { }
 
 
-int DiscreteSpatialDomain::dim() const
+int DiscreteSpatialDomain::coordDim() const
 {
     return this->crs().dim();
+}
+
+void DiscreteSpatialDomain::getCoords(const IndexArray& selected, Ref<Array2d> out) const
+{
+    auto dim = this->coordDim();
+    ENDAS_ASSERT(out.rows() == dim);
+    ENDAS_ASSERT(out.cols() == selected.size());
+
+    Array2d allCoords(dim, this->size());
+    this->getCoords(allCoords);
+
+    selectCols(allCoords, selected, out);
+}
+
+
+Array GriddedDomain::cellSize() const
+{
+    return (this->extent().max() - this->extent().min()).array() / this->shape().cast<AABox::Scalar>();
 }
 
 
