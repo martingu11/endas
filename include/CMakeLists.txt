@@ -40,7 +40,7 @@ target_sources(endas PRIVATE
 
     ${CMAKE_SOURCE_DIR}/include/Endas/IO/ArrayIO.hpp
 
-    ${CMAKE_SOURCE_DIR}/include/Endas/IO/ArrayIO.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/Utils/EnsembleSampler.hpp
 )
 
 

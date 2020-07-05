@@ -37,10 +37,7 @@ target_sources(endas PRIVATE
 
     IO/ArrayIO_NumPy.cpp
 
-    Domain/GenericDomain.cpp
-    Domain/GridDomain.cpp
-    Domain/GridDomainPartitioning.cpp
-    Domain/SimpleObservationManager.cpp
+    Utils/EnsembleSampler.cpp
 
 
     Model/Lorenz95.cpp
@@ -79,6 +76,7 @@ target_include_directories(endas PUBLIC
 
 target_include_directories(endas PRIVATE ${THIRDPARTY_DIR}/simplefft/include)
 target_include_directories(endas PRIVATE ${THIRDPARTY_DIR}/cnpy)
+target_include_directories(endas PRIVATE ${THIRDPARTY_DIR}/libspatial)
 
 
 target_link_libraries(endas PUBLIC Eigen3::Eigen)
