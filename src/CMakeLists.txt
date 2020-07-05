@@ -19,6 +19,7 @@ target_sources(endas PRIVATE
     DA/GridDomain.cpp
     DA/GridDomainPartitioning.cpp
     DA/SimpleObservationManager.cpp
+    DA/IndexedPartitionPointQuery.cpp
 
     DA/Algorithm/KalmanSmoother.cpp
     DA/Algorithm/EnsembleKalmanSmoother.cpp
