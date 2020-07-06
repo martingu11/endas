@@ -51,6 +51,13 @@ typedef Eigen::Array<real_t, Eigen::Dynamic, Eigen::Dynamic> Array2d;
 /** 
  * An array of indexes.
  * This is aimed at subsetting arrays and matrices. 
+ * 
+ * @rst
+ * .. note::
+ *    IndexArray is a dynamic array and is an alias to `std::vector` rather than `Eigen::Array`. 
+ *    This is because index arrays are most commonly constructed without prior knowledge of the 
+ *    size.
+ * @endrst
  */
 typedef std::vector<index_t> IndexArray;
 

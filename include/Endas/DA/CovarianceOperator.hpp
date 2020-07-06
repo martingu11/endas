@@ -161,16 +161,16 @@ public:
     /**
      * Returns reference to the matrix diagonal.
      *
-     * The diagonal is constructed on demand (if DiagonalCovariance was initialized with 
-     * inverse diagonal).
+     * The diagonal is constructed on demand if DiagonalCovariance was initialized with inverse 
+     * diagonal.
      */ 
     const Ref<const Array> diagonal() const;
 
     /**
      * Returns reference to the matrix diagonal.
      * 
-     * The inverse diagonal is constructed on demand (if DiagonalCovariance was initialized with 
-     * actual diagonal).
+     * The inverse diagonal is constructed on demand if DiagonalCovariance was initialized with 
+     * actual diagonal.
      */ 
     const Ref<const Array> inverseDiagonal() const;
 
