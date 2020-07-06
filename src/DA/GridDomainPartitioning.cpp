@@ -105,19 +105,19 @@ void GridDomainPartitioning::Data::generateDomains()
     }
     else if (dim == 2)
     {
-        index_t NR = globalDomain->shape()(0);
-        index_t NC = globalDomain->shape()(1);
+        index_t NX = globalDomain->shape()(0);
+        index_t NY = globalDomain->shape()(1);
 
-        for (index_t i = 0; i < NR; i+= blockSize)
+        for (index_t x = 0; x < NX; x+= blockSize)
         {
-            index_t iend = std::min(i+blockSize, NR);
-            for (index_t j = 0; j < NC; j+= blockSize)
+            index_t xend = std::min(x+blockSize, NX);
+            for (index_t y = 0; y < NY; y+= blockSize)
             {
                 Domain domain(2);
-                domain.block.min()(0) = i;
-                domain.block.min()(1) = j;
-                domain.block.max()(0) = iend;
-                domain.block.max()(1) = std::min(j+blockSize, NC);
+                domain.block.min()(0) = x;
+                domain.block.min()(1) = y;
+                domain.block.max()(0) = xend;
+                domain.block.max()(1) = std::min(y+blockSize, NY);
                 addDomainFn(move(domain));
             }
         }

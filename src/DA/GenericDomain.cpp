@@ -19,7 +19,7 @@ public:
             "Observation coordinate array does not match the dimension of the domain partitioner");
     }
 
-    virtual void rangeQuery(int domain, double range, IndexArray& out) const
+    virtual void rangeQuery(int domain, double range, IndexArray& out, DistanceArray* distOut) const override
     {
         // The domain ID = state variable = point coordinate so the search is trivial.
         // This is meant for small problems so exhaustive search is just fine
@@ -30,7 +30,11 @@ public:
         for (int i = 0; i != mIndexedCoords.size(); i++) 
         {
             int coord = (int)mIndexedCoords(i);
-            if (coord >= start && coord <= end) out.push_back(i);
+            if (coord >= start && coord <= end) 
+            {
+                out.push_back(i);
+                if (distOut) distOut->push_back(abs(coord - domain));
+            }
         }
     }
 

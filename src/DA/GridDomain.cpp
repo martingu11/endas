@@ -8,7 +8,7 @@ using namespace endas;
 
 
 GridDomain::GridDomain(const ArrayShape& shape, std::shared_ptr<const CoordinateSystem> crs, 
-                               const AABox& extent, int numVarsPerCell)
+                       const AABox& extent, int numVarsPerCell)
 : mShape(shape), mCRS(crs), mExtent(extent), mNumVarsPerCell(numVarsPerCell)
 { 
     ENDAS_ASSERT(shape.size() == crs->dim());
@@ -20,7 +20,7 @@ GridDomain::GridDomain(const ArrayShape& shape, std::shared_ptr<const Coordinate
 
 
 GridDomain::GridDomain(const ArrayShape& shape, std::shared_ptr<const CoordinateSystem> crs, 
-                               const AABox& extent, IndexArray cellMap)
+                       const AABox& extent, IndexArray cellMap)
 : mShape(shape), mCRS(crs), mExtent(extent), mNumVarsPerCell(0), mCellMap(move(cellMap))
 {
     ENDAS_ASSERT(shape.size() == crs->dim());
@@ -105,11 +105,12 @@ forEachBlockStateRange(const GriddedDomain::Block& block, int numVarsPerCell,
     }
     else if (dim == 2)
     {
-        index_t colsize = gridShape(0) * numVarsPerCell;
-        for (int j = block.min()(1); j != block.max()(1); j++) 
+        index_t ysize = gridShape(1) * numVarsPerCell;
+
+        for (int x = block.min()(0); x != block.max()(0); x++) 
         {
-            index_t i = j * colsize + block.min()(0) * numVarsPerCell;
-            index_t iend = j * colsize + block.max()(0) * numVarsPerCell;
+            index_t i = x * ysize + block.min()(1) * numVarsPerCell;
+            index_t iend = x * ysize + block.max()(1) * numVarsPerCell;
             fn(i, iend);
         }
     }
