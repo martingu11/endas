@@ -55,12 +55,14 @@ QGModel::~QGModel() { }
 
 #if !ENDAS_HAS_FORTRAN
 
-void QGModel::Data::init(int ensSize) { }
+void QGModel::Data::init(int ensSize) 
+{ 
+    ENDAS_NOT_SUPPORTED("EnDAS must be compiled with Fortran support to enable the QG model.");
+}
 
 void QGModel::operator()(Ref<Array2d> x, int k, double dt, bool store) const
-{
-    ENDAS_NOT_SUPPORTED("The QG model has not been compiled into EnDAS.");
-}
+{ }   
+
 
 #else
 

@@ -9,5 +9,6 @@ Examples
 
    simple
    lorenz95
+   qg
    
 

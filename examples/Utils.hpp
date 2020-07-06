@@ -132,13 +132,13 @@ inline Array covError(const Ref<const Matrix> cov)
 /**
  * Returns state uncertainty/error derived from an ensemble.
  */
-inline Array ensembleError(const Ref<const Array2d> E) 
+inline Array ensembleError(const Ref<const Array2d> E, double numSD = 1.0) 
 {
     Array ret(E.rows());
     for (int r = 0; r != E.rows(); r++) 
     {
         double rmean = E.row(r).mean();
-        ret(r) = sqrt((E.row(r) - rmean).square().mean());
+        ret(r) = sqrt((E.row(r) - rmean).square().mean()) * numSD;
     }
 
     return ret;
