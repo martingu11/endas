@@ -1,5 +1,7 @@
 #include <Endas/DA/SimpleObservationManager.hpp>
+#include <Endas/DA/Taper.hpp>
 #include <Endas/Endas.hpp>
+
 #include "../Compatibility.hpp"
 
 
@@ -75,7 +77,14 @@ ObservationData SimpleObservationManager::fetchObservations() const
     // Local analysis
     else
     {
+        // We will do covariance tapering if the taper function is not NoTaper and has 
+        // support range > 0
+        bool doCovTapering = 
+            dynamic_cast<const NoTaper*>(mData->taperFn) == nullptr &&
+            mData->taperFn->supportRange() > 0;
+
         IndexArray obsIndices;
+        PartitionPointQuery::DistanceArray obsDistances;
 
         // Cycle through domains until we have one with observations
         while (mData->currentDomain != mData->numDomains)
@@ -83,7 +92,17 @@ ObservationData SimpleObservationManager::fetchObservations() const
             // Query which observations we will need for this domain. This will be all that fall within the
             // localization taper function support range.
             obsIndices.clear();
-            mData->obsQuery->rangeQuery(mData->currentDomain, mData->taperFn->supportRange(), obsIndices);
+            obsDistances.clear();
+
+            mData->obsQuery->rangeQuery(
+                mData->currentDomain, mData->taperFn->supportRange(), 
+                obsIndices, 
+                (doCovTapering)? &obsDistances : nullptr);
+
+            if (doCovTapering)
+            {
+                ENDAS_ASSERT(obsDistances.size() == obsIndices.size());
+            }
 
             int d = mData->currentDomain++;
 
@@ -96,6 +115,41 @@ ObservationData SimpleObservationManager::fetchObservations() const
                 auto Rlocal = mData->R->subset(obsIndices);
                 ENDAS_ASSERT(Hlocal);
                 ENDAS_ASSERT(Rlocal);
+                ENDAS_ASSERT(Hlocal->nobs() == obsIndices.size());
+                ENDAS_ASSERT(Rlocal->size() == obsIndices.size());
+
+                // Taper the observation error covariance matrix by the given tapering function.
+                // In practice, this means multiplying the covariance entries so that (co)varinace of 
+                // observations far away is increaed, effectively limiting their influence. 
+                // Currently we only handle diagonal covariance matrices here and set
+                //   
+                //    cov(i,i) = cov(i,i) * 1 / taper(distance(i, domain))
+                // 
+                // where cov(i,i) is the diagonal covariance element, distance(i, domain) is the 
+                // distance of i-th observation to the domain and taper(d) is the taper function 
+                // value dor distance d. 
+                
+                // Todo: Remove observations for which the tapering factor is very close to zero to avoid 
+                // numerical issues with the covariance!
+
+                const DiagonalCovariance* RasDiag = dynamic_cast<const DiagonalCovariance*>(Rlocal.get());
+                if (doCovTapering && RasDiag)
+                {
+                    // A copy of the inverse diagonal. The formula above is implemented by tapering the 
+                    // inverse diagonal to avoid numerical issues. Most filters work with inverse of the
+                    // covariance anyway.
+
+                    Array RdiagInv = RasDiag->inverseDiagonal(); 
+                    ENDAS_ASSERT(RdiagInv.size() == obsDistances.size());
+
+                    // Taper the inverse diagonal entries by taper(distance(i, domain))
+                    Eigen::Map<Array> distancesAsArray(obsDistances.data(), obsDistances.size());
+                    mData->taperFn->taper(RdiagInv, distancesAsArray, RdiagInv);
+
+                    // Construct new covariance operator using the tapered inverse diagonal
+                    Rlocal = make_shared<DiagonalCovariance>(move(RdiagInv), true);
+
+                }
 
                 return ObservationData(d, move(obsLocal), Hlocal, Rlocal);    
             }

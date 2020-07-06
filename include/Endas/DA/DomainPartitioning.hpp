@@ -36,17 +36,23 @@ namespace endas
 class ENDAS_DLL PartitionPointQuery
 {
 public:
+
+    /** Dynamic array of distance measurements. */
+    typedef std::vector<real_t> DistanceArray;
   
     virtual ~PartitionPointQuery() { }
 
     /**
      * Queries points within the given distance from a local domain.
      * 
-     * @param d      Local domain index
-     * @param range  The search range
-     * @param out    Array of indices to populate
+     * @param d        Local domain index
+     * @param range    The search range
+     * @param out      Array of indices to populate
+     * @param distOut  Pointer to an nrray of distances to populate. Can be `nullptr` if distances
+     *                 are not needed
      */ 
-    virtual void rangeQuery(int domain, double range, IndexArray& out) const = 0;
+    virtual void rangeQuery(int domain, double range, IndexArray& out,
+                            DistanceArray* distOut) const = 0;
 
 };
 

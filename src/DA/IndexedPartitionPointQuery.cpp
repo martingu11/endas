@@ -84,28 +84,31 @@ IndexedPartitionPointQuery::~IndexedPartitionPointQuery()
 { }
 
 
-void IndexedPartitionPointQuery::rangeQuery(int domain, double range, IndexArray& out) const
+void IndexedPartitionPointQuery::rangeQuery(int domain, double range, IndexArray& out, 
+                                            DistanceArray* distOut) const
 {
     // Find the bounding box of the domain
-    AABox bbox = mData->partitioner->getLocalBox(domain);
+    AABox domainbox = mData->partitioner->getLocalBox(domain);
 
     // Inflate the bounding box by the range
-    bbox.min().array() -= range;
-    bbox.max().array() += range;
+    AABox query = AABox(domainbox.min().array() - range, domainbox.max().array() + range);
 
     // Find all points inside the box. Use the exact distance from the box 
     double rangeSquared = range*range;
-    coord_range_predicate predicate(bbox, mData->coords);
+    coord_range_predicate predicate(query, mData->coords);
 
     for (auto iter = spatial::region_begin(mData->pointIndex, predicate);
          iter != spatial::region_end(mData->pointIndex, predicate); 
          ++iter)
     {
         index_t i = *iter;
-        double distSquared = bbox.squaredExteriorDistance(mData->coords.col(i).matrix());
+        double distSquared = domainbox.squaredExteriorDistance(mData->coords.col(i).matrix());
 
         if (distSquared <= rangeSquared) 
+        {
             out.push_back(i);
+            if (distOut) distOut->push_back(sqrt(distSquared));
+        }
     }
 
 }

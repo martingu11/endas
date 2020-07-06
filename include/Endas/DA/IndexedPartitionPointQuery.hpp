@@ -47,7 +47,8 @@ public:
                             
     virtual ~IndexedPartitionPointQuery();
 
-    virtual void rangeQuery(int domain, double range, IndexArray& out) const override;
+    virtual void rangeQuery(int domain, double range, IndexArray& out,
+                            DistanceArray* distOut) const override;
 
 private:
     struct Data;
