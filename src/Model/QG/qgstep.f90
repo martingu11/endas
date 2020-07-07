@@ -24,7 +24,7 @@ module qgstep_mod
 
 contains
 
-  subroutine qg_step_rk4(t, dt, rkb, rkh, rkh2, F, r, PSI, Q) bind (c, name="qg_step_rk4")
+  recursive subroutine qg_step_rk4(t, dt, rkb, rkh, rkh2, F, r, PSI, Q) bind (c, name="qg_step_rk4")
     use iso_c_binding, only: c_int, c_double
     real(c_double), intent(in), value :: t, dt, rkb, rkh, rkh2, F, r
     real(c_double), dimension(N, M), intent(inout) :: Q, PSI

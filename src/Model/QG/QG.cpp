@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+
 using namespace std;
 using namespace endas;
 
@@ -108,36 +109,34 @@ void QGModel::operator()(Ref<Array2d> x, int k, double dt, bool store) const
     double dx = 1.0 / double(QG_N - 1);
     double dy = 1.0 / double(QG_M - 1);
 
+    double t = mData->t;
+    double tend = t + dt;
+
+    #pragma omp parallel for
     for (int j = 0; j != x.cols(); j++)
     {
         qg_laplacian(x.col(j).data(), dx, dy, Q.col(j).data());
         Q.col(j) -= mData->F * x.col(j);
-    }
 
-    double t = mData->t;
-    double tend = t + dt;
+        double t = mData->t;
+        double tend = t + dt;
 
-    while (t < tend)
-    {
-        double thisdt = std::min(mData->internalDt, tend - t);
-
-        for (int j = 0; j != x.cols(); j++)
+        while (t < tend)
         {
+            double thisdt = std::min(mData->internalDt, tend - t);
+
             qg_step_rk4(
                 t, thisdt, mData->rkb, mData->rkh, mData->rkh2, mData->F, mData->r, 
                 x.col(j).data(), Q.col(j).data());
-        };
 
-        t+= thisdt;
-    }
+            t+= thisdt;
+        }
 
-    for (int j = 0; j != x.cols(); j++)
-    {
         Array2d xguess = x.col(j);
         qg_calc_psi(xguess.data(), Q.col(j).data(), x.col(j).data(), mData->F);
-    };
+    }
 
-    mData->t = tend;
+    mData->t += dt;
 }
 
 

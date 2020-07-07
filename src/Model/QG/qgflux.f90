@@ -31,7 +31,7 @@ module qgflux_mod
 
 contains
 
-  subroutine calc_psi(PSIGUESS, Q, PSI, F) bind(c, name="qg_calc_psi")
+recursive subroutine calc_psi(PSIGUESS, Q, PSI, F) bind(c, name="qg_calc_psi")
     use iso_c_binding, only: c_double
     real(c_double), intent(in), value :: F
     real(c_double), dimension(N, M), intent(in) :: PSIGUESS, Q
@@ -40,7 +40,7 @@ contains
     call helmholtz(PSIGUESS, Q, F, NX1, NY1, MREFIN, 1.0d0 / NX1, 1, 2, 3, N, M, PSI)
   end subroutine calc_psi
 
-  subroutine qg_flux(t, rkb, rkh, rkh2, F, r, Q, PSIGUESS, PSI, QFLUX)
+  recursive subroutine qg_flux(t, rkb, rkh, rkh2, F, r, Q, PSIGUESS, PSI, QFLUX)
     real(8), intent(in) :: t, rkb, rkh, rkh2, F, r
     !integer, intent(in) :: N, M
     

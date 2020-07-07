@@ -29,7 +29,7 @@ module calc_mod
 
 contains
     
-  subroutine arakawa(A, B, dx, dy, JACOBIAN)
+  recursive subroutine arakawa(A, B, dx, dy, JACOBIAN)
     real(8), dimension(:, :), intent(in) :: A, B
     real(8), intent(in) :: dx, dy
     real(8), dimension(:, :), intent(inout) :: JACOBIAN
@@ -54,7 +54,7 @@ contains
     JACOBIAN(2 : m1, 2 : n1) = JACOBIAN(2 : m1, 2 : n1) / (12.0d0 * dx * dy)
   end subroutine arakawa
 
-  subroutine laplacian(A, dx, dy, L) bind(c, name="qg_laplacian")
+  recursive subroutine laplacian(A, dx, dy, L) bind(c, name="qg_laplacian")
     use iso_c_binding, only: c_double
     real(c_double), intent(in), dimension(N, M) :: A
     real(c_double), intent(in), value :: dx, dy

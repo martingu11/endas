@@ -24,19 +24,19 @@ module helmholtz_mod
 
   implicit none
 
-  save
+  !save
 
   public helmholtz
 
-  integer, private :: iq
-  real(8), allocatable, dimension(:) :: q
+  !integer, private :: iq
+  !real(8), allocatable, dimension(:) :: q
   integer, parameter, private :: LEN20 = 20
-  integer, dimension(LEN20), private :: nst, imx, jmx
-  real(8), dimension(LEN20), private :: h
+  !integer, dimension(LEN20), private :: nst, imx, jmx
+  !real(8), dimension(LEN20), private :: h
 
 contains
 
-  subroutine helmholtz(G, F, zk2, NX1, NY1, M, H1, NU1, NU2, NCYC, NX, MY, P)
+  recursive subroutine helmholtz(G, F, zk2, NX1, NY1, M, H1, NU1, NU2, NCYC, NX, MY, P)
     !
     ! Solves helmholtz equation:
     ! (\nabla^2 - zk2) P  = F, with Dirichlet B.C. The B.C. and the initial
@@ -66,6 +66,12 @@ contains
     integer, intent(in) :: NU1, NU2, NCYC, NX, MY
     real(8), intent(out), dimension(NX, MY) :: P
 
+    integer :: iq
+    real(8), allocatable, dimension(:) :: q
+    integer, dimension(LEN20) :: nst, imx, jmx
+    real(8), dimension(LEN20) :: h
+
+
     integer :: ir
     integer :: k, ksq
     real(8) :: wu
@@ -76,41 +82,44 @@ contains
     iq = 1
     do k = 1, M
        ksq = 2 ** (k - 1)
-       call grdfn(k, NX1 * ksq + 1, NY1 * ksq + 1, H1 / ksq)
-       call grdfn(k + M, NX1 * ksq + 1, NY1 * ksq + 1, H1 / ksq)
+       call grdfn(k, NX1 * ksq + 1, NY1 * ksq + 1, H1 / ksq, iq, nst, imx, jmx, h)
+       call grdfn(k + M, NX1 * ksq + 1, NY1 * ksq + 1, H1 / ksq, iq, nst, imx, jmx, h)
     end do
     wu = 0.0d0
-    call putf1(M, G, 0)
-    call putf1(2 * M, F, 2)
+    call putf1(M, G, 0, q, nst, imx, jmx, h)
+    call putf1(2 * M, F, 2, q, nst, imx, jmx, h)
     do ic = 1, NCYC
       do km = 1, M
          k = 1 + M - km
          if (k /= M) then
-            call putz(k)
+            call putz(k, q, nst, imx, jmx, h)
          end if
          do ir = 1, NU1
-            call relax(k, k + M, wu, M, zk2)
+            call relax(k, k + M, wu, M, zk2, q, nst, imx, jmx, h)
          end do
          if (k > 1) then
-            call rescal(k, k + M, k + M - 1, zk2)
+            call rescal(k, k + M, k + M - 1, zk2, q, nst, imx, jmx, h)
          end if
       end do
       do k = 1, M
          do ir = 1, NU2
-            call relax(k, k + M, wu, M, zk2)
+            call relax(k, k + M, wu, M, zk2, q, nst, imx, jmx, h)
          end do
          if (k < M) then
-            call intadd(k, k + 1)
+            call intadd(k, k + 1, q, nst, imx, jmx, h)
          end if
       end do
    end do
-   call getsol(M, P)
+   call getsol(M, P, q, nst, imx, jmx, h)
    deallocate(q)
  end subroutine helmholtz
 
- subroutine grdfn(k, M, N, hh)
+ recursive subroutine grdfn(k, M, N, hh, iq, nst, imx, jmx, h)
    integer, intent(in) :: k, M, N
    real(8), intent(in) :: hh
+   integer, intent(inout) :: iq
+   integer, intent(inout), dimension(LEN20) :: nst, imx, jmx
+   real(8), intent(inout), dimension(LEN20) :: h
 
    nst(k) = iq
    imx(k) = M
@@ -119,11 +128,14 @@ contains
    iq = iq + M * N
  end subroutine grdfn
 
- subroutine key(k, ist, M, N, hh)
+ recursive subroutine key(k, ist, M, N, hh, nst, imx, jmx, h)
    integer, intent(in) :: k
    integer, dimension(:), intent(out) :: ist
    integer, intent(out) :: M, N
    real(8), intent(out) :: hh
+
+   integer, intent(in), dimension(LEN20) :: nst, imx, jmx
+   real(8), intent(in), dimension(LEN20) :: h
 
    integer :: is, i
 
@@ -137,10 +149,14 @@ contains
    hh = h(k)
  end subroutine key
 
- subroutine putf1(k, F, nh)
+ recursive subroutine putf1(k, F, nh, q, nst, imx, jmx, h)
    integer, intent(in) :: k
    real(8), dimension(:, :), intent(in) :: F
    integer, intent(in) :: nh
+
+   real(8), intent(inout), dimension(:) :: q
+   integer, intent(in), dimension(LEN20) :: nst, imx, jmx
+   real(8), intent(in), dimension(LEN20) :: h
 
    integer, dimension(200) :: ist
 
@@ -148,7 +164,7 @@ contains
    real(8) :: hh, hh2
    integer :: i, j
 
-   call key (k, ist, ii, jj, hh)
+   call key (k, ist, ii, jj, hh, nst, imx, jmx, h)
    hh2 = hh ** nh
    do i = 1, ii
       do j = 1, jj
@@ -157,16 +173,20 @@ contains
    end do
  end subroutine putf1
 
- subroutine getsol(k, P)
+ recursive subroutine getsol(k, P, q, nst, imx, jmx, h)
    integer, intent(in) :: k
    real(8), dimension(:, :), intent(out) :: P
+
+   real(8), intent(in), dimension(:) :: q
+   integer, intent(in), dimension(LEN20) :: nst, imx, jmx
+   real(8), intent(in), dimension(LEN20) :: h
 
    integer, dimension(200) :: ist
    integer :: ii, jj
    real(8) :: hh
    integer :: i, j
 
-   call key(k, ist, ii, jj, hh)
+   call key(k, ist, ii, jj, hh, nst, imx, jmx, h)
    do i = 1, ii
       do j = 1, jj
          P(i, j) = q(ist(i) + j)
@@ -174,15 +194,19 @@ contains
    end do
  end subroutine getsol
 
- subroutine putz(k)
+ recursive subroutine putz(k, q, nst, imx, jmx, h)
    integer, intent(in) :: k
+
+   real(8), intent(inout), dimension(:) :: q
+   integer, intent(in), dimension(LEN20) :: nst, imx, jmx
+   real(8), intent(in), dimension(LEN20) :: h
 
    integer, dimension(200) :: ist
    integer :: ii, jj
    real(8) :: hh
    integer :: i, j
 
-   call key( k, ist, ii, jj, hh)
+   call key( k, ist, ii, jj, hh, nst, imx, jmx, h)
    do  i = 1, ii
       do j = 1, jj
          q(ist(i) + j) = 0.0d0
@@ -190,12 +214,16 @@ contains
    end do
  end subroutine putz
 
- subroutine relax(k, krhs, wu, M, zk2)
+ recursive subroutine relax(k, krhs, wu, M, zk2, q, nst, imx, jmx, h)
    integer, intent(in) :: k
    integer, intent(in) :: krhs
    real(8), intent(inout) :: wu
    integer, intent(in) :: M
    real(8), intent(in) :: zk2
+
+   real(8), intent(inout), dimension(:) :: q
+   integer, intent(in), dimension(LEN20) :: nst, imx, jmx
+   real(8), intent(in), dimension(LEN20) :: h   
 
    integer, dimension(200) :: ist, irhs
    integer :: ii, jj
@@ -205,8 +233,8 @@ contains
    integer :: i, j
    real(8) :: a
 
-   call key(k, ist, ii, jj, hh)
-   call key(krhs, irhs, ii, jj, hh)
+   call key(k, ist, ii, jj, hh, nst, imx, jmx, h)
+   call key(krhs, irhs, ii, jj, hh, nst, imx, jmx, h)
    diag = 4.0d0 + zk2 * hh ** 2
    i1 = ii - 1
    j1 = jj - 1
@@ -223,9 +251,13 @@ contains
    wu = wu + 4.0d0 ** (k - M)
  end subroutine relax
 
- subroutine intadd(kc, kf)
+ recursive subroutine intadd(kc, kf, q, nst, imx, jmx, h)
    integer, intent(in) :: kc
    integer, intent(in) :: kf
+
+   real(8), intent(inout), dimension(:) :: q
+   integer, intent(in), dimension(LEN20) :: nst, imx, jmx
+   real(8), intent(in), dimension(LEN20) :: h      
 
    integer, dimension(200) :: istc, istf
    real(8) :: hc, hf
@@ -234,8 +266,8 @@ contains
    integer :: ifo, ifm, ico, icm
    real(8) :: a, am
 
-   call key(kc, istc, iic, jjc, hc)
-   call key(kf, istf, iif, jjf, hf)
+   call key(kc, istc, iic, jjc, hc, nst, imx, jmx, h)
+   call key(kf, istf, iif, jjf, hf, nst, imx, jmx, h)
    do ic = 2, iic
       if = 2 * ic - 1
       jf = 1
@@ -255,9 +287,13 @@ contains
    end do
  end subroutine intadd
 
- subroutine rescal(kf, krf, krc, zk2)
+ recursive subroutine rescal(kf, krf, krc, zk2, q, nst, imx, jmx, h)
    integer, intent(in) :: kf, krf, krc
    real(8), intent(in) :: zk2
+
+   real(8), intent(inout), dimension(:) :: q
+   integer, intent(in), dimension(LEN20) :: nst, imx, jmx
+   real(8), intent(in), dimension(LEN20) :: h      
 
    integer, dimension(200) :: iuf, irf, irc
    integer :: iif, jjf, iic, jjc, iic1, jjc1
@@ -267,9 +303,9 @@ contains
    real(8) :: s
    real(8) :: diag
 
-   call key(kf, iuf, iif, jjf, hf)
-   call key(krf, irf, iif, jjf, hf)
-   call key(krc, irc, iic, jjc, hc)
+   call key(kf, iuf, iif, jjf, hf, nst, imx, jmx, h)
+   call key(krf, irf, iif, jjf, hf, nst, imx, jmx, h)
+   call key(krc, irc, iic, jjc, hc, nst, imx, jmx, h)
 
    diag = 4.0d0 + zk2 * hf ** 2
    iic1 = iic - 1
