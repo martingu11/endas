@@ -51,7 +51,7 @@ target_sources(endas PRIVATE
     Model/QG/utils.f90
 )
 
-if (CMAKE_Fortran_COMPILER)
+if (ENDAS_HAS_FORTRAN)
     target_sources(endas PRIVATE
         Model/QG/calc.f90
         Model/QG/helmholtz.f90

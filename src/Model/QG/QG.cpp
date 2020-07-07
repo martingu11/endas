@@ -54,9 +54,20 @@ QGModel::QGModel(int N, double internalStep)
 
 QGModel::~QGModel() { }
 
+int QGModel::sizex() const
+{
+    return QG_M;
+}
+
+int QGModel::sizey() const
+{
+    return QG_N;
+}
+
+
 #if !ENDAS_HAS_FORTRAN
 
-void QGModel::Data::init(int ensSize) 
+void QGModel::Data::init() 
 { 
     ENDAS_NOT_SUPPORTED("EnDAS must be compiled with Fortran support to enable the QG model.");
 }
@@ -88,17 +99,6 @@ void QGModel::Data::init()
         qg_params_init();
         globFmodInitialized = true;
     }
-}
-
-
-int QGModel::sizex() const
-{
-    return QG_M;
-}
-
-int QGModel::sizey() const
-{
-    return QG_N;
 }
 
 
