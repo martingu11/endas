@@ -31,6 +31,11 @@ target_sources(endas PRIVATE
     ${CMAKE_SOURCE_DIR}/include/Endas/Caching/ArrayCache.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Caching/MemoryArrayCache.hpp
 
+    ${CMAKE_SOURCE_DIR}/include/Endas/Parallel/Parallel.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/Parallel/AsyncJobExecutor.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/Parallel/SerialJobExecutor.hpp
+    ${CMAKE_SOURCE_DIR}/include/Endas/Parallel/ThreadJobExecutor.hpp
+
     ${CMAKE_SOURCE_DIR}/include/Endas/Random/Random.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Random/MultivariateRandomNormal.hpp
     ${CMAKE_SOURCE_DIR}/include/Endas/Random/GaussianRandomField.hpp

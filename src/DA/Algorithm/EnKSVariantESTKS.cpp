@@ -72,10 +72,10 @@ void ESTKS::ensembleTransform(Ref<Array2d> E, vector<Array2d>& Egdata,
     
     // Compute the weight matrix `W` for updating ensemble perturbations
 
-    ENDAS_PERF_BEGIN(SymSqrt);
+    //ENDAS_PERF_BEGIN(SymSqrt);
     Matrix C(Ainv.rows(), Ainv.cols());
     inverseSymmetricSqrt(Ainv, C, true);
-    ENDAS_PERF_END(SymSqrt);
+    //ENDAS_PERF_END(SymSqrt);
 
     Matrix W = C * mT.transpose();
     W *= sqrt(N-1);
@@ -88,10 +88,10 @@ void ESTKS::ensembleTransform(Ref<Array2d> E, vector<Array2d>& Egdata,
 
     ColVec w = HL.transpose() * RinvDz;     // N-1 x 1
 
-    ENDAS_PERF_BEGIN(AInvert);
+    //ENDAS_PERF_BEGIN(AInvert);
     Eigen::LLT<Ref<Matrix>> AinvChol(Ainv);
     w = AinvChol.solve(w);
-    ENDAS_PERF_END(AInvert);
+    //ENDAS_PERF_END(AInvert);
 
     W.colwise() += w;    
 

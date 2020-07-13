@@ -14,6 +14,10 @@
 namespace endas
 {
 
+/** 
+ * @addtogroup core
+ * @{ 
+ */
 
 
 /** 

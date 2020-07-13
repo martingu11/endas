@@ -28,6 +28,11 @@ target_sources(endas PRIVATE
     
     Caching/ArrayCache.cpp
     Caching/MemoryArrayCache.cpp
+
+    Parallel/Parallel.cpp
+    Parallel/AsyncJobExecutor.cpp
+    Parallel/SerialJobExecutor.cpp
+    Parallel/ThreadJobExecutor.cpp
     
     Random/Random.cpp
     Random/MultivariateRandomNormal.cpp
@@ -78,6 +83,7 @@ target_include_directories(endas PUBLIC
 target_include_directories(endas PRIVATE ${THIRDPARTY_DIR}/simplefft/include)
 target_include_directories(endas PRIVATE ${THIRDPARTY_DIR}/cnpy)
 target_include_directories(endas PRIVATE ${THIRDPARTY_DIR}/libspatial)
+target_include_directories(endas PRIVATE ${THIRDPARTY_DIR}/ctpl)
 
 
 target_link_libraries(endas PUBLIC Eigen3::Eigen)

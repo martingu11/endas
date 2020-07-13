@@ -10,7 +10,7 @@
  *     @defgroup daalg Data assimilation algorithms
  * @}
  * 
- * @defgroup domain State and observation space domains
+ * @defgroup parallel Parallelization
  * 
  * @defgroup random Random number generation
  * 

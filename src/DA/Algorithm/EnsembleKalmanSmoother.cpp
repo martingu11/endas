@@ -1,6 +1,7 @@
 #include <Endas/DA/Algorithm/EnsembleKalmanSmoother.hpp>
 #include <Endas/Core/Ensemble.hpp>
 #include <Endas/Caching/MemoryArrayCache.hpp>
+#include <Endas/Parallel/Parallel.hpp>
 #include <Endas/Endas.hpp>
 
 #include "../../Compatibility.hpp"
@@ -244,13 +245,6 @@ void EnsembleKalmanSmoother::Data::unpackEnsemble(const Ref<const Array2d> E, Re
     {
         locSSP->getLocal(d, E, Eaug.block(start, 0, nloc, N));
     });
-    /*for (int d = 0; d != locNumDomains; d++)
-    {
-        index_t start = locStateLimits.col(d)(0);
-        index_t nloc = locStateLimits.col(d)(1);
-        if (nloc == 0) continue;
-        
-    }*/
 }
 
 void EnsembleKalmanSmoother::Data::packEnsemble(const Ref<const Array2d> Eaug, Ref<Array2d> E)
@@ -259,14 +253,6 @@ void EnsembleKalmanSmoother::Data::packEnsemble(const Ref<const Array2d> Eaug, R
     {
         locSSP->putLocal(d, Eaug.block(start, 0, nloc, N), E);
     });
-
-    /*for (int d = 0; d != locNumDomains; d++)
-    {
-        index_t start = locStateLimits.col(d)(0);
-        index_t nloc = locStateLimits.col(d)(1);
-        if (nloc == 0) continue;
-        locSSP->putLocalState(d, Eaug.block(start, 0, nloc, N), E);
-    }*/
 }
 
 
@@ -319,7 +305,6 @@ void EnsembleKalmanSmoother::beginAnalysis(Ref<Array2d> E, int k)
     if (mData->isLocalized())
     {
         mData->locHaveX.fill(false);
-
         mData->unpackEnsemble(E, mData->locEaug);
     }
 
@@ -354,39 +339,62 @@ void EnsembleKalmanSmoother::assimilate(const ObservationManager& omgr)
     else
     {
         // Have assimilated observations already in this analysis step -> need to reconstruct
-        // global ensemble to be able to call H() on it
+        // global ensemble E to be able to call H(E) on it
         if (mData->upHaveAssimilatedObs)
         {
             mData->packEnsemble(mData->locEaug, Eg);
         }
 
-        //cout << "Local assim " << mData->locNumDomains << endl;
-
-        // Fetch observations from the manager and assimilate...
-        ObservationData odata;
-        while ((odata = omgr.fetchObservations()).empty() == false)
+        // Data assimilation job for a single local analysis domain executed on AsyncJobExecutor.
+        class LocalizedAssimilationJob : public AsyncJob
         {
-            int d = odata.domain;
+        public:
 
-            //cout << "Got data for " << d << endl;
+            LocalizedAssimilationJob(Data* data, ObservationData odata) 
+            : mData(data), mObsData(move(odata)) 
+            { }
 
-            ENDAS_ASSERT(d != GlobalAnalysisDomainId && d >= 0 && d < mData->locNumDomains);
+            virtual void run(int id) override
+            {
+                auto& Eg = *mData->upE;
+                int N = Eg.cols();
 
-            index_t start = mData->locStateLimits.col(d)(0);
-            index_t nloc = mData->locStateLimits.col(d)(1);
-            index_t Xstart = mData->locXLimits(d);
+                int d = mObsData.domain;
+                index_t start = mData->locStateLimits.col(d)(0);
+                index_t nloc = mData->locStateLimits.col(d)(1);
+                index_t Xstart = mData->locXLimits(d);
 
-            // Local (augmented) state and X
-            auto Ed = mData->locEaug.block(start, 0, nloc, N);
-            auto Xd  = mData->locX.block(Xstart, 0, N, N);
-            bool& haveXd = mData->locHaveX(d);
+                // Local (augmented) state and X
+                auto Ed = mData->locEaug.block(start, 0, nloc, N);
+                auto Xd  = mData->locX.block(Xstart, 0, N, N);
+                bool& haveXd = mData->locHaveX(d);
 
-            //cout << "  Assim " << d << endl;
+                mData->assimilateOne(mObsData, Eg, Ed, Xd.matrix(), haveXd);
+            }
 
-            mData->assimilateOne(odata, Eg, Ed, Xd.matrix(), haveXd);
+        private:
+            ObservationData mObsData;
+            Data* mData;
+        };
 
-            //cout << "  Done " << d << endl;
-        }
+        const AsyncJobExecutor& executor = getDefaultJobExecutor();
+
+        // Fetch observations from the manager and assimilate each local domain one-by-one.
+        // The actual work is done in LocalizedAssimilationJob::run()
+
+        executor.pipeline(
+            [&omgr, this](int id) -> unique_ptr<AsyncJob>
+            {
+                ObservationData odata = omgr.fetchObservations();
+                if (odata.empty()) return nullptr;
+
+                int d = odata.domain;
+                ENDAS_ASSERT(d != GlobalAnalysisDomainId && d >= 0 && d < mData->locNumDomains);
+
+                return make_unique<LocalizedAssimilationJob>(this->mData.get(), move(odata));
+            },
+            nullptr
+        );
     }
 }
 
@@ -400,18 +408,17 @@ void EnsembleKalmanSmoother::Data::assimilateOne(const ObservationData& odata,
     ENDAS_ASSERT(odata.H->nobs() == odata.obs.size());
     ENDAS_ASSERT(odata.R->size() == odata.obs.size());
 
-
     // Compute whatever the variant will need from the global ensemble. This typically means 
     // some form of H(E)
     vector<Array2d> Egdata;
     {
-        ENDAS_PERF_SCOPE(ProcessGlobalEnsemble);
+        //ENDAS_PERF_SCOPE(ProcessGlobalEnsemble);
         variant->processGlobalEnsemble(Eg, *odata.H, upK, Egdata);
     }
 
     // Compute the analysis ensemble transform
     {
-        ENDAS_PERF_SCOPE(EnsembleTransform);
+        //ENDAS_PERF_SCOPE(EnsembleTransform);
         if (!haveX)
         {
             variant->ensembleTransform(E, Egdata, odata.obs, *odata.R, upK, X);
@@ -427,7 +434,6 @@ void EnsembleKalmanSmoother::Data::assimilateOne(const ObservationData& odata,
     // We only care about X if we are running smoother (if not, we will use upX conveniently 
     // as a pre-allocated array)
     haveX = haveX || lag > 0;  
-
     upHaveAssimilatedObs = true; 
 }
 
