@@ -12,7 +12,7 @@
 #include <iostream>
 #include <string>
 #include <cmath>
-#include <chrono>
+#include <unordered_map>
 #include <sys/stat.h>
 
 #include <Endas/Endas.hpp>
@@ -32,6 +32,8 @@
 #include <Endas/Spatial/Variogram.hpp>
 #include <Endas/Random/GaussianRandomField.hpp>
 #include <Endas/Random/MultivariateRandomNormal.hpp>
+
+#include <Endas/Core/Profiling.hpp>
 
 #include <EndasModels/QG.hpp>
 
@@ -154,7 +156,7 @@ int main(int argc, char *argv[])
     int numEnsembleInitSteps = 1000;
 
     // Number of data assimilation steps
-    int numAssimSteps = 20;
+    int numAssimSteps = 1000;
 
     // 1.5 -layer quasi-geostrophic model with internal time-stepping `modeldt`.
     QGModel model(N, modeldt);
@@ -320,7 +322,9 @@ int main(int argc, char *argv[])
         for (int k = 1; k != numAssimSteps; k++)
         {
             // Propagate the ensemble from time step k-1 to k
+            ENDAS_PERF_BEGIN(model);
             model(E, k, modeldt);
+            ENDAS_PERF_END(model);
 
             // The update or analysis step
             enks.beginAnalysis(E, k);
@@ -348,6 +352,7 @@ int main(int argc, char *argv[])
         enks.endSmoother();
 
         // Done with smoothing, plot some nice figures
+        profilingSummary(cout);
 
 #if ENDAS_PLOTTING_ENABLED
 
